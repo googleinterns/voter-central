@@ -30,7 +30,7 @@ public class CandidateServlet extends HttpServlet {
 
     // Gets (2) news article information.
 
-    // Gets (3) social media feed.
+    // Gets (3) social media feed (this may not be necessary).
 
     // Sends data as response.
 
@@ -40,6 +40,12 @@ public class CandidateServlet extends HttpServlet {
 
   // Function for getting (2) news article information from the database.
 
-  // Function for getting (3) social media information from the database.
+  // Function for getting (3) social media information from the database (this may not be
+  // necessary).
 
-public class Candidate {}
+  // to package together different types of data as a HTTP response.
+  class CandidateDataPackage {
+    private Candidate candidate;
+    private NewsArticle[] newsArticles;
+  }
+}

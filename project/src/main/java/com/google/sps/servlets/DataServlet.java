@@ -34,10 +34,10 @@ public class DataServlet extends HttpServlet {
 
   }
 
-// to package together different types of data as a HTTP response.
-class DataPackage {
-  private Location location;
-  private Election[] election;
-  private Map<Integer, Integer> electionIDCandidateID;
-  private Map<Integer, String>[] candidateIDNamePairs;
+  // to package together different types of data as a HTTP response.
+  class DataPackage {
+    private Location location;
+    private Election[] election;
+    private Map<Integer, String>[] candidateIDNamePairs;
+  }
 }
