@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-public static class NewsArticleHandler {
+package com.google.sps.util;
+
+public class NewsArticleHandler {
   // Function for scraping the content from a URL.
 
   // Function for checking the news article content for relevancy.
