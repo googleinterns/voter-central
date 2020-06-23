@@ -14,8 +14,8 @@
 
 package com.google.sps.servlets;
 
-import com.google.sps.data.Location;
 import com.google.sps.data.Election;
+import com.google.sps.data.Location;
 import java.io.IOException;
 import java.util.Map;
 import javax.servlet.annotation.WebServlet;
