@@ -14,6 +14,9 @@
 
 package com.google.sps.servlets;
 
+import com.google.sps.data.Candidate;
+import com.google.sps.data.NewsArticle;
+import java.io.IOException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;

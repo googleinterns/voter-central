@@ -14,6 +14,10 @@
 
 package com.google.sps.servlets;
 
+import com.google.sps.data.Election;
+import com.google.sps.data.Location;
+import java.io.IOException;
+import java.util.Map;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +36,11 @@ public class DataServlet extends HttpServlet {
 
     // Sends data as response.
 
+  }
+
+  @Override
+  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    response.sendRedirect("/directory.html");
   }
 
   // to package together different types of data as a HTTP response.
