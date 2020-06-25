@@ -16,12 +16,28 @@ h2 {
   text-align: center;
 }
 
+#navbar-container {
+  height: 80%;
+  left: 30px;
+  position: fixed;
+  text-align: center;
+  width: 15%;
+}
+
+#navbar-container a {
+  padding: 10px 20px;
+  vertical-align: middle;
+}
+
+
 /* Candidate Page Styling */
 
 .candidate-page-info {
-  background-color: lightgrey;
   height: 40%;
-  margin: auto;
   padding: 100px 100px;
-  width: 65%;
+  width: 60%;
+}
+
+#content {
+  margin-left: 20%;
 }
