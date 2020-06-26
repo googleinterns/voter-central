@@ -21,18 +21,18 @@ function addCommonElements() {
 }
 
 function addNavbar() {
-  let navbar = `<a href="/index.html">Home</a>
+  const navbar = `<a href="/index.html">Home</a>
       <br>
       <a href="/">Resources</a>
       <br>
       <a href="/">Polling Locations</a>
       <br>`;
-  let navbarDiv = document.getElementById('navbar-container');
+  const navbarDiv = document.getElementById('navbar-container');
   navbarDiv.innerHTML = navbar;
 }
 
 function addHeader() {
-  let header = `<h1>Voter Central</h1>`;
-  let headerDiv = document.getElementById('header-container');
+  const header = `<h1>Voter Central</h1>`;
+  const headerDiv = document.getElementById('header-container');
   headerDiv.innerHTML = header;
 }
