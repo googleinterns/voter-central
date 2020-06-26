@@ -15,22 +15,24 @@
 // use modern JavaScript (ES5)
 "use strict"
 
-window.onload = function() {
-  addCommonElements();
-};
+function addCommonElements() {
+  addNavbar();
+  addHeader();
+}
 
-/**
- * Adds a official election/candidate information (brief) to the homepage.
- */
-function addOfficialElectionCandidateInformation() {
-  // Capture user input of location.
+function addNavbar() {
+  const navbar = `<a href="/index.html">Home</a>
+      <br>
+      <a href="/">Resources</a>
+      <br>
+      <a href="/">Polling Locations</a>
+      <br>`;
+  const navbarDiv = document.getElementById('navbar-container');
+  navbarDiv.innerHTML = navbar;
+}
 
-  // Send GET request to /data with location.
-
-  // Unpack response.
-
-  // Add official election/candidate information to HTML.
-
-  // Add URLs, that send GET request to /candidate with candidate ID, to HTML.
-
+function addHeader() {
+  const header = `<h1>Voter Central</h1>`;
+  const headerDiv = document.getElementById('header-container');
+  headerDiv.innerHTML = header;
 }
