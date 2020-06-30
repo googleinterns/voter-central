@@ -91,10 +91,10 @@ public class CandidateServlet extends HttpServlet {
     private Candidate candidateData;
     private List<NewsArticle> newsArticlesData;
 
-    CandidatePageDataPackage(Candidate inputCandidateData,
-        List<NewsArticle> inputNewsArticlesData) {
-      this.candidateData = inputCandidateData;
-      this.newsArticlesData = inputNewsArticlesData;
+    CandidatePageDataPackage(Candidate candidateData,
+        List<NewsArticle> newsArticlesData) {
+      this.candidateData = candidateData;
+      this.newsArticlesData = newsArticlesData;
     }
   }
 }

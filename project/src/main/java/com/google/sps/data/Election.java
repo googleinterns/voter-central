@@ -25,26 +25,26 @@ public class Election {
   private Date date;
   private List<Position> candidatePositions;
 
-  public Election(String inputName, Date inputDate, List<String> inputCandidateIds,
-      List<String> inputCandidateNames, List<String> inputCandidatePositions,
-      List<String> inputCandidatePartyAffiliation, List<String> inputCandidateIncumbency) {
-    this.name = inputName;
-    this.date = inputDate;
+  public Election(String name, Date date, List<String> candidateIds, List<String> candidateNames,
+      List<String> candidatePositions, List<String> candidatePartyAffiliation,
+      List<String> candidateIncumbency) {
+    this.name = name;
+    this.date = date;
     // Reformat database data to correlate one {@code Position} object with a list of candidates
     // and their information.
-    Set<String> distinctPositions = new HashSet<>(inputCandidatePositions);
+    Set<String> distinctPositions = new HashSet<>(candidatePositions);
     this.candidatePositions = new ArrayList<>(distinctPositions.size());
     for (String position : distinctPositions) {
-      int startIndex = inputCandidatePositions.indexOf(position);
-      int endIndex = inputCandidatePositions.lastIndexOf(position);
+      int startIndex = candidatePositions.indexOf(position);
+      int endIndex = candidatePositions.lastIndexOf(position);
       Position candidatePosition = new Position(position,
-                                                inputCandidateIds
+                                                candidateIds
                                                     .subList(startIndex, endIndex + 1),
-                                                inputCandidateNames
+                                                candidateNames
                                                     .subList(startIndex, endIndex + 1),
-                                                inputCandidatePartyAffiliation
+                                                candidatePartyAffiliation
                                                     .subList(startIndex, endIndex + 1),
-                                                inputCandidateIncumbency
+                                                candidateIncumbency
                                                     .subList(startIndex, endIndex + 1));
       this.candidatePositions.add(candidatePosition);
     }
@@ -57,13 +57,13 @@ public class Election {
     private List<String> candidatePartyAffiliation;
     private List<String> candidateIncumbency;
 
-    Position (String inputName, List<String> inputCandidateIds, List<String> inputCandidateNames,
-        List<String> inputCandidatePartyAffiliation, List<String> inputCandidateIncumbency) {
-      this.name = inputName;
-      this.candidateIds = inputCandidateIds;
-      this.candidateNames = inputCandidateNames;
-      this.candidatePartyAffiliation = inputCandidatePartyAffiliation;
-      this.candidateIncumbency = inputCandidateIncumbency;
+    Position (String name, List<String> candidateIds, List<String> candidateNames,
+        List<String> candidatePartyAffiliation, List<String> candidateIncumbency) {
+      this.name = name;
+      this.candidateIds = candidateIds;
+      this.candidateNames = candidateNames;
+      this.candidatePartyAffiliation = candidatePartyAffiliation;
+      this.candidateIncumbency = candidateIncumbency;
     }
   }
 }

@@ -41,7 +41,6 @@ public class DataServlet extends HttpServlet {
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    // Extract user input of an address.
     String address = request.getParameter("address");
 
     // Resolve {@code address} to a list of election names.
@@ -108,8 +107,8 @@ public class DataServlet extends HttpServlet {
   class DirectoryPageDataPackage {
     private List<Election> electionsData;
 
-    DirectoryPageDataPackage(List<Election> inputElectionsData) {
-      this.electionsData = inputElectionsData;
+    DirectoryPageDataPackage(List<Election> electionsData) {
+      this.electionsData = electionsData;
     }
   }
 }

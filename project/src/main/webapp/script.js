@@ -50,7 +50,6 @@ window.onload = function() {
  *   </div>
  */
 async function addBriefElectionCandidateInformation() {
-  // Extract user input of address.
   const address = location.search.substring(location.search.indexOf('=') + 1);
 
   // Send GET request to /data with address.
@@ -116,8 +115,6 @@ async function addBriefElectionCandidateInformation() {
  * Adds candidate information to the candidate page.
  */
 async function addCandidateInformation() {
-  console.log(location.search);
-  // Extract candidate ID.
   const candidateId = location.search.substring(
       location.search.indexOf('=') + 1);
 

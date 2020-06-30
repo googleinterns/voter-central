@@ -24,13 +24,13 @@ public class NewsArticle {
   private String content;
   private NewsArticleCategory category;
 
-  public NewsArticle(String inputTitle, String inputUrl, String inputPublisher,
-      Date inputPublishedDate, String inputContent) {
-    this.title = inputTitle;
-    this.url = inputUrl;
-    this.publisher = inputPublisher;
-    this.publishedDate = inputPublishedDate;
-    this.content = inputContent;
+  public NewsArticle(String title, String url, String publisher, Date publishedDate,
+      String content) {
+    this.title = title;
+    this.url = url;
+    this.publisher = publisher;
+    this.publishedDate = publishedDate;
+    this.content = content;
     this.category = null;
   }
 }
