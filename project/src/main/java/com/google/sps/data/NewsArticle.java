@@ -14,8 +14,25 @@
 
 package com.google.sps.data;
 
+import java.util.Date;
+
 public class NewsArticle {
+  private String title;
+  private String url;
+  private String publisher;
+  private Date publishedDate;
+  private String content;
   private NewsArticleCategory category;
+
+  public NewsArticle(String inputTitle, String inputUrl, String inputPublisher,
+      Date inputPublishedDate, String inputContent) {
+    this.title = inputTitle;
+    this.url = inputUrl;
+    this.publisher = inputPublisher;
+    this.publishedDate = inputPublishedDate;
+    this.content = inputContent;
+    this.category = null;
+  }
 }
 
 class NewsArticleCategory {}

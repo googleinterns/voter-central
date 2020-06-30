@@ -94,6 +94,7 @@ async function addBriefElectionCandidateInformation() {
            </tr>`;
       for (let candidateIndex = 0; candidateIndex < candidateIds.length;
           candidateIndex++) {
+        // Add candidate info and embed candidate ID into the URL.
         candidatesTable.innerHTML +=
             `<tr>
                <td><a href="candidate.html?candidateId=${candidateIds[candidateIndex]}">
@@ -110,3 +111,75 @@ async function addBriefElectionCandidateInformation() {
     electionsContainer.appendChild(electionElement);
   }
 }
+
+/**
+ * Adds candidate information to the candidate page.
+ */
+async function addCandidateInformation() {
+  console.log(location.search);
+  // Extract candidate ID.
+  const candidateId = location.search.substring(
+      location.search.indexOf('=') + 1);
+
+  // Send GET request to /candidate and fetch JSON formatted data for the given
+  // candidate ID.
+  const response = await fetch(`/candidate?candidateId=${candidateId}`);
+  const dataPackage = await response.json();
+
+  // Unpack response.
+  const officialCandidateInfo = dataPackage.candidateData;
+  const newsArticles = dataPackage.newsArticlesData;
+  const socialMedia = dataPackage.socialMediaData;
+
+  // Add 3 components of information to the candidate page.
+  addOfficialCandidateInformation(officialCandidateInfo);
+  addNewsArticles(newsArticles);
+  addSocialMedia(socialMedia);
+}
+
+/**
+ * @TODO [Adds the official information component to the candidate page.]
+ */
+function addOfficialCandidateInformation() {}
+
+/**
+ * Adds the news articles component to the candidate page.
+ *
+ * Each piece of news article has the following HTML DOM structure:
+ *     <article id="news-article-i">
+ *       <h3>News article title</h3>
+ *       <a href="URL">Source</a>
+ *       <h5>Publisher</h5>
+ *       <time>Published date</time>
+ *       <div class="news-article-content">
+ *         <p>Content [first 100 words]</p>
+ *         <a href="URL">Read the full article</a>
+ *       </div>
+ *       <hr>
+ *     </article>
+ */
+function addNewsArticles(newsArticles) {
+  const newsArticlesContainer = document.getElementById('news-articles-container');
+  newsArticlesContainer.innerHTML = '';
+  for (let i = 0; i < newsArticles.length; i++) {
+    const newsArticle = newsArticles[i];
+    const articleElement = document.createElement('article');
+    articleElement.id = `news-article-${i + 1}`;
+    articleElement.innerHTML =
+        `<h3>${newsArticle.title}</h3>
+         <a href="${newsArticle.url}">Source</a>
+         <h5>${newsArticle.publisher}</h5>
+         <time>${newsArticle.publishedDate}</time>
+         <div class="news-article-content">
+           <p>${newsArticle.content}</p>
+           <a href="${newsArticle.url}">Read the full article</a>
+         </div>
+         <hr>`;
+    newsArticlesContainer.appendChild(articleElement);
+  }
+}
+
+/**
+ * @TODO [Adds the social media component to the candidate page.]
+ */
+function addSocialMedia(candidateID) {}

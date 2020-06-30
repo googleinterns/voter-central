@@ -45,7 +45,7 @@ public class DataServlet extends HttpServlet {
     String address = request.getParameter("address");
 
     // Resolve {@code address} to a list of election names.
-    // TODO [Need to call the Civic Information API]
+    // @TODO [Need to call the Civic Information API]
     List<String> electionNames = Arrays.asList("New York's 14th Congressional District Election");
 
     // Find election/candidate information. Package and convert the data to JSON.
@@ -60,9 +60,7 @@ public class DataServlet extends HttpServlet {
   }
 
   @Override
-  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    response.sendRedirect("/directory.html");
-  }
+  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {}
 
   /**
    * Queries the database for (brief version) official election/candidate information and format
