@@ -35,6 +35,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/** 
+ * Queries the backend database and serves candidate-specific information for the candidate page.
+ */
 @WebServlet("/candidate")
 public class CandidateServlet extends HttpServlet {
 

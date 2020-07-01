@@ -20,6 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/** 
+ * Represents one election's information on the directory page. One election contains one or more
+ * positions.
+ */
 public class Election {
   private String name;
   private Date date;

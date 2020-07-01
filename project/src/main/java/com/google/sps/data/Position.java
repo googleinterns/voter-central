@@ -16,6 +16,10 @@ package com.google.sps.data;
 
 import java.util.List;
 
+/** 
+ * Represents one position for which candidates run in an election. One position corresponds
+ * to one or more candidates.
+ */
 public class Position {
   private String name;
   private List<DirectoryCandidate> candidates;
