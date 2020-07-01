@@ -14,20 +14,16 @@
 
 package com.google.sps.data;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-public class Election {
+public class DirectoryCandidate {
+  private String id;
   private String name;
-  private Date date;
-  private List<Position> positions;
+  private String partyAffiliation;
+  private String incumbency;
 
-  public Election(String name, Date date, List<Position> positions) {
+  public DirectoryCandidate(String id, String name, String partyAffiliation, String incumbency) {
+    this.id = id;
     this.name = name;
-    this.date = date;
-    this.positions = positions;
+    this.partyAffiliation = partyAffiliation;
+    this.incumbency = incumbency;
   }
 }

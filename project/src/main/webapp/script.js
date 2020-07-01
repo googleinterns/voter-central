@@ -68,7 +68,7 @@ async function addBriefElectionCandidateInformation() {
         `<h3>${election.name}</h3>
          <time>${election.date}</time>`;
     // Each election corresponds to a list of positions.
-    const positions = election.candidatePositions;
+    const positions = election.positions;
     const positionsElement = document.createElement('div');
     positionsElement.id = electionElement.id + `-positions`;
     const positionsList = document.createElement('ul');
@@ -80,10 +80,7 @@ async function addBriefElectionCandidateInformation() {
           `<h4>Position ${positionIndex + 1}: ${position.name}</h4>
            <p>Table of Candidates</p>`;
       // Each position corresponds to a table of candidates.
-      const candidateIds = position.candidateIds;
-      const candidateNames = position.candidateNames;
-      const candidatePartyAffiliation = position.candidatePartyAffiliation;
-      const candidateIncumbency = position.candidateIncumbency;
+      const candidates = position.candidates;
       const candidatesTable = document.createElement('table');
       candidatesTable.innerHTML =
           `<tr>
@@ -91,15 +88,16 @@ async function addBriefElectionCandidateInformation() {
              <th>Party Affiliation</th>
              <th>Incumbent?</th>
            </tr>`;
-      for (let candidateIndex = 0; candidateIndex < candidateIds.length;
+      for (let candidateIndex = 0; candidateIndex < candidates.length;
           candidateIndex++) {
+        const candidate = candidates[candidateIndex];
         // Add candidate info and embed candidate ID into the URL.
         candidatesTable.innerHTML +=
             `<tr>
-               <td><a href="candidate.html?candidateId=${candidateIds[candidateIndex]}">
-                   ${candidateNames[candidateIndex]}</a></td>
-               <td>${candidatePartyAffiliation[candidateIndex]}</td>
-               <td>${candidateIncumbency[candidateIndex]}</td>
+               <td><a href="candidate.html?candidateId=${candidate.id}">
+                   ${candidate.name}</a></td>
+               <td>${candidate.partyAffiliation}</td>
+               <td>${candidate.incumbency}</td>
              </tr>`;
       }
       positionItem.appendChild(candidatesTable);

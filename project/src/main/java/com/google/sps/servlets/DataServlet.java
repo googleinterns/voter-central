@@ -25,12 +25,16 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.gson.Gson;
+import com.google.sps.data.DirectoryCandidate;
 import com.google.sps.data.Election;
+import com.google.sps.data.Position;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -78,27 +82,37 @@ public class DataServlet extends HttpServlet {
     }
     List<Election> electionsData = new ArrayList<>(elections.size());
     for (Entity election : elections) {
-      String name = election.getKey().getName();
-      Date date = (Date) election.getProperty("date");
+      // Query for (brief version) candidate information.
       List<String> candidateIds = (List<String>) election.getProperty("candidateIds");
-      List<String> candidateNames = new ArrayList<>(candidateIds.size());
-      List<String> candidatePositions = (List<String>) election.getProperty("candidatePositions");
-      List<String> candidatePartyAffiliation = new ArrayList<>(candidateIds.size());
       List<String> candidateIncumbency= (List<String>) election.getProperty("candidateIncumbency");
-      // Query for a subset of candidate information.
-      for (String candidateId : candidateIds) {
+      List<DirectoryCandidate> candidates = new ArrayList<>(candidateIds.size());
+      for (int i = 0; i < candidateIds.size(); i++) {
+        String id = candidateIds.get(i);
+        String incumbency = candidateIncumbency.get(i);
         Query candidateQuery = new Query("Candidate")
             .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
-                       KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+                       KeyFactory.createKey("Candidate", Long.parseLong(id))));
         PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
         Entity candidate = candidateQueryResult.asSingleEntity();
-        candidateNames.add((String) candidate.getProperty("name"));
-        candidatePartyAffiliation.add((String) candidate.getProperty("partyAffiliation"));
+        candidates.add(new DirectoryCandidate(id, 
+                                              (String) candidate.getProperty("name"),
+                                              (String) candidate.getProperty("partyAffiliation"),
+                                              incumbency));
       }
-      Election electionData = new Election(name, date, candidateIds, candidateNames,
-                                           candidatePositions, candidatePartyAffiliation,
-                                           candidateIncumbency);
-      electionsData.add(electionData);
+      // Reformat database data and correlate one {@code Position} object with a list of
+      // {@code DierctoryCandidate} and their information.
+      List<String> candidatePositions = (List<String>) election.getProperty("candidatePositions");
+      Set<String> distinctPositions = new HashSet<>(candidatePositions);
+      List<Position> positions = new ArrayList<>(distinctPositions.size());
+      for (String positionName : distinctPositions) {
+        int startIndex = candidatePositions.indexOf(positionName);
+        int endIndex = candidatePositions.lastIndexOf(positionName);
+        positions.add(new Position(positionName, candidates));
+      }
+      // Reformat database data and correslate one {@code Election} with a list of {@code Position}.
+      electionsData.add(new Election(election.getKey().getName(),
+                                     (Date) election.getProperty("date"),
+                                     positions));
     }
     return electionsData;
   }
