@@ -60,53 +60,93 @@ async function addBriefElectionCandidateInformation() {
   // Add (brief version) official election/candidate information to HTML.
   const electionsContainer = document.getElementById('elections-container');
   electionsContainer.innerHTML = '';
-  for (let i = 0; i < elections.length; i++) {
-    const election = elections[i];
-    const electionElement = document.createElement('div');
-    electionElement.id = `election-${i + 1}`;
-    electionElement.innerHTML =
-        `<h3>${election.name}</h3>
-         <time>${election.date}</time>`;
-    // Each election corresponds to a list of positions.
-    const positions = election.positions;
-    const positionsElement = document.createElement('div');
-    positionsElement.id = electionElement.id + `-positions`;
-    const positionsList = document.createElement('ul');
-    for (let positionIndex = 0; positionIndex < positions.length;
-        positionIndex++) {
-      const position = positions[positionIndex];
-      const positionItem = document.createElement('li');
-      positionItem.innerHTML =
-          `<h4>Position ${positionIndex + 1}: ${position.name}</h4>
-           <p>Table of Candidates</p>`;
-      // Each position corresponds to a table of candidates.
-      const candidates = position.candidates;
-      const candidatesTable = document.createElement('table');
-      candidatesTable.innerHTML =
-          `<tr>
-             <th>Candidate Name</th>
-             <th>Party Affiliation</th>
-             <th>Incumbent?</th>
-           </tr>`;
-      for (let candidateIndex = 0; candidateIndex < candidates.length;
-          candidateIndex++) {
-        const candidate = candidates[candidateIndex];
-        // Add candidate info and embed candidate ID into the URL.
-        candidatesTable.innerHTML +=
-            `<tr>
-               <td><a href="candidate.html?candidateId=${candidate.id}">
-                   ${candidate.name}</a></td>
-               <td>${candidate.partyAffiliation}</td>
-               <td>${candidate.incumbency}</td>
-             </tr>`;
-      }
-      positionItem.appendChild(candidatesTable);
-      positionsList.appendChild(positionItem);
-    }
-    positionsElement.appendChild(positionsList);
-    electionElement.appendChild(positionsElement);
+  for (let electionIndex = 0; electionIndex < elections.length;
+      electionIndex++) {
+    const electionElement = constructElection(elections[electionIndex],
+                                              electionIndex);
     electionsContainer.appendChild(electionElement);
   }
+}
+
+/**
+ * Constructs the HTML of one election, which contains a list of positions.
+ */
+function constructElection(election, electionIndex) {
+  const electionElement = document.createElement('div');
+  electionElement.id = `election-${electionIndex + 1}`;
+  electionElement.innerHTML =
+      `<h3>${election.name}</h3>
+        <time>${election.date}</time>`;
+  const positions = election.positions;
+  const positionsElement = document.createElement('div');
+  positionsElement.id = electionElement.id + `-positions`;
+  const positionsList = constructPositionsList(positions);
+  positionsElement.appendChild(positionsList);
+  electionElement.appendChild(positionsElement);
+  return electionElement;
+}
+
+/**
+ * Constructs the HTML of a list of positions, corresponding to one election.
+ */
+function constructPositionsList(positions) {
+  const positionsList = document.createElement('ul');
+  for (let positionIndex = 0; positionIndex < positions.length;
+      positionIndex++) {
+    const positionItem = constructPositionsListItem(positions[positionIndex],
+                                                    positionIndex);
+    positionsList.appendChild(positionItem);
+  }
+  return positionsList;
+}
+
+/**
+ * Constructs the HTML of one position, which contains a table of candidates.
+ */
+function constructPositionsListItem(position, positionIndex) {
+  const positionItem = document.createElement('li');
+  positionItem.innerHTML =
+      `<h4>Position ${positionIndex + 1}: ${position.name}</h4>
+        <p>Table of Candidates</p>`;
+  const candidatesTable = constructCandidateTable(position.candidates);
+  positionItem.appendChild(candidatesTable);
+  return positionItem;
+}
+
+/**
+ * Constructs the HTML of a table of candidates, corresponding to one position.
+ */
+function constructCandidateTable(candidates) {
+  const candidatesTable = document.createElement('table');
+  candidatesTable.innerHTML =
+      `<tr>
+         <th>Candidate Name</th>
+         <th>Party Affiliation</th>
+         <th>Incumbent?</th>
+       </tr>`;
+  for (let candidateIndex = 0; candidateIndex < candidates.length;
+      candidateIndex++) {
+    const candidate = candidates[candidateIndex];
+    candidatesTable.innerHTML +=
+        constructCandidateTableRow(candidate.id,
+                                   candidate.name,
+                                   candidate.partyAffiliation,
+                                   candidate.incumbency);
+  }
+  return candidatesTable;
+}
+
+/**
+ * Constructs the HTML of one table row for a candidate. Adds candidate info
+ * and embed candidate ID into the URL.
+ */
+function constructCandidateTableRow(id, name, partyAffiliation, incumbency) {
+  return `<tr>
+            <td><a href="candidate.html?candidateId=${id}">
+                ${name}</a></td>
+            <td>${partyAffiliation}</td>
+            <td>${incumbency}</td>
+          </tr>`;
 }
 
 /**
