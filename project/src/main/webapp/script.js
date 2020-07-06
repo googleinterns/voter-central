@@ -37,7 +37,7 @@ window.onload = function() {
  *             <tr>
  *               <td><a href="URL">Candidate Name</a></th>
  *               <td>Party Affiliation</th>
- *               <td>Incumbent?</th>
+ *               <td>Incumbent</th>
  *             </tr>
  *           </table>
  *         </li>
@@ -122,7 +122,7 @@ function constructCandidateTable(candidates) {
       `<tr>
          <th>Candidate Name</th>
          <th>Party Affiliation</th>
-         <th>Incumbent?</th>
+         <th>Incumbent</th>
        </tr>`;
   for (let candidateIndex = 0; candidateIndex < candidates.length;
       candidateIndex++) {

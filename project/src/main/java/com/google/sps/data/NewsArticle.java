@@ -17,7 +17,7 @@ package com.google.sps.data;
 import java.util.Date;
 
 /** 
- * Represents one news article, including its metadata and content.
+ * Represents a news article, including its metadata and content.
  */
 public class NewsArticle {
   private String title;

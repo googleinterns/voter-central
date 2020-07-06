@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 /** 
- * Represents one election's information on the directory page. One election contains one or more
+ * Represents an election's information on the directory page. An election contains one or more
  * positions.
  */
 public class Election {
