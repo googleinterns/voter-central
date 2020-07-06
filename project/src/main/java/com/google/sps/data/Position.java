@@ -14,24 +14,18 @@
 
 package com.google.sps.data;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /** 
- * Represents an election's information on the directory page. An election contains one or more
- * positions.
+ * Represents a position for which candidates run in an election. A position corresponds
+ * to one or more candidates.
  */
-public class Election {
+public class Position {
   private String name;
-  private Date date;
-  private List<Position> positions;
+  private List<DirectoryCandidate> candidates;
 
-  public Election(String name, Date date, List<Position> positions) {
+  public Position (String name, List<DirectoryCandidate> candidates) {
     this.name = name;
-    this.date = date;
-    this.positions = positions;
+    this.candidates = candidates;
   }
 }

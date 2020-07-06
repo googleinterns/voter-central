@@ -14,8 +14,28 @@
 
 package com.google.sps.data;
 
+import java.util.Date;
+
+/** 
+ * Represents a news article, including its metadata and content.
+ */
 public class NewsArticle {
+  private String title;
+  private String url;
+  private String publisher;
+  private Date publishedDate;
+  private String content;
   private NewsArticleCategory category;
+
+  public NewsArticle(String title, String url, String publisher, Date publishedDate,
+      String content) {
+    this.title = title;
+    this.url = url;
+    this.publisher = publisher;
+    this.publishedDate = publishedDate;
+    this.content = content;
+    this.category = null;
+  }
 }
 
 class NewsArticleCategory {}
