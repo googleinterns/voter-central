@@ -25,6 +25,7 @@ import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.cloud.language.v1.LanguageServiceSettings;
 import com.google.sps.data.NewsArticle;
 
+// @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /** 
  * Provides a tool for checking the relevancy of content to a candidate.
  */

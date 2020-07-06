@@ -47,7 +47,6 @@ public class ContentExtractor {
     try {
       parser.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      System.out.println(textDocument.getText(false, true));
       return formatNewsArticleFromDocument(textDocument, url);
     } catch (IOException | SAXException | TikaException e) {
       return new NewsArticle();

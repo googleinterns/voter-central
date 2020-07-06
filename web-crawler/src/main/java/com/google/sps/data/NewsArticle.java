@@ -22,15 +22,18 @@ import java.util.List;
  */
 public class NewsArticle {
   private String title;
+  private String url;
   private List<String> content;
 
   public NewsArticle() {
     this.title = "";
+    this.url = "";
     this.content = Arrays.asList();
   }
 
-  public NewsArticle(String title, List<String> content) {
+  public NewsArticle(String title, String url, List<String> content) {
     this.title = title;
+    this.url = url;
     this.content = content;
   }
 
@@ -38,7 +41,15 @@ public class NewsArticle {
     return this.title;
   }
 
+  public String getUrl() {
+    return this.url;
+  }
+
   public List<String> getContent() {
     return this.content;
+  }
+
+  public void setContent(List<String> content) {
+    this.content = content;
   }
 }
