@@ -97,7 +97,8 @@ public class DataServlet extends HttpServlet {
   /**
    * Formats a list of positions and their associated candidates' information. Correlates
    * a {@code Position} object with one or more {@code DierctoryCandidate}. Candidates running
-   * for the same position are assumed to be consecutive in {@code candidates}.
+   * for the same position are assumed to be consecutive in {@code candidateIds} and
+   * {@code candidateIncumbency}.
    */
   private List<Position> extractPositionInformation(List<String> candidatePositions,
       List<String> candidateIds, List<Boolean> candidateIncumbency) {
@@ -108,9 +109,8 @@ public class DataServlet extends HttpServlet {
       int endIndex = candidatePositions.lastIndexOf(positionName);
       List<DirectoryCandidate> candidates = new ArrayList<>(endIndex - startIndex + 1);
       for (int i = startIndex; i <= endIndex; i++) {
-        String candidateId = candidateIds.get(i);
-        boolean isIncumbent = candidateIncumbency.get(i);
-        candidates.add(extractCandidateInformation(candidateId, isIncumbent));
+        candidates.add(extractCandidateInformation(candidateIds.get(i),
+                                                   candidateIncumbency.get(i)));
       }
       positions.add(new Position(positionName, candidates));
     }
