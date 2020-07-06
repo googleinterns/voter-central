@@ -37,7 +37,7 @@ public class ContentExtractor {
   /** 
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}.
    */
-  public static NewsArticle extractContentFromHtml(InputStream htmlFileStream) {
+  public static NewsArticle extractContentFromHtml(InputStream htmlFileStream, String url) {
     BodyContentHandler bodyHandler = new BodyContentHandler();
     ArticleExtractor articleExtractor = new ArticleExtractor();
     BoilerpipeContentHandler boilerpipeHandler =
@@ -47,7 +47,8 @@ public class ContentExtractor {
     try {
       parser.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      return formatNewsArticleFromDocument(textDocument);
+      System.out.println(textDocument.getText(false, true));
+      return formatNewsArticleFromDocument(textDocument, url);
     } catch (IOException | SAXException | TikaException e) {
       return new NewsArticle();
     }
@@ -57,13 +58,13 @@ public class ContentExtractor {
    * Formats and packages information of a {@code NewsArticle} from the parsed result of a
    * {@code TextDocument}.
    */
-  private static NewsArticle formatNewsArticleFromDocument(TextDocument textDocument) {
+  private static NewsArticle formatNewsArticleFromDocument(TextDocument textDocument, String url) {
     List<String> content = new LinkedList<>();
     for (TextBlock textBlock : textDocument.getTextBlocks()) {
       if (textBlock.isContent()) {
         content.add(textBlock.getText());
       }
     }
-    return new NewsArticle(textDocument.getTitle(), content);
+    return new NewsArticle(textDocument.getTitle(), url, content);
   }
 }
