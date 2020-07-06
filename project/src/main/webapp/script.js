@@ -131,7 +131,7 @@ function constructCandidateTable(candidates) {
         constructCandidateTableRow(candidate.id,
                                    candidate.name,
                                    candidate.partyAffiliation,
-                                   candidate.incumbency);
+                                   candidate.isIncumbent);
   }
   return candidatesTable;
 }
@@ -140,12 +140,12 @@ function constructCandidateTable(candidates) {
  * Constructs the HTML of one table row for a candidate. Adds candidate info
  * and embed candidate ID into the URL.
  */
-function constructCandidateTableRow(id, name, partyAffiliation, incumbency) {
+function constructCandidateTableRow(id, name, partyAffiliation, isIncumbent) {
   return `<tr>
             <td><a href="candidate.html?candidateId=${id}">
                 ${name}</a></td>
             <td>${partyAffiliation}</td>
-            <td>${incumbency ? 'Yes' : 'No'}</td>
+            <td>${isIncumbent ? 'Yes' : 'No'}</td>
           </tr>`;
 }
 
