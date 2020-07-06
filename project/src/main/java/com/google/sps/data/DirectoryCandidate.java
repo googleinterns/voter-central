@@ -21,9 +21,9 @@ public class DirectoryCandidate {
   private String id;
   private String name;
   private String partyAffiliation;
-  private String incumbency;
+  private boolean incumbency;
 
-  public DirectoryCandidate(String id, String name, String partyAffiliation, String incumbency) {
+  public DirectoryCandidate(String id, String name, String partyAffiliation, boolean incumbency) {
     this.id = id;
     this.name = name;
     this.partyAffiliation = partyAffiliation;

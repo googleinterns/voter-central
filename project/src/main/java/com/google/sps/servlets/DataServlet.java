@@ -85,7 +85,7 @@ public class DataServlet extends HttpServlet {
       Entity election = electionQueryResult.asSingleEntity();
       List<DirectoryCandidate> candidates =
           extractCandidateInformation((List<String>) election.getProperty("candidateIds"),
-                                      (List<String>) election.getProperty("candidateIncumbency"));
+                                      (List<Boolean>) election.getProperty("candidateIncumbency"));
       List<Position> positions =
           extractPositionInformation((List<String>) election.getProperty("candidatePositions"),
                                      candidates);
@@ -101,12 +101,12 @@ public class DataServlet extends HttpServlet {
    * data as {@code DirectoryCandidate} objects.
    */
   private List<DirectoryCandidate> extractCandidateInformation(List<String> candidateIds,
-      List<String> candidateIncumbency) {
+      List<Boolean> candidateIncumbency) {
     List<DirectoryCandidate> candidates = new ArrayList<>(candidateIds.size());
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     for (int i = 0; i < candidateIds.size(); i++) {
       String id = candidateIds.get(i);
-      String incumbency = candidateIncumbency.get(i);
+      boolean incumbency = candidateIncumbency.get(i);
       Query candidateQuery = new Query("Candidate")
           .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
                       KeyFactory.createKey("Candidate", Long.parseLong(id))));
@@ -131,7 +131,7 @@ public class DataServlet extends HttpServlet {
     for (String positionName : distinctPositions) {
       int startIndex = candidatePositions.indexOf(positionName);
       int endIndex = candidatePositions.lastIndexOf(positionName);
-      positions.add(new Position(positionName, candidates));
+      positions.add(new Position(positionName, candidates.subList(startIndex, endIndex + 1)));
     }
     return positions;
   }

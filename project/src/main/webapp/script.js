@@ -145,7 +145,7 @@ function constructCandidateTableRow(id, name, partyAffiliation, incumbency) {
             <td><a href="candidate.html?candidateId=${id}">
                 ${name}</a></td>
             <td>${partyAffiliation}</td>
-            <td>${incumbency}</td>
+            <td>${incumbency ? 'Yes' : 'No'}</td>
           </tr>`;
 }
 
