@@ -15,14 +15,37 @@
 package com.google.sps.webcrawler;
 
 import com.google.sps.data.NewsArticle;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /** 
  * Provides a tool for processing textual content.
  */
 public class ContentProcessor {
+  private final static int MAX_WORD_COUNT = 100;
 
-  // @TODO
+  // @TODO [Implement more advanced processing methods.]
+  /** 
+   * Extracts the first {@code MAX_WORD_COUNT} words.
+   */
   public static NewsArticle process(NewsArticle newsArticle) {
+    List<String> rawContent = newsArticle.getContent();
+    List<String> processedContent = new LinkedList<>();
+    int remainingWordCount = MAX_WORD_COUNT;
+    for (String contentBlock : rawContent) {
+      String[] splitContentBlock = contentBlock.split(" ");
+      int wordCount = splitContentBlock.length;
+      int allowedLength = Math.min(wordCount, remainingWordCount);
+      String processedContentBlock =
+          String.join(" ", Arrays.asList(splitContentBlock).subList(0, allowedLength));
+      processedContent.add(processedContentBlock);
+      remainingWordCount -= wordCount;
+      if (remainingWordCount <= 0) {
+        break;
+      }
+    }
+    newsArticle.setContent(processedContent);
     return newsArticle;
   }
 }
