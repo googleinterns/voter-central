@@ -80,11 +80,13 @@ public class WebCrawler {
         continue;
       }
       NewsArticle newsArticle = potentialNewsArticle.get();
+      RelevancyChecker relevancyChecker;
       try {
-        if (!RelevancyChecker.isRelevant(newsArticle, candidateName)) {
-          continue;
-        }
-      } catch (Exception e) {
+        relevancyChecker = new RelevancyChecker();
+      } catch (IOException e) {
+        continue;
+      }
+      if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
       NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
@@ -157,17 +159,17 @@ public class WebCrawler {
    */
   public Optional<NewsArticle> scrapeAndExtractHtml(String url) {
     try {
-      URL formattedUrlObj = new URL(url);
-      URL robotsUrlObj = new URL(formattedUrlObj.getProtocol(), formattedUrlObj.getHost(),
+      URL formattedUrl = new URL(url);
+      URL robotsUrl = new URL(formattedUrl.getProtocol(), formattedUrl.getHost(),
           "/robots.txt");
-      InputStream robotsTxtStream = robotsUrlObj.openStream();
+      InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
-      String webpagePath = formattedUrlObj.getPath();
+      String webpagePath = formattedUrl.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
         if (grant != null && grant.getCrawlDelay() != null) {
-          if (!waitForAndSetCrawlDelay(grant, robotsUrlObj.toString())) {
+          if (!waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
             return Optional.empty();
           }
         }
@@ -187,15 +189,15 @@ public class WebCrawler {
    * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
    * to non-null.
    */
-  private boolean waitForAndSetCrawlDelay(Grant grant, String robotsUrl) {
-    if (nextAccessTimes.containsKey(robotsUrl)) {
-      if (!waitIfNecessary(robotsUrl)) {
+  private boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+    if (nextAccessTimes.containsKey(url)) {
+      if (!waitIfNecessary(url)) {
         return false;
       }
-      nextAccessTimes.replace(robotsUrl,
+      nextAccessTimes.replace(url,
                               System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     } else {
-      nextAccessTimes.put(robotsUrl,
+      nextAccessTimes.put(url,
                           System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     }
     return true;
@@ -205,10 +207,10 @@ public class WebCrawler {
    * Waits for {@code timeToDelay} milliseconds if necessary and returns true if the pause
    * succeeded or if the pause was unnecessary.
    */
-  private boolean waitIfNecessary(String robotsUrl) {
-    if (System.currentTimeMillis() < nextAccessTimes.get(robotsUrl)) {
+  private boolean waitIfNecessary(String url) {
+    if (System.currentTimeMillis() < nextAccessTimes.get(url)) {
       try {
-        TimeUnit.MILLISECONDS.sleep(nextAccessTimes.get(robotsUrl) - System.currentTimeMillis());
+        TimeUnit.MILLISECONDS.sleep(nextAccessTimes.get(url) - System.currentTimeMillis());
       } catch (InterruptedException e) {
         return false;
       }
@@ -220,8 +222,11 @@ public class WebCrawler {
   /** 
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema.
-   * Requires "gcloud config set project project-ID" to be set correctly. {@code content} and
-   * {@code abbreviatedContent} are excluded form database indexes.
+   * Requires "gcloud config set project project-ID" to be set correctly.
+   * {@code content} and {@code abbreviatedContent} are excluded form database indexes, which are
+   * additional data structures built to enable efficient lookup on non-keyed properties. Because
+   * we will not query {@code NewsArticle} Datastore entities via {@code content} or
+   * {@code abbreviatedContent}, we will not use indexes regardless.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();

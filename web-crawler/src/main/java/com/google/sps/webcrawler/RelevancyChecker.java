@@ -33,13 +33,20 @@ import java.io.IOException;
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
   private static final double SALIENCE_THRESHOLD = 0.5;
-  private static LanguageServiceClient languageServiceClient;
-  static {
-    try {
-      languageServiceClient = LanguageServiceClient.create();
-    } catch (IOException e) {
-      languageServiceClient = null;
-    }
+  private LanguageServiceClient languageServiceClient;
+
+  /** 
+   * Instantiates a {@code LanguageServiceClient} to use the Google Natural Language API.
+   */
+  public RelevancyChecker() throws IOException {
+    this.languageServiceClient = LanguageServiceClient.create();
+  }
+
+  /** 
+   * Initializes a {@code LanguageServiceClient} with the parameter.
+   */
+  public RelevancyChecker(LanguageServiceClient languageServiceClient) {
+    this.languageServiceClient = languageServiceClient;
   }
 
   /** 
@@ -47,11 +54,7 @@ public class RelevancyChecker {
    * interest. Defines relevancy as the salience of {@code candidateName} in the content,
    * and defines sufficient relevancy with {@code SALIENCE_THRESHOLD}.
    */
-  public static boolean isRelevant(NewsArticle newsArticle, String candidateName) throws
-      IOException {
-    if (languageServiceClient == null) {
-      throw new IOException("[ERROR] Failure to create LanguageServiceClient.");
-    }
+  public boolean isRelevant(NewsArticle newsArticle, String candidateName) {
     double salience = computeSalienceOfName(newsArticle.getContent(), candidateName);
     return salience >= SALIENCE_THRESHOLD;
   }
@@ -61,7 +64,7 @@ public class RelevancyChecker {
    * {@code content}. Salience has range [0, 1], with higher salience indicating higher
    * relevance of {@code candidateName} to {@code content} overall.
    */
-  private static double computeSalienceOfName(String content, String candidateName) {
+  private double computeSalienceOfName(String content, String candidateName) {
     Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
     AnalyzeEntitiesRequest request =
         AnalyzeEntitiesRequest.newBuilder()
