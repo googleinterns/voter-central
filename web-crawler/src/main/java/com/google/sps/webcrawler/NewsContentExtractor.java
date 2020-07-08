@@ -49,23 +49,11 @@ public class NewsContentExtractor {
     try {
       parser.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      return Optional.of(formatNewsArticleFromDocument(textDocument, url));
+      return Optional.of(new NewsArticle(textDocument.getTitle(),
+                                         url,
+                                         textDocument.getContent()));
     } catch (IOException | SAXException | TikaException e) {
       return Optional.empty();
     }
-  }
-
-  /** 
-   * Formats and packages information of a {@code NewsArticle} from the parsed result of a
-   * {@code TextDocument}.
-   */
-  private static NewsArticle formatNewsArticleFromDocument(TextDocument textDocument, String url) {
-    List<String> content = new LinkedList<>();
-    for (TextBlock textBlock : textDocument.getTextBlocks()) {
-      if (textBlock.isContent()) {
-        content.add(textBlock.getText());
-      }
-    }
-    return new NewsArticle(textDocument.getTitle(), url, content);
   }
 }

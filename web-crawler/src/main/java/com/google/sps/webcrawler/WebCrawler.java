@@ -157,17 +157,17 @@ public class WebCrawler {
    */
   public Optional<NewsArticle> scrapeAndExtractHtml(String url) {
     try {
-      URL formattedUrl = new URL(url);
-      String robotsUrl = String.format("%s://%s/robots.txt", formattedUrl.getProtocol(),
-          formattedUrl.getHost());
-      InputStream robotsTxtStream = new URL(robotsUrl).openStream();
+      URL formattedUrlObj = new URL(url);
+      URL robotsUrlObj = new URL(formattedUrlObj.getProtocol(), formattedUrlObj.getHost(),
+          "/robots.txt");
+      InputStream robotsTxtStream = robotsUrlObj.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
-      String webpagePath = formattedUrl.getPath();
+      String webpagePath = formattedUrlObj.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
         if (grant != null && grant.getCrawlDelay() != null) {
-          if (!waitForAndSetCrawlDelay(grant, robotsUrl)) {
+          if (!waitForAndSetCrawlDelay(grant, robotsUrlObj.toString())) {
             return Optional.empty();
           }
         }
@@ -220,8 +220,8 @@ public class WebCrawler {
   /** 
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema.
-   * Requires "gcloud config set project project-ID" to be set correctly. Data beyond 1500 bytes
-   * be excluded from indexes.
+   * Requires "gcloud config set project project-ID" to be set correctly. {@code content} and
+   * {@code abbreviatedContent} are excluded form database indexes.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
@@ -232,7 +232,7 @@ public class WebCrawler {
         .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
         .set("title", newsArticle.getTitle())
         .set("url", newsArticle.getUrl())
-        .set("content", excludeStringFromIndexes(combineContentInHtml(newsArticle.getContent())))
+        .set("content", excludeStringFromIndexes(newsArticle.getContent()))
         .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
         .build();
     datastore.put(newsArticleEntity);
@@ -240,17 +240,10 @@ public class WebCrawler {
 
   /** 
    * Converts {@code String} to {@code StringValue} and excludes the data from indexes, to avoid
-   * the 1500-bytes size limit for indexed data.
+   * the 1500-byte size limit for indexed data.
    */
   private StringValue excludeStringFromIndexes(String content) {
     return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
-  }
-
-  /** 
-   * Combines a collection of {@code String} into a single {@code String} for future usage in HTML.
-   */
-  private String combineContentInHtml(List<String> content) {
-    return String.join("<br>", content);
   }
 
   // For testing purposes.

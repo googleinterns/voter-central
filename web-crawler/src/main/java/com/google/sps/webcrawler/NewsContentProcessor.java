@@ -27,26 +27,16 @@ public class NewsContentProcessor {
 
   // @TODO [Implement more advanced processing methods.]
   /** 
-   * Extracts the first {@code MAX_WORD_COUNT} words.
+   * Extracts the first {@code MAX_WORD_COUNT} words from the news article content.
    */
   public static NewsArticle process(NewsArticle newsArticle) {
-    List<String> rawContent = newsArticle.getContent();
-    List<String> processedContent = new LinkedList<>();
-    int remainingWordCount = MAX_WORD_COUNT;
-
-    for (String contentBlock : rawContent) {
-      String[] splitContentBlock = contentBlock.split(" ");
-      int wordCount = splitContentBlock.length;
-      int allowedLength = Math.min(wordCount, remainingWordCount);
-      String processedContentBlock =
-          String.join(" ", Arrays.asList(splitContentBlock).subList(0, allowedLength));
-      processedContent.add(processedContentBlock);
-      remainingWordCount -= wordCount;
-      if (remainingWordCount <= 0) {
-        break;
-      }
-    }
-    newsArticle.setAbbreviatedContent(String.join("<br>", processedContent));
+    String rawContent = newsArticle.getContent();
+    String[] splitContent = rawContent.split(" ");
+    int wordCount = splitContent.length;
+    int allowedLength = Math.min(wordCount, MAX_WORD_COUNT);
+    String processedContent =
+        String.join(" ", Arrays.asList(splitContent).subList(0, allowedLength));
+    newsArticle.setAbbreviatedContent(processedContent);
     return newsArticle;
   }
 }

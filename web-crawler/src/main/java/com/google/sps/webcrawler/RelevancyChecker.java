@@ -52,18 +52,8 @@ public class RelevancyChecker {
     if (languageServiceClient == null) {
       throw new IOException("[ERROR] Failure to create LanguageServiceClient.");
     }
-    double totalSalience = 0;
-    int salienceCount = 0;
-    for (String content : newsArticle.getContent()) {
-      try {
-        totalSalience += computeSalienceOfName(content, candidateName);
-        salienceCount++;
-      } catch (Exception e) {
-        continue;
-      }
-    }
-    double averageSalience = salienceCount == 0 ? 0 : totalSalience / salienceCount;
-    return averageSalience >= SALIENCE_THRESHOLD;
+    double salience = computeSalienceOfName(newsArticle.getContent(), candidateName);
+    return salience >= SALIENCE_THRESHOLD;
   }
 
   /** 
