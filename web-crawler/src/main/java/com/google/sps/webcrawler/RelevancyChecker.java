@@ -28,7 +28,7 @@ import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
- * A {@code LanguageServiceClient} that performs entity analysis to check the relevancy of news
+ * A {@code RelevancyChecker} that performs entity analysis to check the relevancy of news
  * article content to a candidate.
  */
 public class RelevancyChecker {
@@ -37,7 +37,7 @@ public class RelevancyChecker {
   private LanguageServiceClient languageServiceClient;
 
   /** 
-   * Constructs a {@code LanguageServiceClient} instance to use the Google Natural Language API.
+   * Constructs a {@code RelevancyChecker} instance to use the Google Natural Language API.
    *
    * @throws IOException if {@code LanguageServiceClient} instantiation fails, such as because of
    *   lack of permission to access the library.

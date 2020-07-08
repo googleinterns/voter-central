@@ -15,14 +15,6 @@
 
 package com.google.sps.webcrawler;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
@@ -46,8 +38,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 /** 
  * A web crawler for compiling candidate-specifc news articles information.
@@ -63,7 +61,7 @@ public class WebCrawler {
   private Map<String, Long> nextAccessTimes = new HashMap<>();
 
   /** 
-   * Constructs a {@code RelevancyChecker} instance.
+   * Constructs a {@code WebCrawler} instance.
    *
    * @throws IOException if {@code RelevancyChecker} instantiation fails, such as because of lack
    *     of permission to access required libraries.
@@ -266,7 +264,7 @@ public class WebCrawler {
       myWebCrawler = new WebCrawler();
     } catch (IOException e) {
       System.out.println("[ERROR] " + e);
-      System.exit(0);
+      System.exit(-1);
       return;
     }
     myWebCrawler.compileNewsArticle("Alexandria Ocasio-Cortez", "123");
