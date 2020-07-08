@@ -24,21 +24,34 @@ import com.google.cloud.language.v1.EntityMention;
 import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.cloud.language.v1.LanguageServiceSettings;
 import com.google.sps.data.NewsArticle;
+import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
-/** 
- * Provides a tool for checking the relevancy of content to a candidate.
+/**
+ * Provides a tool for checking the relevancy of news article content to a candidate.
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
-  private static final double salienceThreshold = 0.5;
+  private static final double SALIENCE_THRESHOLD = 0.5;
+  private static LanguageServiceClient languageServiceClient;
+  static {
+    try {
+      languageServiceClient = LanguageServiceClient.create();
+    } catch (IOException e) {
+      languageServiceClient = null;
+    }
+  }
 
   /** 
    * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of
    * interest. Defines relevancy as the salience of {@code candidateName} in the content,
-   * and defines sufficient relevancy with {@salienceThreshold}.
+   * and defines sufficient relevancy with {@code SALIENCE_THRESHOLD}.
    */
-  public static boolean isRelevant(NewsArticle newsArticle, String candidateName) {
+  public static boolean isRelevant(NewsArticle newsArticle, String candidateName) throws
+      IOException {
+    if (languageServiceClient == null) {
+      throw new IOException("[ERROR] Failure to create LanguageServiceClient.");
+    }
     double totalSalience = 0;
     int salienceCount = 0;
     for (String content : newsArticle.getContent()) {
@@ -49,8 +62,8 @@ public class RelevancyChecker {
         continue;
       }
     }
-    double averageSalience = salienceCount != 0 ? totalSalience / salienceCount : 0;
-    return averageSalience >= salienceThreshold ? true : false;
+    double averageSalience = salienceCount == 0 ? 0 : totalSalience / salienceCount;
+    return averageSalience >= SALIENCE_THRESHOLD;
   }
 
   /** 
@@ -58,22 +71,19 @@ public class RelevancyChecker {
    * {@code content}. Salience has range [0, 1], with higher salience indicating higher
    * relevance of {@code candidateName} to {@code content} overall.
    */
-  private static double computeSalienceOfName(String content, String candidateName)
-      throws Exception {
-    try (LanguageServiceClient language = LanguageServiceClient.create()) {
-      Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
-      AnalyzeEntitiesRequest request =
-          AnalyzeEntitiesRequest.newBuilder()
-              .setDocument(doc)
-              .setEncodingType(EncodingType.UTF8)
-              .build();
-      AnalyzeEntitiesResponse response = language.analyzeEntities(request);
-      for (Entity entity : response.getEntitiesList()) {
-        if (candidateName.equalsIgnoreCase(entity.getName())) {
-          return entity.getSalience();
-        }
+  private static double computeSalienceOfName(String content, String candidateName) {
+    Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
+    AnalyzeEntitiesRequest request =
+        AnalyzeEntitiesRequest.newBuilder()
+            .setDocument(doc)
+            .setEncodingType(EncodingType.UTF8)
+            .build();
+    AnalyzeEntitiesResponse response = languageServiceClient.analyzeEntities(request);
+    for (Entity entity : response.getEntitiesList()) {
+      if (candidateName.equalsIgnoreCase(entity.getName())) {
+        return entity.getSalience();
       }
-      return 0;
     }
+    return 0;
   }
 }

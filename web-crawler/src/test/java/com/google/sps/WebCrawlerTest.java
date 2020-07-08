@@ -14,7 +14,7 @@
 
 import com.google.sps.webcrawler.WebCrawler;
 
-public class WebCrawlerTestor {
+public class WebCrawlerTest {
 
   public static void main(String[] args) {
     WebCrawler myWebCrawler = new WebCrawler();

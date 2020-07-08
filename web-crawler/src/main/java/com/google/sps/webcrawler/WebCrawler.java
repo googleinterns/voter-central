@@ -27,23 +27,25 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.StringValue;
 import com.google.gson.Gson;
 import com.google.sps.data.NewsArticle;
-import com.google.sps.webcrawler.ContentExtractor;
-import com.google.sps.webcrawler.ContentProcessor;
+import com.google.sps.webcrawler.NewsContentExtractor;
+import com.google.sps.webcrawler.NewsContentProcessor;
 import com.google.sps.webcrawler.RelevancyChecker;
 import com.panforge.robotstxt.Grant;
 import com.panforge.robotstxt.RobotsTxt;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Optional;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
@@ -56,6 +58,8 @@ public class WebCrawler {
   private Map<String, Long> nextAccessTimes = new HashMap<>();
   private final static String CUSTOM_SEARCH_KEY = "";
   private final static String CUSTOM_SEARCH_ENGINE_ID = "";
+  private final static String TEST_URL =
+      "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
 
   /** 
    * Compiles news articles for the candidate with the specified {@code candidateName} and
@@ -71,13 +75,20 @@ public class WebCrawler {
   public void compileNewsArticle(String candidateName, String candidateId) {
     List<String> urls = getUrlsFromCustomSearch(candidateName);
     for (String url : urls) {
-      NewsArticle newsArticle = scrapeAndExtractHtml(url);
-      if (!RelevancyChecker.isRelevant(newsArticle, candidateName)) {
+      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractHtml(url);
+      if (!potentialNewsArticle.isPresent()) {
         continue;
       }
-      NewsArticle processedNewsArticle = ContentProcessor.process(newsArticle);
+      NewsArticle newsArticle = potentialNewsArticle.get();
+      try {
+        if (!RelevancyChecker.isRelevant(newsArticle, candidateName)) {
+          continue;
+        }
+      } catch (Exception e) {
+        continue;
+      }
+      NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
       storeInDatabase(candidateId, processedNewsArticle);
-      // waitForMaxCrawlDelay();
     }
   }
 
@@ -123,6 +134,7 @@ public class WebCrawler {
               HttpEntity entity = response.getEntity();
               return entity != null ? EntityUtils.toString(entity) : null;
           } else {
+              httpclient.close();
               throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
@@ -132,65 +144,74 @@ public class WebCrawler {
       Gson gson = new Gson();
       Object jsonResponse = gson.fromJson(responseBody, Object.class);
       //@TODO [Unpack {@code jsonResponse} and find URLs.]
-      return Arrays.asList(
-          "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html");
+      return Arrays.asList(TEST_URL);
     } catch (IOException e){
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
-      return Arrays.asList(
-          "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html");
+      return Arrays.asList(TEST_URL);
     }
   }
 
   /** 
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
-   * textual content.
+   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  public NewsArticle scrapeAndExtractHtml(String url) {
-    String robotsUrl = url.substring(0, url.indexOf("/", url.indexOf("//") + 2) + 1)
-        + "robots.txt";
+  public Optional<NewsArticle> scrapeAndExtractHtml(String url) {
     try {
+      URL formattedUrl = new URL(url);
+      String robotsUrl = String.format("%s://%s/robots.txt", formattedUrl.getProtocol(),
+          formattedUrl.getHost());
       InputStream robotsTxtStream = new URL(robotsUrl).openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
-      String webpagePath = url.substring(url.indexOf("/", url.indexOf("//") + 2));
+      String webpagePath = formattedUrl.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      // Check and set crawl delay.
-      if (grant != null && grant.getCrawlDelay() != null) {
-        if (nextAccessTimes.containsKey(robotsUrl)) {
-          // Wait until the crawl delay fully passes.
-          if (System.currentTimeMillis() < nextAccessTimes.get(robotsUrl)) {
-            if (!waitForCrawlDelay(nextAccessTimes.get(robotsUrl) - System.currentTimeMillis())) {
-              return new NewsArticle();
-            };
-          }
-          nextAccessTimes.replace(robotsUrl,
-                                  System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
-        } else {
-          System.out.println(System.currentTimeMillis());
-          nextAccessTimes.put(robotsUrl,
-                              System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
-        }
-      }
-      // Check permission to access.
+      // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
+        if (grant != null && grant.getCrawlDelay() != null) {
+          if (!waitForAndSetCrawlDelay(grant, robotsUrl)) {
+            return Optional.empty();
+          }
+        }
         InputStream webpageStream = new URL(url).openStream();
-        return ContentExtractor.extractContentFromHtml(webpageStream, url);
+        return NewsContentExtractor.extractContentFromHtml(webpageStream, url);
       } else {
-        return new NewsArticle();
+        return Optional.empty();
       }
-    } catch (IOException e) {
-      System.out.println("[ERROR] Error occured during web scraping.");
-      return new NewsArticle();
+    } catch (Exception e) {
+      System.out.println("[ERROR] Error occured during web scraping: " + e);
+      return Optional.empty();
     }
   }
 
   /** 
-   * Waits for {@code timeToDelay} milliseconds and returns true if the pause was successful.
+   * Waits for the required crawl delay to pass if necessary and makes a note of the required
+   * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
+   * to non-null.
    */
-  private boolean waitForCrawlDelay(long timeToDelay) {
-    try {
-      TimeUnit.MILLISECONDS.sleep(timeToDelay);
-    } catch (InterruptedException e) {
-      return false;
+  private boolean waitForAndSetCrawlDelay(Grant grant, String robotsUrl) {
+    if (nextAccessTimes.containsKey(robotsUrl)) {
+      if (!waitIfNecessary(robotsUrl)) {
+        return false;
+      }
+      nextAccessTimes.replace(robotsUrl,
+                              System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+    } else {
+      nextAccessTimes.put(robotsUrl,
+                          System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+    }
+    return true;
+  }
+
+  /** 
+   * Waits for {@code timeToDelay} milliseconds if necessary and returns true if the pause
+   * succeeded or if the pause was unnecessary.
+   */
+  private boolean waitIfNecessary(String robotsUrl) {
+    if (System.currentTimeMillis() < nextAccessTimes.get(robotsUrl)) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(nextAccessTimes.get(robotsUrl) - System.currentTimeMillis());
+      } catch (InterruptedException e) {
+        return false;
+      }
     }
     return true;
   }
@@ -199,21 +220,30 @@ public class WebCrawler {
   /** 
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema.
-   * Requires "gcloud config set project project-ID" to be set correctly. Assumes "content" to be
-   * occupy fewer than 1500 bytes.
+   * Requires "gcloud config set project project-ID" to be set correctly. Data beyond 1500 bytes
+   * be excluded from indexes.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
     Key newsArticleKey = datastore.newKeyFactory()
         .setKind("NewsArticle")
-        .newKey((new Random()).nextLong());
+        .newKey((long) newsArticle.getUrl().hashCode());
     Entity newsArticleEntity = Entity.newBuilder(newsArticleKey)
         .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
         .set("title", newsArticle.getTitle())
         .set("url", newsArticle.getUrl())
-        .set("content", combineContentInHtml(newsArticle.getContent()))
+        .set("content", excludeStringFromIndexes(combineContentInHtml(newsArticle.getContent())))
+        .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
         .build();
     datastore.put(newsArticleEntity);
+  }
+
+  /** 
+   * Converts {@code String} to {@code StringValue} and excludes the data from indexes, to avoid
+   * the 1500-bytes size limit for indexed data.
+   */
+  private StringValue excludeStringFromIndexes(String content) {
+    return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
   }
 
   /** 

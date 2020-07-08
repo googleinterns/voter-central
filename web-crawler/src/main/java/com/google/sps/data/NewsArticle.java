@@ -23,18 +23,16 @@ import java.util.List;
 public class NewsArticle {
   private String title;
   private String url;
+  // A list of content blocks together constituting the full content. A content block represents
+  // a paragraph in the news article.
   private List<String> content;
-
-  public NewsArticle() {
-    this.title = "";
-    this.url = "";
-    this.content = Arrays.asList();
-  }
+  private String abbreviatedContent;
 
   public NewsArticle(String title, String url, List<String> content) {
     this.title = title;
     this.url = url;
     this.content = content;
+    this.abbreviatedContent = null;
   }
 
   public String getTitle() {
@@ -49,7 +47,15 @@ public class NewsArticle {
     return this.content;
   }
 
+  public String getAbbreviatedContent() {
+    return this.abbreviatedContent;
+  }
+
   public void setContent(List<String> content) {
     this.content = content;
+  }
+
+  public void setAbbreviatedContent(String abbreviatedContent) {
+    this.abbreviatedContent = abbreviatedContent;
   }
 }

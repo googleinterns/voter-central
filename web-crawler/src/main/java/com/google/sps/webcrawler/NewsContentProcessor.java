@@ -22,7 +22,7 @@ import java.util.List;
 /** 
  * Provides a tool for processing textual content.
  */
-public class ContentProcessor {
+public class NewsContentProcessor {
   private final static int MAX_WORD_COUNT = 100;
 
   // @TODO [Implement more advanced processing methods.]
@@ -33,6 +33,7 @@ public class ContentProcessor {
     List<String> rawContent = newsArticle.getContent();
     List<String> processedContent = new LinkedList<>();
     int remainingWordCount = MAX_WORD_COUNT;
+
     for (String contentBlock : rawContent) {
       String[] splitContentBlock = contentBlock.split(" ");
       int wordCount = splitContentBlock.length;
@@ -45,7 +46,7 @@ public class ContentProcessor {
         break;
       }
     }
-    newsArticle.setContent(processedContent);
+    newsArticle.setAbbreviatedContent(String.join("<br>", processedContent));
     return newsArticle;
   }
 }
