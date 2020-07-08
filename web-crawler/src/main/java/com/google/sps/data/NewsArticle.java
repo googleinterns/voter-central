@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /** 
- * Represents one news article, including its metadata and content.
+ * A news article, including its metadata and content.
  */
 public class NewsArticle {
   private String title;

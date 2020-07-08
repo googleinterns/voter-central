@@ -28,7 +28,8 @@ import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
- * Provides a tool for checking the relevancy of news article content to a candidate.
+ * A {@code LanguageServiceClient} that performs entity analysis to check the relevancy of news
+ * article content to a candidate.
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
@@ -36,15 +37,15 @@ public class RelevancyChecker {
   private LanguageServiceClient languageServiceClient;
 
   /** 
-   * Instantiates a {@code LanguageServiceClient} to use the Google Natural Language API.
+   * Constructs a {@code LanguageServiceClient} instance to use the Google Natural Language API.
+   *
+   * @throws IOException if {@code LanguageServiceClient} instantiation fails, such as because of
+   *   lack of permission to access the library.
    */
   public RelevancyChecker() throws IOException {
     this.languageServiceClient = LanguageServiceClient.create();
   }
 
-  /** 
-   * Initializes a {@code LanguageServiceClient} with the parameter.
-   */
   public RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }

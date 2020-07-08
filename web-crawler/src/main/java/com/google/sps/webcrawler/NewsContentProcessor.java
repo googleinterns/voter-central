@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /** 
- * Provides a tool for processing textual content.
+ * Static utilities for processing textual content, such as abbreviation.
  */
 public class NewsContentProcessor {
   private final static int MAX_WORD_COUNT = 100;

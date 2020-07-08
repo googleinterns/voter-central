@@ -50,16 +50,27 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 /** 
- * Represents a web crawler for compiling candidate-specifc news article information.
+ * A web crawler for compiling candidate-specifc news articles information.
  */
 public class WebCrawler {
-  // Mappings of (website robots.txt URL, the next allowed time to access, in milliseconds) for
-  // respecting the required crawl delay.
-  private Map<String, Long> nextAccessTimes = new HashMap<>();
   private final static String CUSTOM_SEARCH_KEY = "";
   private final static String CUSTOM_SEARCH_ENGINE_ID = "";
   private final static String TEST_URL =
       "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
+  private RelevancyChecker relevancyChecker;
+  // Mappings of (website robots.txt URL, the next allowed time to access, in milliseconds) for
+  // respecting the required crawl delay.
+  private Map<String, Long> nextAccessTimes = new HashMap<>();
+
+  /** 
+   * Constructs a {@code RelevancyChecker} instance.
+   *
+   * @throws IOException if {@code RelevancyChecker} instantiation fails, such as because of lack
+   *     of permission to access required libraries.
+   */
+  public WebCrawler() throws IOException {
+    this.relevancyChecker = new RelevancyChecker();
+  }
 
   /** 
    * Compiles news articles for the candidate with the specified {@code candidateName} and
@@ -73,19 +84,13 @@ public class WebCrawler {
    * 7. Stores processed content in the database.
    */
   public void compileNewsArticle(String candidateName, String candidateId) {
-    List<String> urls = getUrlsFromCustomSearch(candidateName);
-    for (String url : urls) {
+    List<URL> urls = getUrlsFromCustomSearch(candidateName);
+    for (URL url : urls) {
       Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractHtml(url);
       if (!potentialNewsArticle.isPresent()) {
         continue;
       }
       NewsArticle newsArticle = potentialNewsArticle.get();
-      RelevancyChecker relevancyChecker;
-      try {
-        relevancyChecker = new RelevancyChecker();
-      } catch (IOException e) {
-        continue;
-      }
       if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
@@ -114,19 +119,22 @@ public class WebCrawler {
   // @TODO [Test with Google Custom Search. Extract other metadata.]
   /** 
    * Searches for {@code candidateName} in the Google Custom Search engine and finds URLs of news
-   * articles.
+   * articles. Returns an empty list if no valid URLs are found.
    *
    * @see <a href=
    *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
    *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  public List<String> getUrlsFromCustomSearch(String candidateName) {
-    List<String> urls;
+  public List<URL> getUrlsFromCustomSearch(String candidateName) {
+    // For testing purposes.
+    List<URL> urls = Arrays.asList();
     String request =
         String.format("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
     CloseableHttpClient httpclient = HttpClients.createDefault();
     try {
+      // For testing purposes.
+      urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
       ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
@@ -146,25 +154,25 @@ public class WebCrawler {
       Gson gson = new Gson();
       Object jsonResponse = gson.fromJson(responseBody, Object.class);
       //@TODO [Unpack {@code jsonResponse} and find URLs.]
-      return Arrays.asList(TEST_URL);
     } catch (IOException e){
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
-      return Arrays.asList(TEST_URL);
+      // For testing purposes (commented off).
+      // urls = Arrays.asList();
     }
+    return urls;
   }
 
   /** 
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
    * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  public Optional<NewsArticle> scrapeAndExtractHtml(String url) {
+  public Optional<NewsArticle> scrapeAndExtractHtml(URL url) {
     try {
-      URL formattedUrl = new URL(url);
-      URL robotsUrl = new URL(formattedUrl.getProtocol(), formattedUrl.getHost(),
+      URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
           "/robots.txt");
       InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
-      String webpagePath = formattedUrl.getPath();
+      String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
@@ -173,8 +181,8 @@ public class WebCrawler {
             return Optional.empty();
           }
         }
-        InputStream webpageStream = new URL(url).openStream();
-        return NewsContentExtractor.extractContentFromHtml(webpageStream, url);
+        InputStream webpageStream = url.openStream();
+        return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
       } else {
         return Optional.empty();
       }
@@ -253,7 +261,14 @@ public class WebCrawler {
 
   // For testing purposes.
   public static void main(String[] args) {
-    WebCrawler myWebCrawler = new WebCrawler();
+    WebCrawler myWebCrawler;
+    try {
+      myWebCrawler = new WebCrawler();
+    } catch (IOException e) {
+      System.out.println("[ERROR] " + e);
+      System.exit(0);
+      return;
+    }
     myWebCrawler.compileNewsArticle("Alexandria Ocasio-Cortez", "123");
     // Prevent {@code java.lang.IllegalThreadStateException}.
     System.exit(0);
