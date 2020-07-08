@@ -257,5 +257,7 @@ public class WebCrawler {
   public static void main(String[] args) {
     WebCrawler myWebCrawler = new WebCrawler();
     myWebCrawler.compileNewsArticle("Alexandria Ocasio-Cortez", "123");
+    // Prevent {@code java.lang.IllegalThreadStateException}.
+    System.exit(0);
   }
 }
