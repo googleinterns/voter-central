@@ -15,15 +15,11 @@
 // use modern JavaScript (ES5)
 "use strict"
 
-angular.module('navigation').component('navBar', {
-  template: `<a href="/index.html">Home</a>
-    <br>
-    <a href="/education.html">Voter Education</a>
-    <br>
-    <a href="/">Polling Locations</a>
-    <br>`,
-  controller: function generateNavBar() {
-    // Dynamically generate links and pages relating to directory page etc.
-  
+angular.module('candidatePage').component('candidatePage', {
+  templateUrl: '/candidate-page/candidate-page.template.html', 
+  controller: function candidatePageController() {
+    // TODO: modify this code so it works within the component, and interacts
+    // with the template rather than as a seperate JS function.
+      addCandidateInformation();
   }
 });

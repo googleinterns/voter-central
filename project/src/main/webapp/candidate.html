@@ -9,23 +9,20 @@
     <script src="/../../../node_modules/angular/angular.js"></script>
     <script src="config.js"></script>
     <script src="app.module.js"></script>
+    <script src="script.js"></script>
     <script src="/navigation/navigation.module.js"></script>
     <script src="/navigation/nav-bar.component.js"></script>
     <script src="/navigation/header.component.js"></script>
     <script src="/directory-page/directory-page.module.js"></script>
     <script src="/candidate-page/candidate-page.module.js"></script>
-    <script src="/candidate-page/official-info.component.js"></script>
-    <script src="/candidate-page/news-info.component.js"></script>
-    <script src="/candidate-page/social-media-info.component.js"></script>
+    <script src="/candidate-page/candidate-page.component.js"></script>
     <title>Voter Central Candidate Page</title>
   </head>
   <body>
     <header></header>
     <nav-bar></nav-bar>
     <main role="main">
-      <official-info class="candidate-page-info"></official-info>
-      <news-info class="candidate-page-info"></news-info>
-      <social-media-info class="candidate-page-info"></social-media-info>
+      <candidate-page></candidate-page>
     </main>
   </body>
 </html>

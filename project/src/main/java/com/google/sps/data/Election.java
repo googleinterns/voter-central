@@ -14,4 +14,24 @@
 
 package com.google.sps.data;
 
-public class Election {}
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/** 
+ * Represents an election's information on the directory page. An election contains one or more
+ * positions.
+ */
+public class Election {
+  private String name;
+  private Date date;
+  private List<Position> positions;
+
+  public Election(String name, Date date, List<Position> positions) {
+    this.name = name;
+    this.date = date;
+    this.positions = positions;
+  }
+}

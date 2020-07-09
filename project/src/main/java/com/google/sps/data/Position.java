@@ -1,4 +1,4 @@
-//Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// use modern JavaScript (ES5)
-"use strict"
+package com.google.sps.data;
 
-angular.module('navigation').component('navBar', {
-  template: `<a href="/index.html">Home</a>
-    <br>
-    <a href="/education.html">Voter Education</a>
-    <br>
-    <a href="/">Polling Locations</a>
-    <br>`,
-  controller: function generateNavBar() {
-    // Dynamically generate links and pages relating to directory page etc.
-  
+import java.util.List;
+
+/** 
+ * Represents a position for which candidates run in an election. A position corresponds
+ * to one or more candidates.
+ */
+public class Position {
+  private String name;
+  private List<DirectoryCandidate> candidates;
+
+  public Position (String name, List<DirectoryCandidate> candidates) {
+    this.name = name;
+    this.candidates = candidates;
   }
-});
+}
