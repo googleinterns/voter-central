@@ -175,7 +175,20 @@ async function addCandidateInformation() {
 /**
  * @TODO [Adds the official information component to the candidate page.]
  */
-function addOfficialCandidateInformation() {}
+function addOfficialCandidateInformation(officialCandidateInfo) {
+  const officialInfoContainer = 
+      document.getElementById('official-info-container');
+  officialInfoContainer.innerHTML = 
+      `<h3>${officialCandidateInfo.name}</h3>
+      <img src="${officialCandidateInfo.photoURL}" alt="pic of ${officialCandidateInfo.name}" 
+          width="200" height="200">
+      <ul>
+        <li>Email:${officialCandidateInfo.email}</li>
+        <li>Phone Number: ${officialCandidateInfo.phoneNumber}</li>
+        <li>Party Affiliation: ${officialCandidateInfo.partyAffiliation}</li>
+      <ul>
+      <p>click <a href="${officialCandidateInfo.website}">here</a> to be redirected to ${officialCandidateInfo.name}'s website</p>`;
+}
 
 /**
  * Adds the news articles component to the candidate page.

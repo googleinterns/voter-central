@@ -47,14 +47,13 @@ public class CandidateServlet extends HttpServlet {
     String candidateId = request.getParameter("candidateId");
 
     // @TODO [Get (1) official election/candidate information.]
-
+    Candidate candidateData = getCandidateData(candidateId);
     // Get (2) news article information.
     List<NewsArticle> newsArticlesData = findNewsArticles(candidateId);
-
     // @TODO [Get (3) social media feed.]
-
+    
     // Find candidate-specific information. Package and convert the data to JSON.
-    CandidatePageDataPackage dataPackage = new CandidatePageDataPackage(null, newsArticlesData);
+    CandidatePageDataPackage dataPackage = new CandidatePageDataPackage(candidateData, newsArticlesData);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
 
@@ -64,7 +63,22 @@ public class CandidateServlet extends HttpServlet {
   }
 
   // @TODO [Function for getting (1) official election/candidate information from the database.]
-
+  private Candidate getCandidateData(String candidateId) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    Query candidateQuery = new Query("Candidate")
+        .setFilter(new FilterPredicate("candidateId", FilterOperator.EQUAL,
+                   KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+    PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
+    Entity candidateData = candidateQueryResult.asSingleEntity();
+    return new Candidate(candidateId,
+                      (String)candidateData.getProperty("name"),
+                      (String)candidateData.getProperty("partyAffiliation"),
+                      (Boolean)candidateData.getProperty("isIncumbent"),
+                      (String)candidateData.getProperty("photoURL"),
+                      (String)candidateData.getProperty("email"),
+                      (String)candidateData.getProperty("phone number"),
+                      (String)candidateData.getProperty("website"));
+  }
   /**
    * Queries the database for news articles about the candidate represented by {@code candidateId}.
    */

@@ -14,4 +14,17 @@
 
 package com.google.sps.data;
 
-public class Candidate {}
+public class Candidate extends DirectoryCandidate{
+  private String photoURL;
+  private String email; 
+  private String phoneNumber;
+  private String website;
+
+   public Candidate(String id, String name, String partyAffiliation, boolean isIncumbent, String photoURL, String email, String phoneNumber, String website) {
+    super(id,name,partyAffiliation,isIncumbent);
+    this.photoURL = photoURL;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+    this.website = website;
+  }
+}
