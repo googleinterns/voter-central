@@ -1,0 +1,6 @@
+# Configuration file containing API keys.
+Config.java
+
+# Maven generated files.
+target/
+

@@ -31,6 +31,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.sps.infocompiler.Config;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,7 +52,7 @@ import org.apache.http.util.EntityUtils;
  * article information, and storing them in the database.
  */
 public class InfoCompiler {
-  private final static String CIVIC_INFO_API_KEY = "AIzaSyDg8QhN9VUyKammq27hd46XlXtlTTpzBls";
+  private final static String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
   private final static String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
                     CIVIC_INFO_API_KEY);
