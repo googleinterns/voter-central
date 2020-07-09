@@ -13,7 +13,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <failOnMissingWebXml>false</failOnMissingWebXml>
-    <exec.mainClass>com.google.sps.webcrawler.WebCrawler</exec.mainClass>
+    <exec.mainClass>com.google.sps.infocompiler.InfoCompiler</exec.mainClass>
   </properties>
 
   <dependencyManagement>
