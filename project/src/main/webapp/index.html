@@ -20,11 +20,12 @@
     <header></header>
     <nav-bar></nav-bar>
     <main role="main">
-      <form id="location-input" action="/data" method="POST">
-        <label for="zipcode">Enter your zipcode:</label>
+      <form id="location-input" action="/directory.html">
+        <label for="address">Enter your street address:</label>
         <br>
-        <input type="number" id="zipcode" placeholder="00000" required/>
-        <input type="submit" id="submit-zipcode"/>
+        <input type="text" id="address" name="address" placeholder="...your street address..."
+                required/>
+        <input type="submit" id="submit-address"/>
       </form>
     </main>
   </body>
