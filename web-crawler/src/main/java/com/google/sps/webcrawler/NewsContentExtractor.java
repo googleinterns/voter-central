@@ -30,13 +30,13 @@ import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
-/** 
+/**
  * Static utilities for extracting textual content from HTML pages.
  */
 public class NewsContentExtractor {
   private static HtmlParser parser = new HtmlParser();
 
-  /** 
+  /**
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
    * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors
    * such as failure in reading in the HTML source code from {@code htmlFileStream}.

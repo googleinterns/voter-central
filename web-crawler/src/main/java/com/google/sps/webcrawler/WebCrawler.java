@@ -47,7 +47,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-/** 
+/**
  * A web crawler for compiling candidate-specifc news articles information.
  */
 public class WebCrawler {
@@ -60,7 +60,7 @@ public class WebCrawler {
   // respecting the required crawl delay.
   private Map<String, Long> nextAccessTimes = new HashMap<>();
 
-  /** 
+  /**
    * Constructs a {@code WebCrawler} instance.
    *
    * @throws IOException if {@code RelevancyChecker} instantiation fails, such as because of lack
@@ -70,7 +70,7 @@ public class WebCrawler {
     this.relevancyChecker = new RelevancyChecker();
   }
 
-  /** 
+  /**
    * Compiles news articles for the candidate with the specified {@code candidateName} and
    * {@code candidateId}:
    * 1. Obtains news article URLs from Google Custom Search.
@@ -98,7 +98,7 @@ public class WebCrawler {
   }
 
   // @TODO [Might adopt in {@code compileNewsArticle}.]
-  /** 
+  /**
    * Controls the web scraping frequency by delaying the @{code WebCrawler} for the maximum amount
    * of time as required by webpages encountered so far. This method is for frequency-tuning
    * purposes only. {@code WebCrawler} will confirm that the required crawl delay is met, before
@@ -115,23 +115,24 @@ public class WebCrawler {
   // }
 
   // @TODO [Test with Google Custom Search. Extract other metadata.]
-  /** 
+  /**
    * Searches for {@code candidateName} in the Google Custom Search engine and finds URLs of news
    * articles. Returns an empty list if no valid URLs are found.
+   * Note: This function contains a few hard-coded implementations because of the current lack of
+   * access to the engine. In order for the web crawler to be tested from beginning to end, this
+   * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
    *
    * @see <a href=
    *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
    *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
-    // For testing purposes.
     List<URL> urls = Arrays.asList();
     String request =
         String.format("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
     CloseableHttpClient httpclient = HttpClients.createDefault();
     try {
-      // For testing purposes.
       urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
       ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
@@ -154,8 +155,6 @@ public class WebCrawler {
       //@TODO [Unpack {@code jsonResponse} and find URLs.]
     } catch (IOException e){
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
-      // For testing purposes (commented off).
-      // urls = Arrays.asList();
     }
     return urls;
   }
@@ -174,10 +173,9 @@ public class WebCrawler {
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
-        if (grant != null && grant.getCrawlDelay() != null) {
-          if (!waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-            return Optional.empty();
-          }
+        if (grant != null && grant.getCrawlDelay() != null &&
+            !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
+          return Optional.empty();
         }
         InputStream webpageStream = url.openStream();
         return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
@@ -190,7 +188,7 @@ public class WebCrawler {
     }
   }
 
-  /** 
+  /**
    * Waits for the required crawl delay to pass if necessary and makes a note of the required
    * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
    * to non-null.
@@ -209,7 +207,7 @@ public class WebCrawler {
     return true;
   }
 
-  /** 
+  /**
    * Waits for {@code timeToDelay} milliseconds if necessary and returns true if the pause
    * succeeded or if the pause was unnecessary.
    */
@@ -225,7 +223,7 @@ public class WebCrawler {
   }
 
   // @TODO [Fill in other properties: published date, publisher.]
-  /** 
+  /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema.
    * Requires "gcloud config set project project-ID" to be set correctly.
@@ -249,7 +247,7 @@ public class WebCrawler {
     datastore.put(newsArticleEntity);
   }
 
-  /** 
+  /**
    * Converts {@code String} to {@code StringValue} and excludes the data from indexes, to avoid
    * the 1500-byte size limit for indexed data.
    */

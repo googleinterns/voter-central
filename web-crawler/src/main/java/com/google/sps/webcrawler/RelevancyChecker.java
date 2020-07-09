@@ -36,7 +36,7 @@ public class RelevancyChecker {
   private static final double SALIENCE_THRESHOLD = 0.5;
   private LanguageServiceClient languageServiceClient;
 
-  /** 
+  /**
    * Constructs a {@code RelevancyChecker} instance to use the Google Natural Language API.
    *
    * @throws IOException if {@code LanguageServiceClient} instantiation fails, such as because of
@@ -50,7 +50,7 @@ public class RelevancyChecker {
     this.languageServiceClient = languageServiceClient;
   }
 
-  /** 
+  /**
    * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of
    * interest. Defines relevancy as the salience of {@code candidateName} in the content,
    * and defines sufficient relevancy with {@code SALIENCE_THRESHOLD}.
@@ -60,7 +60,7 @@ public class RelevancyChecker {
     return salience >= SALIENCE_THRESHOLD;
   }
 
-  /** 
+  /**
    * Performs entity analysis, and computes the salience score of {@code candidateName} in the
    * {@code content}. Salience has range [0, 1], with higher salience indicating higher
    * relevance of {@code candidateName} to {@code content} overall.
