@@ -15,21 +15,5 @@
 // use modern JavaScript (ES5)
 "use strict"
 
-/**
- * Adds a official election/candidate information (brief) to the homepage.
- */
-function addOfficialElectionCandidateInformation() {
-  // Capture user input of location.
-
-  // Send GET request to /data with location.
-
-  // Unpack response.
-
-  // Add official election/candidate information to HTML.
-
-  // Add URLs, that send GET request to /candidate with candidate ID, to HTML.
-
-}
-
 angular.module('voterCentral',
     ['navigation', 'directoryPage', 'candidatePage']);
