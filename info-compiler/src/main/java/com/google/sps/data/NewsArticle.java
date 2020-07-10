@@ -27,9 +27,9 @@ public class NewsArticle {
   private String abbreviatedContent;
 
   public NewsArticle(String title, String url, String content) {
-    this.title = title;
-    this.url = url;
-    this.content = content;
+    this.title = (title == null) ? "" : title;
+    this.url = (url == null) ? "" : url;
+    this.content = (content == null) ? "" : content;
     this.abbreviatedContent = null;
   }
 

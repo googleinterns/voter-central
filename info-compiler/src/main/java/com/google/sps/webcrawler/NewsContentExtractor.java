@@ -52,7 +52,7 @@ public class NewsContentExtractor {
       return Optional.of(new NewsArticle(textDocument.getTitle(),
                                          url,
                                          textDocument.getContent()));
-    } catch (IOException | SAXException | TikaException e) {
+    } catch (IOException | SAXException | TikaException | NullPointerException e) {
       return Optional.empty();
     }
   }
