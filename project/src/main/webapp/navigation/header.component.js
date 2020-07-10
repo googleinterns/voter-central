@@ -17,7 +17,7 @@
 
 angular.module('navigation').component('header', {
   template: `<h1>Voter Central</h1>`,
-  controller: function generateHeader() {
+  controller: function headerController() {
     // Generate any dynamic info for header
   }
 });

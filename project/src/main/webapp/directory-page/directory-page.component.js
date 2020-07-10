@@ -17,7 +17,7 @@
 
 angular.module('directoryPage').component('directoryPage', {
   templateUrl: '/directory-page/directory-page.template.html', 
-  controller: function generateElectionsTable() {
+  controller: function directoryPageController() {
     // TODO: modify this code so it works within the component, and interacts
     // with the template rather than as a seperate JS function.
       addBriefElectionCandidateInformation()

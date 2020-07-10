@@ -17,12 +17,12 @@
 
 angular.module('navigation').component('navBar', {
   template: `<a href="/index.html">Home</a>
-    <br>
-    <a href="/education.html">Voter Education</a>
-    <br>
-    <a href="/">Polling Locations</a>
-    <br>`,
-  controller: function generateNavBar() {
+      <br>
+      <a href="/education.html">Voter Education</a>
+      <br>
+      <a href="/">Polling Locations</a>
+      <br>`,
+  controller: function navBarController() {
     // Dynamically generate links and pages relating to directory page etc.
   
   }
