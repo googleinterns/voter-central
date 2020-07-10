@@ -53,7 +53,7 @@ public final class NewsContentExtractorTest {
   }
 
   @Test
-  public void extractContentFromValidWebpage() {
+  public void extractContentFromHtml_validWebpage() {
     // Extract content and meta data from a valid webpage. The extracted information should be
     // consistent with {@code URL} and {@code NEWS_ARTICLE}. Content processing hasn't occurred
     // so the abbreviated content is null.
@@ -68,7 +68,7 @@ public final class NewsContentExtractorTest {
   }
 
   @Test
-  public void extractContentFromValidWebpageWithWrongUrlParam() {
+  public void eextractContentFromHtml_validWebpageWithWrongUrlParam() {
     // Extract content and meta data from a valid webpage, but the URL passed in is incorrect.
     // The extraction process is correct, but the constructed {@code NewsArticle} has the incorrect
     // URL. Other information should be consistent with {@code URL} and {@code NEWS_ARTICLE}.
@@ -86,7 +86,7 @@ public final class NewsContentExtractorTest {
   }
 
   @Test
-  public void extractContentFromIOExceptionStream() throws IOException {
+  public void extractContentFromHtml_IOExceptionStream() throws IOException {
     // The webpage stream throws {@code IOException} when being read. This exception should be
     // caught and no content will be extracted.
     InputStream badStream = mock(InputStream.class);
@@ -99,7 +99,7 @@ public final class NewsContentExtractorTest {
   // SAXException is a checked exception and thus invalid for mocking with {@code thenThrow()}.
   //
   // @Test
-  // public void extractContentFromSAXExceptionStream() throws IOException {
+  // public void extractContentFromHtml_SAXExceptionStream() throws IOException {
   //   // The webpage stream throws {@code SAXException} when being read. This exception should be
   //   // caught and no content will be extracted.
   //   InputStream badStream = mock(InputStream.class);
@@ -112,7 +112,7 @@ public final class NewsContentExtractorTest {
   // TikaException is a checked exception and thus invalid for mocking with {@code thenThrow()}.
   //
   // @Test
-  // public void extractContentFromTikaExceptionStream() throws IOException {
+  // public void extractContentFromHtml_TikaExceptionStream() throws IOException {
   //   // The webpage stream throws {@code TikaException} when being read. This exception should be
   //   // caught and no content will be extracted.
   //   InputStream badStream = mock(InputStream.class);
@@ -123,7 +123,7 @@ public final class NewsContentExtractorTest {
   // }
 
   @Test
-  public void extractContentFromNullWebpageStream() {
+  public void extractContentFromHtml_NullWebpageStream() {
     // The webpage stream is null, and it will cause a {@code NullPointerException}. No content
     // can be extracted.
     Optional<NewsArticle> potentialNewsArticle =

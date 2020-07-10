@@ -74,7 +74,7 @@ public final class WebCrawlerTest {
   public void getUrlsFromCustomSearch() {}
 
   @Test
-  public void scrapeAndExtractFromValidUrl() throws IOException {
+  public void scrapeAndExtractHtml_validUrl() throws IOException {
     // Scrape and extract news article content from {@code VALID_URL}. The content and metadata
     // packaged in {@code NewsArticle} should be consistent with that in {@code NEWS_ARTICLE}.
     // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
@@ -96,7 +96,7 @@ public final class WebCrawlerTest {
   // @TODO [Might try the configuration. Alternatively might wrap URL, and mock the wrapper class.]
   //
   // @Test
-  // public void scrapeAndExtractFromInvalidProtocolUrl() throws IOException {
+  // public void scrapeAndExtractHtml_invalidProtocolUrl() throws IOException {
   //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
   //   // protocol. The invalid {@code URL} would cause an {@code IOException} getting read. This
   //   // exception should be caught and an empty {@code Optional} should be returned.
@@ -111,7 +111,7 @@ public final class WebCrawlerTest {
   //   Assert.assertFalse(potentialNewsArticle.isPresent());
   // }
   // @Test
-  // public void scrapeAndExtractFromInvalidHostUrl() throws IOException {
+  // public void scrapeAndExtractHtml_invalidHostUrl() throws IOException {
   //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
   //   // host. The invalid {@code URL} would cause an {@code IOException} getting read. This
   //   // exception should be caught and an empty {@code Optional} should be returned.
@@ -127,7 +127,7 @@ public final class WebCrawlerTest {
   // }
 
   @Test
-  public void scrapeAndExtractFromNonscrapableWebpage() throws IOException {
+  public void scrapeAndExtractHtml_nonscrapableWebpage() throws IOException {
     // Scrape and extract news article content from a non-scrapable webpage. An empty
     // {@code Optional} should be returned as the result.
     // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
@@ -141,7 +141,7 @@ public final class WebCrawlerTest {
   }
 
   @Test
-  public void scrapeAndExtractFromWebpageThatRequiresDelay() throws IOException {
+  public void scrapeAndExtractHtml_webpageThatRequiresDelay() throws IOException {
     // Scrape and extract news article content with required crawler delay, achieved through a mock
     // {@code Grant}. The required delay should be documented in {@code nextAccessTimes}. It is 
     // keyed by {@code VALID_URL_ROBOTS_TXT}, which is the robots.txt file corresponding to
@@ -167,7 +167,7 @@ public final class WebCrawlerTest {
   }
 
   @Test
-  public void checkDatastoreEntityConstructionFromNewsArticle() {
+  public void storeInDatabase_checkDatastoreEntityConstructionFromNewsArticle() {
     // Check that the Datastore service extracts the correct information from {@code NEWS_ARTICLE}
     // and construct the correct entity for storing that information.
     // Mocking {@code Key}, a final class, requires additional Mockito configuration. @TODO [Might
@@ -191,7 +191,7 @@ public final class WebCrawlerTest {
   // realizes the same functionality as {@code newKeyFactory()}.
   //
   // @Test
-  // public void verifyDatastoreOperations() {
+  // public void storeInDatabase_verifyDatastoreOperations() {
   //   // Verify that the Datastore service create two keys, one for the news article to be inserted
   //   // and the other for constructing a foreign reference key to the corresponding candidate.
   //   // Verify that the Datastore service stores an entity in the database.
@@ -203,7 +203,7 @@ public final class WebCrawlerTest {
   // Integrated test.
   //
   // @Test
-  // public void compileNewsArticlesForACandidate() {
+  // public void compileNewsArticles_oneCandidate() {
   //   // Execute the entire news articles compilation process, starting from getting URLs about
   //   // {@code CANDIDATE_NAME}, and ending with storing processed news articles content in the
   //   // database.

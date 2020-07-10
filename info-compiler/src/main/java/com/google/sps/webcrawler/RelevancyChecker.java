@@ -42,7 +42,7 @@ public class RelevancyChecker {
    *   lack of permission to access the library.
    */
   public RelevancyChecker() throws IOException {
-    this.languageServiceClient = LanguageServiceClient.create();
+    this(LanguageServiceClient.create());
   }
 
   /**

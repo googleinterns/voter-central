@@ -70,7 +70,7 @@ public class WebCrawler {
    *     of permission to access required libraries.
    */
   public WebCrawler() throws IOException {
-    this.datastore = DatastoreOptions.getDefaultInstance().getService();
+    this(DatastoreOptions.getDefaultInstance().getService());
     this.relevancyChecker = new RelevancyChecker();
   }
 

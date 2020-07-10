@@ -55,7 +55,7 @@ public final class NewsContentProcessorTest {
   }
 
   @Test
-  public void processLongContent() {
+  public void process_longContent() {
     // Process {@code LONG_CONTENT} and extract abbreviated content as {@code MAX_CONTENT}, which
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
     // content remain the same.
@@ -68,7 +68,7 @@ public final class NewsContentProcessorTest {
   }
 
   @Test
-  public void processShortContent() {
+  public void process_shortContent() {
     // Process {@code SHORT_CONTENT} and extract abbreviated content as {@code SHORT_CONTENT},
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
     // title, URL and content remain the same.
@@ -81,7 +81,7 @@ public final class NewsContentProcessorTest {
   }
 
   @Test
-  public void processEmptyContent() {
+  public void process_emptyContent() {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);

@@ -59,7 +59,7 @@ public final class RelevancyCheckerTest {
   }
 
   @Test
-  public void checkWithMockSalienceComputationThatFindsEverythingRelevant() {
+  public void computeSalienceOfName_checkWithMockComputationThatFindsEverythingRelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score higher than {@code SALIENCE_THRESHOLD}. The mock will determine relevancy by
     // comparing the fake salience score with {@code SALIENCE_THRESHOLD} as a real relevancy
@@ -76,7 +76,7 @@ public final class RelevancyCheckerTest {
   }
 
   @Test
-  public void checkWithMockSalienceComputationThatFindsEverythingIrrelevant() {
+  public void computeSalienceOfName_checkWithMockComputationThatFindsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score lower than {@code SALIENCE_THRESHOLD}. The mock will determine relevancy by
     // comparing the fake salience score with {@code SALIENCE_THRESHOLD} as a real relevancy
@@ -113,7 +113,7 @@ public final class RelevancyCheckerTest {
   // method calls within {@code computeSalienceOfName()}.
   //
   // @Test
-  // public void checkWithMockClientThatFindsEverythingRelevant() {
+  // public void computeSalienceOfName_checkWithMockClientThatFindsEverythingRelevant() {
   //   // Check content relevancy with a mock Natural Language API client that computes a salience
   //   // score higher than {@code SALIENCE_THRESHOLD}. Both {@code RELEVANT_CONTENT} and
   //   // {@code IRRELEVANT_CONTENT} will be deemed relevant. {@code thenReturn} does not take
@@ -137,7 +137,7 @@ public final class RelevancyCheckerTest {
   //   Assert.assertTrue(relevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME));
   // }
   // @Test
-  // public void checkWithMockClientThatFindsEverythingIrrelevant() {
+  // public void computeSalienceOfName_checkWithMockClientThatFindsEverythingIrrelevant() {
   //   // Check content relevancy with a mock Natural Language API client that computes a salience
   //   // score lower than {@code SALIENCE_THRESHOLD}. Both {@code RELEVANT_CONTENT} and
   //   // {@code IRRELEVANT_CONTENT} will be deemed irrelevant. {@code thenReturn} does not take
@@ -156,7 +156,7 @@ public final class RelevancyCheckerTest {
   // {@code com.google.api.gax.rpc.PermissionDeniedException}.
   //
   // @Test
-  // public void checkWithRealClient() {
+  // public void isRelevant_checkWithRealClient() {
   //   // Check content relevancy with a Natural Language API client. {@code RELEVANT_CONTENT} will
   //   // be deemed relevant, and {@code IRRELEVANT_CONTENT} irrelevant.
   //   NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
