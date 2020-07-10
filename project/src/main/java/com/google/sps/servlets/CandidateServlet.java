@@ -66,7 +66,7 @@ public class CandidateServlet extends HttpServlet {
   private Candidate getCandidateData(String candidateId) {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     Query candidateQuery = new Query("Candidate")
-        .setFilter(new FilterPredicate("candidateId", FilterOperator.EQUAL,
+        .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
     Entity candidateData = candidateQueryResult.asSingleEntity();
