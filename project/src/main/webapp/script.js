@@ -180,12 +180,12 @@ function addOfficialCandidateInformation(officialCandidateInfo) {
       document.getElementById('official-info-container');
   officialInfoContainer.innerHTML = 
       `<h3>${officialCandidateInfo.name}</h3>
-      <img src="${officialCandidateInfo.photoURL}" alt="pic of ${officialCandidateInfo.name}" 
-          width="200" height="200">
+      <img src="${officialCandidateInfo.photoURL}" alt="pic of 
+          ${officialCandidateInfo.name}" width="200" height="200">
       <ul>
+        <li>Party Affiliation: ${officialCandidateInfo.partyAffiliation}</li>
         <li>Email:${officialCandidateInfo.email}</li>
         <li>Phone Number: ${officialCandidateInfo.phoneNumber}</li>
-        <li>Party Affiliation: ${officialCandidateInfo.partyAffiliation}</li>
       <ul>
       <p>click <a href="${officialCandidateInfo.website}">here</a> to be redirected to ${officialCandidateInfo.name}'s website</p>`;
 }
