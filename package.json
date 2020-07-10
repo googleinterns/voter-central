@@ -1,0 +1,31 @@
+{
+  "name": "voter-central",
+  "version": "1.0.0",
+  "description": "This repo contains the STEP capstone project: \"Voter Central\".",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.4.0",
+    "eslint-config-google": "^0.14.0",
+    "htmllint-cli": "0.0.7",
+    "markdownlint": "^0.20.4",
+    "stylelint": "^13.6.1",
+    "stylelint-config-standard": "^20.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/googleinterns/voter-central.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/googleinterns/voter-central/issues"
+  },
+  "homepage": "https://github.com/googleinterns/voter-central#readme"
+}
