@@ -60,7 +60,7 @@ public class InfoCompiler {
     String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                   CIVIC_INFO_API_KEY);
   private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds;
+  private List<String> electionQueryIds = new ArrayList<>(); // initialized for testing purposes.
   // For testing purposes (not to add too much information to the database).
   // Will include all 50 states.
   private List<String> states =
@@ -140,6 +140,31 @@ public class InfoCompiler {
    */
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
+    HttpGet httpGet = new HttpGet(queryUrl);
+    ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+      @Override
+      public String handleResponse(final HttpResponse response) throws IOException {
+        int status = response.getStatusLine().getStatusCode();
+        if (status >= 200 && status < 300) {
+            HttpEntity entity = response.getEntity();
+            return entity != null ? EntityUtils.toString(entity) : null;
+        } else {
+            httpclient.close();
+            throw new ClientProtocolException("Unexpected response status: " + status);
+        }
+      }
+    };
+    String responseBody = httpclient.execute(httpGet, responseHandler);
+    httpclient.close();
+    JsonObject json = new JsonParser().parse(responseBody).getAsJsonObject();
+    return json;
+  }
+
+  /** 
+   * For testing purposes.
+   */
+  public JsonObject queryCivicInformation(String queryUrl, CloseableHttpClient httpclient)
+      throws IOException {
     HttpGet httpGet = new HttpGet(queryUrl);
     ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
       @Override
@@ -255,14 +280,5 @@ public class InfoCompiler {
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
-  }
-
-  // For testing purposes.
-  public static void main(String[] args) {
-    InfoCompiler myInfoCompiler = new InfoCompiler();
-    myInfoCompiler.queryAndStoreBaseElectionInfo();
-    myInfoCompiler.queryAndStoreElectionContestInfo();
-    // Prevent {@code java.lang.IllegalThreadStateException}.
-    System.exit(0);
   }
 }
