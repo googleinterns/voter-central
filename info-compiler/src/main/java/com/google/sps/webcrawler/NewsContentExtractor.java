@@ -32,7 +32,7 @@ import org.xml.sax.SAXException;
 
 /** Static utilities for extracting textual content from HTML pages. */
 public class NewsContentExtractor {
-  private static final HtmlParser parser = new HtmlParser();
+  private static final HtmlParser PARSER = new HtmlParser();
 
   /**
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
@@ -41,11 +41,14 @@ public class NewsContentExtractor {
    */
   public static Optional<NewsArticle> extractContentFromHtml(
       InputStream htmlFileStream, String url) {
+    if (htmlFileStream == null) {
+      return Optional.empty();
+    }
     BoilerpipeContentHandler boilerpipeHandler =
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
-      parser.parse(htmlFileStream, boilerpipeHandler, metadata);
+      PARSER.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
       return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
     } catch (IOException | SAXException | TikaException e) {
