@@ -16,19 +16,13 @@ package com.google.sps.webcrawler;
 
 import com.google.sps.data.NewsArticle;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
-/**
- * Static utilities for processing textual content, such as abbreviation.
- */
+/** Static utilities for processing textual content, such as abbreviation. */
 public class NewsContentProcessor {
   static final int MAX_WORD_COUNT = 100;
 
   // @TODO [Implement more advanced processing methods.]
-  /**
-   * Extracts the first {@code MAX_WORD_COUNT} words from the news article content.
-   */
+  /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
   public static NewsArticle process(NewsArticle newsArticle) {
     String rawContent = newsArticle.getContent();
     String[] splitContent = rawContent.split(" ");

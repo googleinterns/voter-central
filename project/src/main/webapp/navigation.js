@@ -23,7 +23,7 @@ function addCommonElements() {
 function addNavbar() {
   const navbar = `<a href="/index.html">Home</a>
       <br>
-      <a href="/">Resources</a>
+      <a href="/education.html">Voter Education</a>
       <br>
       <a href="/">Polling Locations</a>
       <br>`;
