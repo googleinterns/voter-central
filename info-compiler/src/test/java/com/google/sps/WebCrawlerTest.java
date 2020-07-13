@@ -16,17 +16,20 @@ package com.google.sps.webcrawler;
 
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.FullEntity;
-import com.google.cloud.datastore.IncompleteKey;
-import com.google.cloud.datastore.Value;
+import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.testing.LocalDatastoreHelper;
 import com.google.sps.data.NewsArticle;
 import com.panforge.robotstxt.Grant;
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.TimeoutException;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -59,13 +62,15 @@ public final class WebCrawlerTest {
   private final static String ABBREVIATED_CONTENT = ".";
   private final static int DELAY = 1;
 
-  private WebCrawler webCrawler;
-  private Datastore datastore;
+  private static WebCrawler webCrawler;
+  private static LocalDatastoreHelper datastoreHelper;
 
-  @Before
-  public void initialize() throws IOException {
-    this.datastore = mock(Datastore.class);
-    this.webCrawler = new WebCrawler(datastore);
+  @BeforeClass
+  public static void initialize() throws InterruptedException, IOException {
+    datastoreHelper = LocalDatastoreHelper.create();
+    datastoreHelper.start();
+    Datastore datastore = datastoreHelper.getOptions().getService();
+    webCrawler = new WebCrawler(datastore);
     NEWS_ARTICLE.setAbbreviatedContent(ABBREVIATED_CONTENT);
   }
 
@@ -74,7 +79,7 @@ public final class WebCrawlerTest {
   public void getUrlsFromCustomSearch() {}
 
   @Test
-  public void scrapeAndExtractHtml_validUrl() throws IOException {
+  public void scrapeAndExtractFromHtml_validUrl() throws IOException {
     // Scrape and extract news article content from {@code VALID_URL}. The content and metadata
     // packaged in {@code NewsArticle} should be consistent with that in {@code NEWS_ARTICLE}.
     // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
@@ -82,7 +87,7 @@ public final class WebCrawlerTest {
     // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
     // {@code NewsContentExtractor} to aid test-driven development.
     URL url = new URL(VALID_URL);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractHtml(url);
+    Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
@@ -107,7 +112,7 @@ public final class WebCrawlerTest {
   //   URL url = mock(URL.class);
   //   when(url.getProtocol()).thenReturn(INVALID_PROTOCOL);
   //   when(url.getHost()).thenReturn(VALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractHtml(url);
+  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
   //   Assert.assertFalse(potentialNewsArticle.isPresent());
   // }
   // @Test
@@ -122,7 +127,7 @@ public final class WebCrawlerTest {
   //   URL url = mock(URL.class);
   //   when(url.getProtocol()).thenReturn(VALID_PROTOCOL);
   //   when(url.getHost()).thenReturn(INVALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractHtml(url);
+  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
   //   Assert.assertFalse(potentialNewsArticle.isPresent());
   // }
 
@@ -139,7 +144,7 @@ public final class WebCrawlerTest {
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(false);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractHtml(
+    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
         grant, robotsUrl, url);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
@@ -160,7 +165,7 @@ public final class WebCrawlerTest {
     when(grant.hasAccess()).thenReturn(true);
     when(grant.getCrawlDelay()).thenReturn(DELAY);
     WebCrawler webCrawlerSpy = spy(webCrawler);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractHtml(
+    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
         grant, robotsUrl, url);
     //verify(webCrawlerSpy, times(1)).waitForAndSetCrawlDelay(anyObject(), anyString());
     Assert.assertTrue(potentialNewsArticle.isPresent());
@@ -173,22 +178,48 @@ public final class WebCrawlerTest {
   }
 
   @Test
-  public void storeInDatabase_checkDatastoreEntityConstructionFromNewsArticle() {
-    // Check that the Datastore service extracts the correct information from {@code NEWS_ARTICLE}
-    // and construct the correct entity for storing that information.
-    // Mocking {@code Key}, a final class, requires additional Mockito configuration. @TODO [Might
-    // try the configuration.]
-    // {@code ImcompleteKey} is used instead temporarily.
-    // {@code IncompleteKey} cannot be used to construct {@code Entity}, so {@code FullEntity} is
-    // used instead.
-    IncompleteKey newsArticleKey = mock(IncompleteKey.class);
-    FullEntity newsArticleEntity = webCrawler.storeInDatabase(CANDIDATE_ID, NEWS_ARTICLE,
-                                                              newsArticleKey);
+  public void storeInDatabase_checkDatastoreEntityConstructionFromNewsArticle()
+      throws IOException {
+    // Check that the Datastore service extracts the correct information from {@code NEWS_ARTICLE},
+    // constructs the correct key and entity for storing that information, and successfully stores
+    // said entity into the database. Use a Datastore emulator to simulate operations, as
+    // opposed to a Mockito mock of Datastore which does not provide mocking of all required
+    // operations.
+    Datastore datastore = resetDatastore();
+    webCrawler.storeInDatabase(CANDIDATE_ID, NEWS_ARTICLE);
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+            .setKind("NewsArticle")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(query);
+    Assert.assertTrue(queryResult.hasNext());
+    Entity newsArticleEntity = queryResult.next();
+    Assert.assertFalse(queryResult.hasNext());
+    Key newsArticleKey =
+        datastore
+            .newKeyFactory()
+            .setKind("NewsArticle")
+            .newKey((long) NEWS_ARTICLE.getUrl().hashCode());
+    Key candidateKey =
+        datastore
+            .newKeyFactory()
+            .setKind("Candidate")
+            .newKey(CANDIDATE_ID);
+    Assert.assertEquals(newsArticleEntity.getKey(), newsArticleKey);
+    Assert.assertEquals(newsArticleEntity.getKey("candidateId"), candidateKey);
     Assert.assertEquals(newsArticleEntity.getString("title"), NEWS_ARTICLE.getTitle());
     Assert.assertEquals(newsArticleEntity.getString("url"), NEWS_ARTICLE.getUrl());
     Assert.assertEquals(newsArticleEntity.getString("content"), NEWS_ARTICLE.getContent());
     Assert.assertEquals(newsArticleEntity.getString("abbreviatedContent"),
                         NEWS_ARTICLE.getAbbreviatedContent());
+  }
+
+  /** Resets the internal state of the Datastore emulator and resets {@code webCrawler}. */
+  private Datastore resetDatastore() throws IOException {
+    this.datastoreHelper.reset();
+    Datastore datastore = this.datastoreHelper.getOptions().getService();
+    this.webCrawler = new WebCrawler(datastore);
+    return datastore;
   }
 
   // {@code newKeyFactory()} is deemed an abtract method and thus cannot be mocked directly or
@@ -221,4 +252,9 @@ public final class WebCrawlerTest {
   //   }
   //   myWebCrawler.compileNewsArticle(CANDIDATE_NAME, CANDIDATE_ID);
   // }
+
+  @AfterClass
+  public static void cleanup() throws InterruptedException, IOException, TimeoutException {
+    datastoreHelper.stop();
+  }
 }

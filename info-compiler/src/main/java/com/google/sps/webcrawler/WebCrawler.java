@@ -18,8 +18,6 @@ package com.google.sps.webcrawler;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.FullEntity;
-import com.google.cloud.datastore.IncompleteKey;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.StringValue;
 import com.google.gson.Gson;
@@ -70,9 +68,7 @@ public class WebCrawler {
     this(DatastoreOptions.getDefaultInstance().getService());
   }
 
-  /**
-   * For testing purposes.
-   */
+  /** For testing purposes. */
   WebCrawler(Datastore datastore) throws IOException {
     this.datastore = datastore;
     this.relevancyChecker = new RelevancyChecker();
@@ -92,7 +88,7 @@ public class WebCrawler {
   public void compileNewsArticle(String candidateName, String candidateId) {
     List<URL> urls = getUrlsFromCustomSearch(candidateName);
     for (URL url : urls) {
-      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractHtml(url);
+      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractFromHtml(url);
       if (!potentialNewsArticle.isPresent()) {
         continue;
       }
@@ -172,14 +168,14 @@ public class WebCrawler {
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
    * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  public Optional<NewsArticle> scrapeAndExtractHtml(URL url) {
+  public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
     try {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      return politelyScrapeAndExtractHtml(grant, robotsUrl, url);
+      return politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
       return Optional.empty();
@@ -190,7 +186,7 @@ public class WebCrawler {
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
    * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  Optional<NewsArticle> politelyScrapeAndExtractHtml(Grant grant, URL robotsUrl, URL url) {
+  Optional<NewsArticle> politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl, URL url) {
     try {
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
@@ -252,7 +248,6 @@ public class WebCrawler {
    * {@code abbreviatedContent}, we will not use indexes regardless.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
-    Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
     Key newsArticleKey =
         datastore
             .newKeyFactory()
@@ -271,20 +266,6 @@ public class WebCrawler {
   }
 
   /**
-   * For testing purposes.
-   */
-  FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
-      IncompleteKey newsArticleKey) {
-    FullEntity newsArticleEntity = Entity.newBuilder(newsArticleKey)
-        .set("title", newsArticle.getTitle())
-        .set("url", newsArticle.getUrl())
-        .set("content", excludeStringFromIndexes(newsArticle.getContent()))
-        .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
-        .build();
-    return newsArticleEntity;
-  }
-
-  /**
    * Converts {@code String} to {@code StringValue} and excludes the data from indexes, to avoid
    * the 1500-byte size limit for indexed data.
    */
@@ -292,9 +273,7 @@ public class WebCrawler {
     return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
   }
 
-  /**
-   * For testing purposes.
-   */
+  /** For testing purposes. */
   Map<String, Long> getNextAccessTimes() {
     return this.nextAccessTimes;
   }
