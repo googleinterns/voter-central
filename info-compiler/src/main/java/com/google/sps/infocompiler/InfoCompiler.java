@@ -222,11 +222,7 @@ public class InfoCompiler {
     // Fill in position and candidate information for the election entities in the database.
     electionEntity = Entity.newBuilder(electionEntity)
         .set("candidatePositions", candidatePositions)
-        .build();
-    electionEntity = Entity.newBuilder(electionEntity)
         .set("candidateIds", candidateIds)
-        .build();
-    electionEntity = Entity.newBuilder(electionEntity)
         .set("candidateIncumbency", candidateIncumbency)
         .build();
     datastore.update(electionEntity);

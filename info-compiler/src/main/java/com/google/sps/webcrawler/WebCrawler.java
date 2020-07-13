@@ -48,7 +48,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 /**
- * A web crawler for compiling candidate-specifc news articles information.
+ * A web crawler for compiling candidate-specific news articles information.
  */
 public class WebCrawler {
   private final static String CUSTOM_SEARCH_KEY = "";
