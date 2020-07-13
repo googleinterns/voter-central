@@ -47,13 +47,11 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-/**
- * A web crawler for compiling candidate-specific news articles information.
- */
+/** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private final static String CUSTOM_SEARCH_KEY = "";
-  private final static String CUSTOM_SEARCH_ENGINE_ID = "";
-  private final static String TEST_URL =
+  private static final String CUSTOM_SEARCH_KEY = "";
+  private static final String CUSTOM_SEARCH_ENGINE_ID = "";
+  private static final String TEST_URL =
       "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private RelevancyChecker relevancyChecker;
   // Mappings of (website robots.txt URL, the next allowed time to access, in milliseconds) for
@@ -129,13 +127,15 @@ public class WebCrawler {
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
     List<URL> urls = Arrays.asList();
     String request =
-        String.format("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
+        String.format(
+            "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
     CloseableHttpClient httpclient = HttpClients.createDefault();
     try {
       urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
-      ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+      ResponseHandler<String> responseHandler =
+          new ResponseHandler<String>() {
         @Override
         public String handleResponse(final HttpResponse response) throws IOException {
           int status = response.getStatusLine().getStatusCode();
@@ -153,7 +153,7 @@ public class WebCrawler {
       Gson gson = new Gson();
       Object jsonResponse = gson.fromJson(responseBody, Object.class);
       //@TODO [Unpack {@code jsonResponse} and find URLs.]
-    } catch (IOException e){
+    } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
     }
     return urls;
@@ -173,8 +173,9 @@ public class WebCrawler {
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
-        if (grant != null && grant.getCrawlDelay() != null &&
-            !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
+        if (grant != null
+            && grant.getCrawlDelay() != null
+            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
           return Optional.empty();
         }
         InputStream webpageStream = url.openStream();
@@ -198,11 +199,9 @@ public class WebCrawler {
       if (!waitIfNecessary(url)) {
         return false;
       }
-      nextAccessTimes.replace(url,
-                              System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+      nextAccessTimes.replace(url, System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     } else {
-      nextAccessTimes.put(url,
-                          System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+      nextAccessTimes.put(url, System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     }
     return true;
   }
@@ -225,8 +224,7 @@ public class WebCrawler {
   // @TODO [Fill in other properties: published date, publisher.]
   /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
-   * database schema.
-   * Requires "gcloud config set project project-ID" to be set correctly.
+   * database schema. Requires "gcloud config set project project-ID" to be set correctly.
    * {@code content} and {@code abbreviatedContent} are excluded form database indexes, which are
    * additional data structures built to enable efficient lookup on non-keyed properties. Because
    * we will not query {@code NewsArticle} Datastore entities via {@code content} or
@@ -234,16 +232,18 @@ public class WebCrawler {
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-    Key newsArticleKey = datastore.newKeyFactory()
-        .setKind("NewsArticle")
-        .newKey((long) newsArticle.getUrl().hashCode());
-    Entity newsArticleEntity = Entity.newBuilder(newsArticleKey)
-        .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
-        .set("title", newsArticle.getTitle())
-        .set("url", newsArticle.getUrl())
-        .set("content", excludeStringFromIndexes(newsArticle.getContent()))
-        .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
-        .build();
+    Key newsArticleKey =
+        datastore.newKeyFactory()
+            .setKind("NewsArticle")
+            .newKey((long) newsArticle.getUrl().hashCode());
+    Entity newsArticleEntity =
+        Entity.newBuilder(newsArticleKey)
+            .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
+            .set("title", newsArticle.getTitle())
+            .set("url", newsArticle.getUrl())
+            .set("content", excludeStringFromIndexes(newsArticle.getContent()))
+            .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .build();
     datastore.put(newsArticleEntity);
   }
 
