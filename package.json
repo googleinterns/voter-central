@@ -6,7 +6,9 @@
   "directories": {
     "test": "tests"
   },
-  "dependencies": {},
+  "dependencies": {
+    "angular": "^1.8.0"
+  },
   "devDependencies": {
     "eslint": "^7.4.0",
     "eslint-config-google": "^0.14.0",

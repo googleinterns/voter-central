@@ -15,10 +15,6 @@
 // use modern JavaScript (ES5)
 "use strict"
 
-window.onload = function() {
-  addCommonElements();
-};
-
 /**
  * Adds a brief version of the official election/candidate information to the
  * homepage.

@@ -15,24 +15,4 @@
 // use modern JavaScript (ES5)
 "use strict"
 
-function addCommonElements() {
-  addNavbar();
-  addHeader();
-}
-
-function addNavbar() {
-  const navbar = `<a href="/index.html">Home</a>
-      <br>
-      <a href="/education.html">Voter Education</a>
-      <br>
-      <a href="/">Polling Locations</a>
-      <br>`;
-  const navbarDiv = document.getElementById('navbar-container');
-  navbarDiv.innerHTML = navbar;
-}
-
-function addHeader() {
-  const header = `<h1>Voter Central</h1>`;
-  const headerDiv = document.getElementById('header-container');
-  headerDiv.innerHTML = header;
-}
+angular.module('navigation', []);

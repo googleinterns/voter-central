@@ -5,3 +5,10 @@ To run a local server, execute this command:
 ```bash
 mvn package appengine:run
 ```
+The project requires the use of AngularJS. To install, make sure you have
+a recent version of `npm` installed. Then run this command under
+`src/main/webapp/`:
+
+```bash
+npm install angular
+```
