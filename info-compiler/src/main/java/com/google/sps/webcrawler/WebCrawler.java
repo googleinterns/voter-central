@@ -77,7 +77,7 @@ public class WebCrawler {
   /**
    * For testing purposes.
    */
-  default WebCrawler(Datastore datastore) throws IOException {
+  WebCrawler(Datastore datastore) throws IOException {
     this.datastore = datastore;
     this.relevancyChecker = new RelevancyChecker();
   }
@@ -203,7 +203,7 @@ public class WebCrawler {
   /** 
    * For testing purposes.
    */
-  default Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
+  Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
     try {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
           "/robots.txt");
@@ -229,7 +229,7 @@ public class WebCrawler {
    * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
    * to non-null. This method is made public for testing purposes.
    */
-  default boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+  boolean waitForAndSetCrawlDelay(Grant grant, String url) {
     if (nextAccessTimes.containsKey(url)) {
       if (!waitIfNecessary(url)) {
         return false;
@@ -285,7 +285,7 @@ public class WebCrawler {
   /**
    * For testing purposes.
    */
-  default FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
+  FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
       IncompleteKey newsArticleKey) {
     FullEntity newsArticleEntity = Entity.newBuilder(newsArticleKey)
         .set("title", newsArticle.getTitle())
@@ -304,7 +304,10 @@ public class WebCrawler {
     return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
   }
 
-  public Map<String, Long> getNextAccessTimes() {
+  /**
+   * For testing purposes.
+   */
+  Map<String, Long> getNextAccessTimes() {
     return this.nextAccessTimes;
   }
 }

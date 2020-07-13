@@ -23,7 +23,7 @@ import java.util.List;
  * Static utilities for processing textual content, such as abbreviation.
  */
 public class NewsContentProcessor {
-  default static final int MAX_WORD_COUNT = 100;
+  static final int MAX_WORD_COUNT = 100;
 
   // @TODO [Implement more advanced processing methods.]
   /**
