@@ -14,7 +14,7 @@
 
 package com.google.sps.data;
 
-/** Represents a candidate's information on the directory page.*/
+/** Represents a candidate's information on the directory page. */
 public class DirectoryCandidate {
   private String id;
   private String candidateName;

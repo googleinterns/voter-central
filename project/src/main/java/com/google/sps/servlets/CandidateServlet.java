@@ -75,7 +75,7 @@ public class CandidateServlet extends HttpServlet {
     PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
     Entity candidateData = candidateQueryResult.asSingleEntity();
 
-    Query electionQuery = 
+    Query electionQuery =
         new Query("Election")
             .setFilter(
                 new FilterPredicate(
@@ -112,10 +112,10 @@ public class CandidateServlet extends HttpServlet {
     Query newsArticleQuery =
         new Query("NewsArticle")
             .setFilter(
-              new FilterPredicate(
-                  "candidateId", 
-                  FilterOperator.EQUAL,
-                  KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+                new FilterPredicate(
+                    "candidateId", 
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery newsArticleQueryResult = datastore.prepare(newsArticleQuery);
     List<Entity> newsArticles = newsArticleQueryResult.asList(FetchOptions.Builder.withDefaults());
     List<NewsArticle> newsArticlesData = new ArrayList<>(newsArticles.size());
