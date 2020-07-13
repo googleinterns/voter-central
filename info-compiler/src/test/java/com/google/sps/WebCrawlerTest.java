@@ -128,15 +128,19 @@ public final class WebCrawlerTest {
 
   @Test
   public void scrapeAndExtractHtml_nonscrapableWebpage() throws IOException {
-    // Scrape and extract news article content from a non-scrapable webpage. An empty
-    // {@code Optional} should be returned as the result.
+    // Scrape and extract news article content from a non-scrapable webpage, as suggested by a mock
+    // {@code Grant}. The URLs for robots.txt and the webpage are irrelevant and set to those
+    // corresponding to {@code VALID_URL}. An empty {@code Optional} should be returned as the
+    // result.
     // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
     // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
     // {@code NewsContentExtractor} to aid test-driven development.
     URL url = new URL(VALID_URL);
+    URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(false);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractHtml(url, grant);
+    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractHtml(
+        grant, robotsUrl, url);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
 
@@ -151,11 +155,13 @@ public final class WebCrawlerTest {
     // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
     // {@code NewsContentExtractor} to aid test-driven development.
     URL url = new URL(VALID_URL);
+    URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(true);
     when(grant.getCrawlDelay()).thenReturn(DELAY);
     WebCrawler webCrawlerSpy = spy(webCrawler);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractHtml(url, grant);
+    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractHtml(
+        grant, robotsUrl, url);
     //verify(webCrawlerSpy, times(1)).waitForAndSetCrawlDelay(anyObject(), anyString());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();

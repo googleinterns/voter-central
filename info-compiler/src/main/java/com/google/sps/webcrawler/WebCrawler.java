@@ -68,7 +68,6 @@ public class WebCrawler {
    */
   public WebCrawler() throws IOException {
     this(DatastoreOptions.getDefaultInstance().getService());
-    this.relevancyChecker = new RelevancyChecker();
   }
 
   /**
@@ -169,7 +168,7 @@ public class WebCrawler {
     return urls;
   }
 
-  /** 
+  /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
    * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
@@ -180,31 +179,19 @@ public class WebCrawler {
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null
-            && grant.getCrawlDelay() != null
-            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          return Optional.empty();
-        }
-        InputStream webpageStream = url.openStream();
-        return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
-      } else {
-        return Optional.empty();
-      }
+      return politelyScrapeAndExtractHtml(grant, robotsUrl, url);
     } catch (Exception e) {
-      System.out.println("[ERROR] Error occured during web scraping: " + e);
+      System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
       return Optional.empty();
     }
   }
 
-  /** 
-   * For testing purposes.
+  /**
+   * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
+   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
+  Optional<NewsArticle> politelyScrapeAndExtractHtml(Grant grant, URL robotsUrl, URL url) {
     try {
-      URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
-          "/robots.txt");
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
         if (grant != null
@@ -218,7 +205,7 @@ public class WebCrawler {
         return Optional.empty();
       }
     } catch (Exception e) {
-      System.out.println("[ERROR] Error occured during web scraping: " + e);
+      System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
       return Optional.empty();
     }
   }
