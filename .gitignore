@@ -4,3 +4,4 @@ Config.java
 # Maven generated files.
 target/
 
+node_modules/

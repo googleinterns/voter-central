@@ -118,20 +118,21 @@ public class WebCrawler {
   /**
    * Searches for {@code candidateName} in the Google Custom Search engine and finds URLs of news
    * articles. Returns an empty list if no valid URLs are found.
+   * Note: This function contains a few hard-coded implementations because of the current lack of
+   * access to the engine. In order for the web crawler to be tested from beginning to end, this
+   * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
    *
    * @see <a href=
    *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
    *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
-    // For testing purposes.
     List<URL> urls = Arrays.asList();
     String request =
         String.format("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
     CloseableHttpClient httpclient = HttpClients.createDefault();
     try {
-      // For testing purposes.
       urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
       ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
@@ -154,8 +155,6 @@ public class WebCrawler {
       //@TODO [Unpack {@code jsonResponse} and find URLs.]
     } catch (IOException e){
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
-      // For testing purposes (commented off).
-      // urls = Arrays.asList();
     }
     return urls;
   }
@@ -174,10 +173,9 @@ public class WebCrawler {
       Grant grant = robotsTxt.ask("*", webpagePath);
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
-        if (grant != null && grant.getCrawlDelay() != null) {
-          if (!waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-            return Optional.empty();
-          }
+        if (grant != null && grant.getCrawlDelay() != null &&
+            !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
+          return Optional.empty();
         }
         InputStream webpageStream = url.openStream();
         return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
