@@ -73,7 +73,7 @@ public final class InfoCompilerTest {
   }
 
   @Test
-  public void queryCivicInformation() throws Exception {
+  public void queryCivicInformation_succeedWithMockResponse() throws Exception {
     // Query the Civic Information API with a mock HTTP client + mock callback function of type
     // {@code ResponseHandler<String>} that converts the {@code HttpResponse} response to
     // {@code RESPONSE}, and subsequently convert {@code RESPONSE} to {@code json}.
