@@ -48,7 +48,7 @@ public class RelevancyChecker {
   /**
    * For testing purposes.
    */
-  public RelevancyChecker(LanguageServiceClient languageServiceClient) {
+  protected RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }
 

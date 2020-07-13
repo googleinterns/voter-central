@@ -68,7 +68,7 @@ public final class NewsContentExtractorTest {
   }
 
   @Test
-  public void eextractContentFromHtml_validWebpageWithWrongUrlParam() {
+  public void extractContentFromHtml_validWebpageWithWrongUrlParam() {
     // Extract content and meta data from a valid webpage, but the URL passed in is incorrect.
     // The extraction process is correct, but the constructed {@code NewsArticle} has the incorrect
     // URL. Other information should be consistent with {@code URL} and {@code NEWS_ARTICLE}.
