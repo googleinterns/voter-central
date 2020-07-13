@@ -17,14 +17,14 @@ package com.google.sps.data;
 import java.util.List;
 
 /** 
- * Represents a position for which candidates run in an election. A position corresponds
- * to one or more candidates.
+ * Represents a position for which candidates run in an election. A position corresponds to one or
+ * more candidates.
  */
 public class Position {
   private String positionName;
   private List<DirectoryCandidate> candidates;
 
-  public Position (String positionName, List<DirectoryCandidate> candidates) {
+  public Position(String positionName, List<DirectoryCandidate> candidates) {
     this.positionName = positionName;
     this.candidates = candidates;
   }
