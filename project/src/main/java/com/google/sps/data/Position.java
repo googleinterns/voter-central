@@ -16,7 +16,7 @@ package com.google.sps.data;
 
 import java.util.List;
 
-/** 
+/**
  * Represents a position for which candidates run in an election. A position corresponds to one or
  * more candidates.
  */

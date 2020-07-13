@@ -17,7 +17,7 @@ package com.google.sps.data;
 import java.util.Date;
 import java.util.List;
 
-/** 
+/**
  * Represents an election's information on the directory page. An election contains one or more
  * positions.
  */

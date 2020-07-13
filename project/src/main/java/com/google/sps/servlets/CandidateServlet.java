@@ -46,15 +46,13 @@ public class CandidateServlet extends HttpServlet {
     // Extract candidate ID.
     String candidateId = request.getParameter("candidateId");
     String electionName = request.getParameter("electionName");
-    
     // @TODO [Get (1) official election/candidate information.]
     Candidate candidateData = getCandidateData(candidateId, electionName);
     // Get (2) news article information.
     List<NewsArticle> newsArticlesData = findNewsArticles(candidateId);
     // @TODO [Get (3) social media feed.]
-    
     // Find candidate-specific information. Package and convert the data to JSON.
-    CandidatePageDataPackage dataPackage = 
+    CandidatePageDataPackage dataPackage =
         new CandidatePageDataPackage(candidateData, newsArticlesData);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
@@ -67,27 +65,28 @@ public class CandidateServlet extends HttpServlet {
   // @TODO [Function for getting (1) official election/candidate information from the database.]
   private Candidate getCandidateData(String candidateId, String electionName) {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    Query candidateQuery = 
+    Query candidateQuery =
         new Query("Candidate")
             .setFilter(
                 new FilterPredicate(
-                  "__key__", 
-                  FilterOperator.EQUAL,
-                  KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+                    "__key__",
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
     Entity candidateData = candidateQueryResult.asSingleEntity();
 
-    Query electionQuery = new Query("Election")
-          .setFilter(
-            new FilterPredicate(
-              "__key__", 
-              FilterOperator.EQUAL,
-              KeyFactory.createKey("Election", electionName)));
+    Query electionQuery = 
+        new Query("Election")
+            .setFilter(
+                new FilterPredicate(
+                    "__key__",
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Election", electionName)));
     PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
     Entity election = electionQueryResult.asSingleEntity();
     List<String> electionCandidateIdList = (List<String>) election.getProperty("candidateIds");
     List<String> electionPositionList = (List<String>) election.getProperty("candidatePositions");
-    List<Boolean> electionIsIncumbentList = 
+    List<Boolean> electionIsIncumbentList =
         (List<Boolean>) election.getProperty("candidateIncumbency");
     int candidateIdIndex = electionCandidateIdList.indexOf(candidateId);
     boolean candidateIncumbency = electionIsIncumbentList.get(candidateIdIndex);
@@ -110,18 +109,18 @@ public class CandidateServlet extends HttpServlet {
    */
   private List<NewsArticle> findNewsArticles(String candidateId) {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    Query newsArticleQuery = 
+    Query newsArticleQuery =
         new Query("NewsArticle")
             .setFilter(
               new FilterPredicate(
-                "candidateId", 
-                FilterOperator.EQUAL,
-                KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+                  "candidateId", 
+                  FilterOperator.EQUAL,
+                  KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery newsArticleQueryResult = datastore.prepare(newsArticleQuery);
     List<Entity> newsArticles = newsArticleQueryResult.asList(FetchOptions.Builder.withDefaults());
     List<NewsArticle> newsArticlesData = new ArrayList<>(newsArticles.size());
     for (Entity newsArticle : newsArticles) {
-      NewsArticle newsArticleData = 
+      NewsArticle newsArticleData =
           new NewsArticle(
               (String) newsArticle.getProperty("title"),
               (String) newsArticle.getProperty("url"),
@@ -140,7 +139,7 @@ public class CandidateServlet extends HttpServlet {
     private Candidate candidateData;
     private List<NewsArticle> newsArticlesData;
 
-    CandidatePageDataPackage(Candidate candidateData,List<NewsArticle> newsArticlesData) {
+    CandidatePageDataPackage(Candidate candidateData, List<NewsArticle> newsArticlesData) {
       this.candidateData = candidateData;
       this.newsArticlesData = newsArticlesData;
     }

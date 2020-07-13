@@ -162,7 +162,7 @@ async function addCandidateInformation() {
       location.search.indexOf('=') + 1, location.search.indexOf('&'));
 
   const electionName =
-      location.search.substring(location.search.lastIndexOf("=") + 1,)
+      location.search.substring(location.search.lastIndexOf('=') + 1);
   // Send GET request to /candidate and fetch JSON formatted data for the given
   // candidate ID.
   const response =
@@ -225,7 +225,7 @@ function addOfficialCandidateInformation(officialCandidateInfo) {
  *     </article>
  */
 function addNewsArticles(newsArticles) {
-  const newsArticlesContainer = 
+  const newsArticlesContainer =
       document.getElementById('news-articles-container');
   newsArticlesContainer.innerHTML = '';
   for (let i = 0; i < newsArticles.length; i++) {
