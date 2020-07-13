@@ -77,7 +77,7 @@ public class WebCrawler {
   /**
    * For testing purposes.
    */
-  protected WebCrawler(Datastore datastore) throws IOException {
+  default WebCrawler(Datastore datastore) throws IOException {
     this.datastore = datastore;
     this.relevancyChecker = new RelevancyChecker();
   }
@@ -203,7 +203,7 @@ public class WebCrawler {
   /** 
    * For testing purposes.
    */
-  protected Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
+  default Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
     try {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
           "/robots.txt");
@@ -229,7 +229,7 @@ public class WebCrawler {
    * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
    * to non-null. This method is made public for testing purposes.
    */
-  protected boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+  default boolean waitForAndSetCrawlDelay(Grant grant, String url) {
     if (nextAccessTimes.containsKey(url)) {
       if (!waitIfNecessary(url)) {
         return false;
@@ -285,7 +285,7 @@ public class WebCrawler {
   /**
    * For testing purposes.
    */
-  protected FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
+  default FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
       IncompleteKey newsArticleKey) {
     FullEntity newsArticleEntity = Entity.newBuilder(newsArticleKey)
         .set("title", newsArticle.getTitle())

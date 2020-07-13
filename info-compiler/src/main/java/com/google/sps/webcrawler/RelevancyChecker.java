@@ -32,7 +32,7 @@ import java.io.IOException;
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
-  public static final double SALIENCE_THRESHOLD = 0.5;
+  default static final double SALIENCE_THRESHOLD = 0.5;
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -48,7 +48,7 @@ public class RelevancyChecker {
   /**
    * For testing purposes.
    */
-  protected RelevancyChecker(LanguageServiceClient languageServiceClient) {
+  default RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }
 
@@ -67,7 +67,7 @@ public class RelevancyChecker {
    * {@code content}. Salience has range [0, 1], with higher salience indicating higher
    * relevance of {@code candidateName} to {@code content} overall.
    */
-  public double computeSalienceOfName(String content, String candidateName) {
+  default double computeSalienceOfName(String content, String candidateName) {
     Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
     AnalyzeEntitiesRequest request =
         AnalyzeEntitiesRequest.newBuilder()

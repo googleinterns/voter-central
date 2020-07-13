@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
  * Static utilities for extracting textual content from HTML pages.
  */
 public class NewsContentExtractor {
-  private static HtmlParser parser = new HtmlParser();
+  private static final HtmlParser parser = new HtmlParser();
 
   /**
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
