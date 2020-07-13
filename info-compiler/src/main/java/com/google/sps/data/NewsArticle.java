@@ -14,12 +14,7 @@
 
 package com.google.sps.data;
 
-import java.util.Arrays;
-import java.util.List;
-
-/**
- * A news article, including its metadata and content.
- */
+/** A news article, including its metadata and content. */
 public class NewsArticle {
   private String title;
   private String url;
