@@ -36,20 +36,18 @@ public class NewsContentExtractor {
 
   /**
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
-   * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors
-   * such as failure in reading in the HTML source code from {@code htmlFileStream}.
+   * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors such
+   * as failure in reading in the HTML source code from {@code htmlFileStream}.
    */
-  public static Optional<NewsArticle> extractContentFromHtml(InputStream htmlFileStream,
-      String url) {
+  public static Optional<NewsArticle> extractContentFromHtml(
+      InputStream htmlFileStream, String url) {
     BoilerpipeContentHandler boilerpipeHandler =
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
       parser.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      return Optional.of(new NewsArticle(textDocument.getTitle(),
-                                         url,
-                                         textDocument.getContent()));
+      return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
     } catch (IOException | SAXException | TikaException e) {
       return Optional.empty();
     }

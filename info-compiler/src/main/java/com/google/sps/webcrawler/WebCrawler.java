@@ -30,7 +30,6 @@ import com.panforge.robotstxt.RobotsTxt;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -120,9 +119,8 @@ public class WebCrawler {
    * access to the engine. In order for the web crawler to be tested from beginning to end, this
    * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
    *
-   * @see <a href=
-   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
-   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
+   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
     List<URL> urls = Arrays.asList();
@@ -136,23 +134,23 @@ public class WebCrawler {
       HttpGet httpGet = new HttpGet(request);
       ResponseHandler<String> responseHandler =
           new ResponseHandler<String>() {
-        @Override
-        public String handleResponse(final HttpResponse response) throws IOException {
-          int status = response.getStatusLine().getStatusCode();
-          if (status >= 200 && status < 300) {
-              HttpEntity entity = response.getEntity();
-              return entity != null ? EntityUtils.toString(entity) : null;
-          } else {
-              httpclient.close();
-              throw new ClientProtocolException("Unexpected response status: " + status);
-          }
-        }
+              @Override
+              public String handleResponse(final HttpResponse response) throws IOException {
+                int status = response.getStatusLine().getStatusCode();
+                if (status >= 200 && status < 300) {
+                    HttpEntity entity = response.getEntity();
+                    return entity != null ? EntityUtils.toString(entity) : null;
+                } else {
+                    httpclient.close();
+                    throw new ClientProtocolException("Unexpected response status: " + status);
+                }
+              }
       };
       String responseBody = httpclient.execute(httpGet, responseHandler);
       httpclient.close();
       Gson gson = new Gson();
       Object jsonResponse = gson.fromJson(responseBody, Object.class);
-      //@TODO [Unpack {@code jsonResponse} and find URLs.]
+      // @TODO [Unpack {@code jsonResponse} and find URLs.]
     } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
     }
@@ -165,8 +163,7 @@ public class WebCrawler {
    */
   public Optional<NewsArticle> scrapeAndExtractHtml(URL url) {
     try {
-      URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
-          "/robots.txt");
+      URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       String webpagePath = url.getPath();
@@ -190,9 +187,9 @@ public class WebCrawler {
   }
 
   /**
-   * Waits for the required crawl delay to pass if necessary and makes a note of the required
-   * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
-   * to non-null.
+   * Waits for the required crawl delay to pass if necessary and makes a note of the required crawl
+   * delay. Returns true if the aforementioned process succeeded. {@code grant} is expected to
+   * non-null.
    */
   private boolean waitForAndSetCrawlDelay(Grant grant, String url) {
     if (nextAccessTimes.containsKey(url)) {
@@ -224,8 +221,8 @@ public class WebCrawler {
   // @TODO [Fill in other properties: published date, publisher.]
   /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
-   * database schema. Requires "gcloud config set project project-ID" to be set correctly.
-   * {@code content} and {@code abbreviatedContent} are excluded form database indexes, which are
+   * database schema. Requires "gcloud config set project project-ID" to be set correctly. {@code
+   * content} and {@code abbreviatedContent} are excluded form database indexes, which are
    * additional data structures built to enable efficient lookup on non-keyed properties. Because
    * we will not query {@code NewsArticle} Datastore entities via {@code content} or
    * {@code abbreviatedContent}, we will not use indexes regardless.
@@ -233,7 +230,8 @@ public class WebCrawler {
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
     Key newsArticleKey =
-        datastore.newKeyFactory()
+        datastore
+            .newKeyFactory()
             .setKind("NewsArticle")
             .newKey((long) newsArticle.getUrl().hashCode());
     Entity newsArticleEntity =
@@ -242,7 +240,8 @@ public class WebCrawler {
             .set("title", newsArticle.getTitle())
             .set("url", newsArticle.getUrl())
             .set("content", excludeStringFromIndexes(newsArticle.getContent()))
-            .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .set(
+                "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
             .build();
     datastore.put(newsArticleEntity);
   }

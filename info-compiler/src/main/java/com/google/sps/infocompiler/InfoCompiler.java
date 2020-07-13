@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -56,7 +55,7 @@ public class InfoCompiler {
   private final static String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s", CIVIC_INFO_API_KEY);
   private final static String VOTER_INFO_QUERY_URL =
-    String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
+      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
   private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
   private List<String> electionQueryIds;
   // For testing purposes (not to add too much information to the database).
@@ -65,9 +64,9 @@ public class InfoCompiler {
 
   /**
    * Queries the ElectionQuery of the Civic Information API for a basic subset of election
-   * information, which will serve as the starting point for finding additional information,
-   * and stores said found information in the database. Information includes: name, date, and query
-   * ID of the election for the Civic Information API.
+   * information, which will serve as the starting point for finding additional information, and
+   * stores said found information in the database. Information includes: name, date, and query ID
+   * of the election for the Civic Information API.
    */
   public void queryAndStoreBaseElectionInfo() {
     queryAndStore(ELECTION_QUERY_URL, "elections", null);
@@ -75,11 +74,11 @@ public class InfoCompiler {
 
   /**
    * Queries the VoterInfoQuery of the Civic Information API for election positions and candidates
-   * information, which will serve as the starting point for finding additional information,
-   * and stores said found information in the database. VoterInfoQuery requires two query
-   * parameters: (1) address and (2) election ID. To cover the entire United States and all
-   * elections, queries all combinations of states as the address and election IDs. Information
-   * includes: positions, candidate names, candidate party affiliations.
+   * information, which will serve as the starting point for finding additional information, and
+   * stores said found information in the database. VoterInfoQuery requires two query parameters:
+   * (1) address and (2) election ID. To cover the entire United States and all elections, queries
+   * all combinations of states as the address and election IDs. Information includes: positions,
+   * candidate names, candidate party affiliations.
    */
   public void queryAndStoreElectionContestInfo() {
     for (String state : states) {
@@ -95,14 +94,14 @@ public class InfoCompiler {
    * in the database.
    */
   private void queryAndStoreElectionContestInfo(String state, String electionQueryId) {
-    String queryUrl = String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
-                                    state, electionQueryId);
+    String queryUrl =
+        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL, state, electionQueryId);
     queryAndStore(queryUrl, "contests", electionQueryId);
   }
 
   /**
-   * Queries the Civic Information API (once) for {@code targetInfo}, by making requests to
-   * {@code queryUrl}, and saves found information in the database.
+   * Queries the Civic Information API (once) for {@code targetInfo}, by making requests to {@code
+   * queryUrl}, and saves found information in the database.
    */
   private void queryAndStore(String queryUrl, String targetInfo, String electionQueryId) {
     JsonArray infoArray;
@@ -130,26 +129,25 @@ public class InfoCompiler {
    * Queries the Civic Information API and retrieves JSON response as {@code JsonObject}.
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
-   * @see <a href=
-   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
-   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
+   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
     ResponseHandler<String> responseHandler =
         new ResponseHandler<String>() {
-      @Override
-      public String handleResponse(final HttpResponse response) throws IOException {
-        int status = response.getStatusLine().getStatusCode();
-        if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? EntityUtils.toString(entity) : null;
-        } else {
-            httpclient.close();
-            throw new ClientProtocolException("Unexpected response status: " + status);
+        @Override
+        public String handleResponse(final HttpResponse response) throws IOException {
+          int status = response.getStatusLine().getStatusCode();
+          if (status >= 200 && status < 300) {
+              HttpEntity entity = response.getEntity();
+              return entity != null ? EntityUtils.toString(entity) : null;
+          } else {
+              httpclient.close();
+              throw new ClientProtocolException("Unexpected response status: " + status);
+          }
         }
-      }
     };
     String responseBody = httpclient.execute(httpGet, responseHandler);
     httpclient.close();
@@ -163,32 +161,35 @@ public class InfoCompiler {
    * default, stores the election day at the beginning of the day in EDT timezone.
    */
   private void storeBaseElectionInDatabase(JsonObject election) {
-    Key electionKey = datastore.newKeyFactory()
-        .setKind("Election")
-        .newKey(election.get("name").getAsString());
+    Key electionKey =
+        datastore.newKeyFactory()
+            .setKind("Election")
+            .newKey(election.get("name").getAsString());
     String electionQueryId = election.get("id").getAsString();
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
-    Date date = new Date(
-        Integer.parseInt(yearMonthDay[0]) - 1900,
-        Integer.parseInt(yearMonthDay[1]) - 1,
-        Integer.parseInt(yearMonthDay[2]),
-        4,
-        0); // Convert from UTC to EDT with 4 hours.
-    Entity electionEntity = Entity.newBuilder(electionKey)
-        .set("queryId", electionQueryId)
-        .set("date", TimestampValue.newBuilder(Timestamp.of(date)).build())
-        .set("candidatePositions", Arrays.asList())
-        .set("candidateIds", Arrays.asList())
-        .set("candidateIncumbency", Arrays.asList())
-        .build();
+    Date date =
+        new Date(
+            Integer.parseInt(yearMonthDay[0]) - 1900,
+            Integer.parseInt(yearMonthDay[1]) - 1,
+            Integer.parseInt(yearMonthDay[2]),
+            4,
+            0); // Convert from UTC to EDT with 4 hours.
+    Entity electionEntity =
+        Entity.newBuilder(electionKey)
+            .set("queryId", electionQueryId)
+            .set("date", TimestampValue.newBuilder(Timestamp.of(date)).build())
+            .set("candidatePositions", Arrays.asList())
+            .set("candidateIds", Arrays.asList())
+            .set("candidateIncumbency", Arrays.asList())
+            .build();
     datastore.put(electionEntity);
     electionQueryIds.add(electionQueryId);
   }
 
   /**
    * Stores the {@code contest} information of an election, including election positions, running
-   * candidate names and party affiliations. Updates {@code Election} entities and creates
-   * {@code Candidate} entities.
+   * candidate names and party affiliations. Updates {@code Election} entities and creates {@code
+   * Candidate} entities.
    */
   private void storeElectionContestInDatabase(String electionQueryId, JsonObject contest) {
     JsonArray candidates = contest.getAsJsonArray("candidates");
@@ -213,9 +214,10 @@ public class InfoCompiler {
     // Obtain candidate information and create candidate entities in the database.
     for (JsonElement candidate : candidates) {
       storeElectionContestCandidateInDatabase(
-          (JsonObject) candidate, candidateIds, candidateIncumbency);
-      candidatePositions.add(
-          StringValue.newBuilder(contest.get("office").getAsString()).build());
+          (JsonObject) candidate,
+          candidateIds,
+          candidateIncumbency);
+      candidatePositions.add(StringValue.newBuilder(contest.get("office").getAsString()).build());
     }
     // Fill in position and candidate information for the election entities in the database.
     electionEntity =
@@ -229,8 +231,8 @@ public class InfoCompiler {
 
   // @TODO [Find incumbency.]
   /**
-   * Stores information of a {@code candidate} in the database, and updates the candidate's
-   * running position's information for the election. Information includes: name, party affiliation.
+   * Stores information of a {@code candidate} in the database, and updates the candidate's running
+   * position's information for the election. Information includes: name, party affiliation.
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {

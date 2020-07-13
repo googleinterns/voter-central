@@ -16,8 +16,6 @@ package com.google.sps.webcrawler;
 
 import com.google.sps.data.NewsArticle;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 /** Static utilities for processing textual content, such as abbreviation. */
 public class NewsContentProcessor {
