@@ -45,9 +45,11 @@ public class CandidateServlet extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     // Extract candidate ID.
     String candidateId = request.getParameter("candidateId");
-
+    String electionName = request.getParameter("electionName");
+    System.out.println(electionName);
+    
     // @TODO [Get (1) official election/candidate information.]
-    Candidate candidateData = getCandidateData(candidateId);
+    Candidate candidateData = getCandidateData(candidateId, electionName);
     // Get (2) news article information.
     List<NewsArticle> newsArticlesData = findNewsArticles(candidateId);
     // @TODO [Get (3) social media feed.]
@@ -63,22 +65,39 @@ public class CandidateServlet extends HttpServlet {
   }
 
   // @TODO [Function for getting (1) official election/candidate information from the database.]
-  private Candidate getCandidateData(String candidateId) {
+  private Candidate getCandidateData(String candidateId, String electionName) {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     Query candidateQuery = new Query("Candidate")
         .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
     Entity candidateData = candidateQueryResult.asSingleEntity();
+
+    Query electionQuery = new Query("Election")
+          .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
+                    KeyFactory.createKey("Election", electionName)));
+    PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
+    Entity election = electionQueryResult.asSingleEntity();
+    List<String> electionCandidateIdList = (List<String>) election.getProperty("candidateIds");
+    List<String> electionPositionList = 
+        (List<String>) election.getProperty("candidatePositions");
+    List<Boolean> electionIsIncumbentList = 
+        (List<Boolean>) election.getProperty("candidateIncumbency");
+    int candidateIdIndex = electionCandidateIdList.indexOf(candidateId);
+    boolean candidateIncumbency = electionIsIncumbentList.get(candidateIdIndex);
+    String candidatePosition = electionPositionList.get(candidateIdIndex);
+
     return new Candidate(candidateId,
-                      (String)candidateData.getProperty("name"),
-                      (String)candidateData.getProperty("partyAffiliation"),
-                      (Boolean)candidateData.getProperty("isIncumbent"),
-                      (String)candidateData.getProperty("photoURL"),
-                      (String)candidateData.getProperty("email"),
-                      (String)candidateData.getProperty("phone number"),
-                      (String)candidateData.getProperty("website"));
+                      (String) candidateData.getProperty("name"),
+                      (String) candidateData.getProperty("partyAffiliation"),
+                      (boolean) candidateIncumbency,
+                      (String) candidateData.getProperty("email"),
+                      (String) candidateData.getProperty("phone number"),
+                      (String) candidateData.getProperty("photoURL"),
+                      (String) candidatePosition,
+                      (String) candidateData.getProperty("website"));
   }
+
   /**
    * Queries the database for news articles about the candidate represented by {@code candidateId}.
    */

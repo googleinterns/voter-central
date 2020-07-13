@@ -21,11 +21,11 @@ import java.util.List;
  * to one or more candidates.
  */
 public class Position {
-  private String name;
+  private String positionName;
   private List<DirectoryCandidate> candidates;
 
-  public Position (String name, List<DirectoryCandidate> candidates) {
-    this.name = name;
+  public Position (String positionName, List<DirectoryCandidate> candidates) {
+    this.positionName = positionName;
     this.candidates = candidates;
   }
 }

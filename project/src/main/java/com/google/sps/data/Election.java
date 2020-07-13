@@ -25,12 +25,12 @@ import java.util.Set;
  * positions.
  */
 public class Election {
-  private String name;
+  private String electionName;
   private Date date;
   private List<Position> positions;
 
-  public Election(String name, Date date, List<Position> positions) {
-    this.name = name;
+  public Election(String electionName, Date date, List<Position> positions) {
+    this.electionName = electionName;
     this.date = date;
     this.positions = positions;
   }

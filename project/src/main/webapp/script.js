@@ -75,12 +75,13 @@ function constructElection(election, electionIndex) {
   const electionElement = document.createElement('div');
   electionElement.id = `election-${electionIndex + 1}`;
   electionElement.innerHTML =
-      `<h3>${election.name}</h3>
+      `<h3>${election.electionName}</h3>
         <time>${election.date}</time>`;
   const positions = election.positions;
   const positionsElement = document.createElement('div');
   positionsElement.id = electionElement.id + `-positions`;
-  const positionsList = constructPositionsList(positions);
+  const positionsList = 
+      constructPositionsList(positions, election.electionName);
   positionsElement.appendChild(positionsList);
   electionElement.appendChild(positionsElement);
   return electionElement;
@@ -89,12 +90,12 @@ function constructElection(election, electionIndex) {
 /**
  * Constructs the HTML of a list of positions, corresponding to one election.
  */
-function constructPositionsList(positions) {
+function constructPositionsList(positions, electionName) {
   const positionsList = document.createElement('ul');
   for (let positionIndex = 0; positionIndex < positions.length;
       positionIndex++) {
     const positionItem = constructPositionsListItem(positions[positionIndex],
-                                                    positionIndex);
+                                                    positionIndex, electionName);
     positionsList.appendChild(positionItem);
   }
   return positionsList;
@@ -103,12 +104,12 @@ function constructPositionsList(positions) {
 /**
  * Constructs the HTML of one position, which contains a table of candidates.
  */
-function constructPositionsListItem(position, positionIndex) {
+function constructPositionsListItem(position, positionIndex, electionName) {
   const positionItem = document.createElement('li');
   positionItem.innerHTML =
-      `<h4>Position ${positionIndex + 1}: ${position.name}</h4>
+      `<h4>Position ${positionIndex + 1}: ${position.positionName}</h4>
         <p>Table of Candidates</p>`;
-  const candidatesTable = constructCandidateTable(position.candidates);
+  const candidatesTable = constructCandidateTable(position.candidates, electionName);
   positionItem.appendChild(candidatesTable);
   return positionItem;
 }
@@ -116,7 +117,7 @@ function constructPositionsListItem(position, positionIndex) {
 /**
  * Constructs the HTML of a table of candidates, corresponding to one position.
  */
-function constructCandidateTable(candidates) {
+function constructCandidateTable(candidates, electionName) {
   const candidatesTable = document.createElement('table');
   candidatesTable.innerHTML =
       `<tr>
@@ -129,9 +130,10 @@ function constructCandidateTable(candidates) {
     const candidate = candidates[candidateIndex];
     candidatesTable.innerHTML +=
         constructCandidateTableRow(candidate.id,
-                                   candidate.name,
+                                   candidate.candidateName,
                                    candidate.partyAffiliation,
-                                   candidate.isIncumbent);
+                                   candidate.isIncumbent,
+                                   electionName);
   }
   return candidatesTable;
 }
@@ -140,10 +142,11 @@ function constructCandidateTable(candidates) {
  * Constructs the HTML of one table row for a candidate. Adds candidate info
  * and embed candidate ID into the URL.
  */
-function constructCandidateTableRow(id, name, partyAffiliation, isIncumbent) {
+function constructCandidateTableRow(id, candidateName, partyAffiliation, isIncumbent,
+    electionName) {
   return `<tr>
-            <td><a href="candidate.html?candidateId=${id}">
-                ${name}</a></td>
+            <td><a href="candidate.html?candidateId=${id}&electionName=${electionName}">
+                ${candidateName}</a></td>
             <td>${partyAffiliation}</td>
             <td>${isIncumbent ? 'Yes' : 'No'}</td>
           </tr>`;
@@ -154,11 +157,14 @@ function constructCandidateTableRow(id, name, partyAffiliation, isIncumbent) {
  */
 async function addCandidateInformation() {
   const candidateId = location.search.substring(
-      location.search.indexOf('=') + 1);
+      location.search.indexOf('=') + 1, location.search.indexOf('&'));
 
+  const electionName = 
+      location.search.substring(location.search.lastIndexOf("=") + 1,)
   // Send GET request to /candidate and fetch JSON formatted data for the given
   // candidate ID.
-  const response = await fetch(`/candidate?candidateId=${candidateId}`);
+  const response = 
+      await fetch(`/candidate?candidateId=${candidateId}&electionName=${electionName}`);
   const dataPackage = await response.json();
 
   // Unpack response.
@@ -167,27 +173,37 @@ async function addCandidateInformation() {
   const socialMedia = dataPackage.socialMediaData;
 
   // Add 3 components of information to the candidate page.
-  addOfficialCandidateInformation(officialCandidateInfo);
   addNewsArticles(newsArticles);
   addSocialMedia(socialMedia);
+  addOfficialCandidateInformation(officialCandidateInfo);
+
 }
 
 /**
- * @TODO [Adds the official information component to the candidate page.]
+ * @TODO [add blurb and more detailed information with webscraping]
+ *Returns HTML that can be used to populate candidate info page dynamically.
  */
 function addOfficialCandidateInformation(officialCandidateInfo) {
   const officialInfoContainer = 
       document.getElementById('official-info-container');
+  var messageForIncumbents = "";
+  if (officialCandidateInfo.isIncumbent) {
+    messageForIncumbents = officialCandidateInfo.candidateName + 
+        "currently holds office as " + officialCandidateInfo.position;
+  }
   officialInfoContainer.innerHTML = 
-      `<h3>${officialCandidateInfo.name}</h3>
+      `<h3>${officialCandidateInfo.candidateName}</h3>
       <img src="${officialCandidateInfo.photoURL}" alt="pic of 
-          ${officialCandidateInfo.name}" width="200" height="200">
+          ${officialCandidateInfo.candidateName}" width="200" height="200">
       <ul>
+        <li>Position: ${officialCandidateInfo.position}</li> 
         <li>Party Affiliation: ${officialCandidateInfo.partyAffiliation}</li>
-        <li>Email:${officialCandidateInfo.email}</li>
+        <li>Email: ${officialCandidateInfo.email}</li>
         <li>Phone Number: ${officialCandidateInfo.phoneNumber}</li>
       <ul>
-      <p>click <a href="${officialCandidateInfo.website}">here</a> to be redirected to ${officialCandidateInfo.name}'s website</p>`;
+      <p>${messageForIncumbents}</p>
+      <p>Click <a href="${officialCandidateInfo.website}">here</a> to be  
+          redirected to ${officialCandidateInfo.candidateName}'s website</p>`;
 }
 
 /**
