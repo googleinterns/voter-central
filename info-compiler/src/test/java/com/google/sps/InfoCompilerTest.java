@@ -42,6 +42,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,12 +77,13 @@ public final class InfoCompilerTest {
   private static JsonObject SINGLE_CONTEST_JSON;
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
+  private static Datastore datastore;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
-    Datastore datastore = datastoreHelper.getOptions().getService();
+    datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
 
     ELECTION_JSON = new JsonObject();
@@ -102,6 +104,20 @@ public final class InfoCompilerTest {
     candidate.addProperty("party", "Democratic");
     candidates.add(candidate);
     SINGLE_CONTEST_JSON.add("candidates", candidates);
+  }
+
+  /**
+   * Resets the internal state of the Datastore emulator and then {@code datastore}. Also resets
+   * {@code infoCompiler}. We choose to reset, instead of creating/destroying the Datastore
+   * emulator at each test, because {@code datastoreHelper.stop()} sometimes generates a {@code
+   * java.net.ConnectException}, when making HTTP requests. Hence we try to limit the number of
+   * times {@code datastoreHelper} is created/destroyed.
+   */
+  @Before
+  public void resetDatastore() throws IOException {
+    datastoreHelper.reset();
+    datastore = datastoreHelper.getOptions().getService();
+    infoCompiler = new InfoCompiler(datastore);
   }
 
   @Test
@@ -139,7 +155,6 @@ public final class InfoCompilerTest {
         4,
         0);
 
-    Datastore datastore = resetDatastore();
     infoCompiler.storeBaseElectionInDatabase(election);
     Query<Entity> query =
         Query.newEntityQueryBuilder()
@@ -173,7 +188,6 @@ public final class InfoCompilerTest {
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
                                 + candidate.get("party").getAsString().hashCode());
 
-    Datastore datastore = resetDatastore();
     infoCompiler.storeBaseElectionInDatabase(election);
     infoCompiler.storeElectionContestInDatabase(election.get("id").getAsString(),
                                                 SINGLE_CONTEST_JSON);
@@ -213,14 +227,6 @@ public final class InfoCompilerTest {
     Assert.assertEquals(candidateEntity.getString("name"), candidate.get("name").getAsString());
     Assert.assertEquals(candidateEntity.getString("partyAffiliation"),
                         candidate.get("party").getAsString() + " Party");
-  }
-
-  /** Resets the internal state of the Datastore emulator and resets {@code infoCompiler}. */
-  private Datastore resetDatastore() throws IOException {
-    datastoreHelper.reset();
-    Datastore datastore = this.datastoreHelper.getOptions().getService();
-    infoCompiler = new InfoCompiler(datastore);
-    return datastore;
   }
 
   // Integrated tests.
