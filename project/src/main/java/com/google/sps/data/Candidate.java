@@ -22,17 +22,9 @@ public class Candidate extends DirectoryCandidate {
   private String website;
   private String twitter;
 
-  public Candidate(
-      String id,
-      String name,
-      String partyAffiliation,
-      boolean isIncumbent,
-      String email,
-      String phoneNumber,
-      String photoURL,
-      String position,
-      String website,
-      String twitter) {
+  public Candidate(String id, String name, String partyAffiliation, String email,
+      String phoneNumber, String photoURL, String position, String website,
+      String twitter, boolean isIncumbent) {
     super(id, name, partyAffiliation, isIncumbent);
     this.email = email;
     this.phoneNumber = phoneNumber;
