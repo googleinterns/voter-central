@@ -216,9 +216,9 @@ public final class WebCrawlerTest {
 
   /** Resets the internal state of the Datastore emulator and resets {@code webCrawler}. */
   private Datastore resetDatastore() throws IOException {
-    this.datastoreHelper.reset();
+    datastoreHelper.reset();
     Datastore datastore = this.datastoreHelper.getOptions().getService();
-    this.webCrawler = new WebCrawler(datastore);
+    webCrawler = new WebCrawler(datastore);
     return datastore;
   }
 
