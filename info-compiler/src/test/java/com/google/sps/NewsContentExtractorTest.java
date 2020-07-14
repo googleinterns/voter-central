@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.Optional;
 import org.apache.tika.exception.TikaException;
 import org.junit.Assert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -129,5 +130,10 @@ public final class NewsContentExtractorTest {
     Optional<NewsArticle> potentialNewsArticle =
         NewsContentExtractor.extractContentFromHtml(null, URL);
     Assert.assertFalse(potentialNewsArticle.isPresent());
+  }
+
+  @After
+  public void closeInputStream() throws IOException {
+    validWebpageStream.close();
   }
 }

@@ -173,6 +173,7 @@ public class WebCrawler {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
+      robotsTxtStream.close();
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
       return politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
@@ -196,7 +197,10 @@ public class WebCrawler {
           return Optional.empty();
         }
         InputStream webpageStream = url.openStream();
-        return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+        Optional<NewsArticle> potentialNewsArticle =
+            NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+        webpageStream.close();
+        return potentialNewsArticle;
       } else {
         return Optional.empty();
       }
