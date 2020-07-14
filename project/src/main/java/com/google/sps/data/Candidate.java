@@ -20,6 +20,7 @@ public class Candidate extends DirectoryCandidate {
   private String photoURL;
   private String position;
   private String website;
+  private String twitter;
 
   public Candidate(
       String id,
@@ -30,12 +31,14 @@ public class Candidate extends DirectoryCandidate {
       String phoneNumber,
       String photoURL,
       String position,
-      String website) {
+      String website,
+      String twitter) {
     super(id, name, partyAffiliation, isIncumbent);
     this.email = email;
     this.phoneNumber = phoneNumber;
     this.photoURL = photoURL;
     this.position = position;
     this.website = website;
+    this.twitter = twitter;
   }
 }

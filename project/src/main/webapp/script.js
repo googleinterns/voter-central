@@ -176,14 +176,14 @@ async function addCandidateInformation() {
   const socialMedia = dataPackage.socialMediaData;
 
   // Add 3 components of information to the candidate page.
+  addOfficialCandidateInformation(officialCandidateInfo);
   addNewsArticles(newsArticles);
   addSocialMedia(socialMedia);
-  addOfficialCandidateInformation(officialCandidateInfo);
 }
 
 /**
  * @TODO [add blurb and more detailed information with webscraping]
- *Returns HTML that can be used to populate candidate info page dynamically.
+ * Returns HTML that can be used to populate candidate info page dynamically.
  */
 function addOfficialCandidateInformation(officialCandidateInfo) {
   const officialInfoContainer =
@@ -191,7 +191,7 @@ function addOfficialCandidateInformation(officialCandidateInfo) {
   let messageForIncumbents = '';
   if (officialCandidateInfo.isIncumbent) {
     messageForIncumbents = officialCandidateInfo.candidateName +
-        'currently holds office as ' + officialCandidateInfo.position;
+        ' currently holds office as ' + officialCandidateInfo.position;
   }
   officialInfoContainer.innerHTML =
       `<h3>${officialCandidateInfo.candidateName}</h3>
@@ -202,6 +202,7 @@ function addOfficialCandidateInformation(officialCandidateInfo) {
         <li>Party Affiliation: ${officialCandidateInfo.partyAffiliation}</li>
         <li>Email: ${officialCandidateInfo.email}</li>
         <li>Phone Number: ${officialCandidateInfo.phoneNumber}</li>
+        <li>Twitter: ${officialCandidateInfo.twitter}</li>
       <ul>
       <p>${messageForIncumbents}</p>
       <p>Click <a href="${officialCandidateInfo.website}">here</a> to be  
