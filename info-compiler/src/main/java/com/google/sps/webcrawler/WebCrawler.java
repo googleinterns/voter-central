@@ -274,7 +274,10 @@ public class WebCrawler {
    * the 1500-byte size limit for indexed data.
    */
   private StringValue excludeStringFromIndexes(String content) {
-    return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
+    return StringValue
+        .newBuilder(content == null ? "" : content)
+        .setExcludeFromIndexes(true)
+        .build();
   }
 
   /** For testing purposes. */

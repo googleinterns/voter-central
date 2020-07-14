@@ -60,7 +60,7 @@ public final class WebCrawlerTest {
         "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
         "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
         "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
-  private final static String ABBREVIATED_CONTENT = ".";
+  private final static String EMPTY_ABBREVIATED_CONTENT = "";
   private final static int DELAY = 1;
 
   private static WebCrawler webCrawler;
@@ -73,7 +73,6 @@ public final class WebCrawlerTest {
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
     webCrawler = new WebCrawler(datastore);
-    NEWS_ARTICLE.setAbbreviatedContent(ABBREVIATED_CONTENT);
   }
 
   /**
@@ -106,10 +105,7 @@ public final class WebCrawlerTest {
     Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
-    Assert.assertEquals(newsArticle.getUrl(), NEWS_ARTICLE.getUrl());
-    Assert.assertTrue(newsArticle.getContent().contains(NEWS_ARTICLE.getContent()));
-    Assert.assertNull(newsArticle.getAbbreviatedContent());
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE);
   }
 
   // For the following two methods:
@@ -183,13 +179,9 @@ public final class WebCrawlerTest {
     WebCrawler webCrawlerSpy = spy(webCrawler);
     Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
         grant, robotsUrl, url);
-    //verify(webCrawlerSpy, times(1)).waitForAndSetCrawlDelay(anyObject(), anyString());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
-    Assert.assertEquals(newsArticle.getUrl(), NEWS_ARTICLE.getUrl());
-    Assert.assertTrue(newsArticle.getContent().contains(NEWS_ARTICLE.getContent()));
-    Assert.assertNull(newsArticle.getAbbreviatedContent());
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE);
     Assert.assertTrue(webCrawler.getNextAccessTimes().containsKey(VALID_URL_ROBOTS_TXT));
   }
 
@@ -226,7 +218,7 @@ public final class WebCrawlerTest {
     Assert.assertEquals(newsArticleEntity.getString("url"), NEWS_ARTICLE.getUrl());
     Assert.assertEquals(newsArticleEntity.getString("content"), NEWS_ARTICLE.getContent());
     Assert.assertEquals(newsArticleEntity.getString("abbreviatedContent"),
-                        NEWS_ARTICLE.getAbbreviatedContent());
+                        EMPTY_ABBREVIATED_CONTENT);
   }
 
   // {@code newKeyFactory()} is deemed an abtract method and thus cannot be mocked directly or

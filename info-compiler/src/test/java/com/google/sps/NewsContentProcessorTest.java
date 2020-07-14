@@ -35,11 +35,13 @@ public final class NewsContentProcessorTest {
   private String LONG_CONTENT;
   private String MAX_CONTENT;
   private String SHORT_CONTENT;
+  private NewsArticle MAX_CONTENT_NEWS_ARTICLE;
+  private NewsArticle SHORT_CONTENT_NEWS_ARTICLE;
+  private NewsArticle EMPTY_CONTENT_NEWS_ARTICLE;
 
   @Before
   public void createContent() {
     LONG_CONTENT = "";
-    
     for (int i = 0; i < NewsContentProcessor.MAX_WORD_COUNT + 1; i++) {
       LONG_CONTENT += WORD + " ";
     }
@@ -52,6 +54,13 @@ public final class NewsContentProcessorTest {
       }
     }
     SHORT_CONTENT = WORD;
+
+    MAX_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, LONG_CONTENT);
+    MAX_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(MAX_CONTENT);
+    SHORT_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, SHORT_CONTENT);
+    SHORT_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(SHORT_CONTENT);
+    EMPTY_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
+    EMPTY_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(EMPTY_CONTENT);
   }
 
   @Test
@@ -60,11 +69,8 @@ public final class NewsContentProcessorTest {
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
     // content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), LONG_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), MAX_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    Assert.assertEquals(processedNewsArticle, MAX_CONTENT_NEWS_ARTICLE);
   }
 
   @Test
@@ -73,11 +79,8 @@ public final class NewsContentProcessorTest {
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
     // title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), SHORT_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), SHORT_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    Assert.assertEquals(processedNewsArticle, SHORT_CONTENT_NEWS_ARTICLE);
   }
 
   @Test
@@ -85,10 +88,7 @@ public final class NewsContentProcessorTest {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), EMPTY_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), EMPTY_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    Assert.assertEquals(processedNewsArticle, EMPTY_CONTENT_NEWS_ARTICLE);
   }
 }

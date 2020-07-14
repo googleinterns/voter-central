@@ -47,6 +47,16 @@ public final class NewsContentExtractorTest {
           "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
           "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
           "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
+  private final static NewsArticle NEWS_ARTICLE_WITH_WRONG_URL =
+      new NewsArticle(
+          "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - " +
+          "CNNPolitics",
+          WRONG_URL,
+          "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
+          "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
+          "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
+  private final static NewsArticle NEWS_ARTICLE_WITH_EMPTY_CONTENT =
+      new NewsArticle(EMPTY, URL, EMPTY);
   private final static int END_OF_STREAM_INDICATOR = -1;
   private InputStream realWebpageStream;
 
@@ -61,13 +71,10 @@ public final class NewsContentExtractorTest {
     // be consistent with {@code URL} and {@code NEWS_ARTICLE}. Content processing hasn't occurred
     // so the abbreviated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(realWebpageStream, URL);
+        NewsContentExtractor.extractContentFromHtml(realWebpageStream, NEWS_ARTICLE.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
-    Assert.assertEquals(newsArticle.getUrl(), NEWS_ARTICLE.getUrl());
-    Assert.assertTrue(newsArticle.getContent().contains(NEWS_ARTICLE.getContent()));
-    Assert.assertNull(newsArticle.getAbbreviatedContent());
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE);
   }
 
   @Test
@@ -77,14 +84,11 @@ public final class NewsContentExtractorTest {
     // URL. Other information should be consistent with {@code URL} and {@code NEWS_ARTICLE}.
     // Content processing hasn't occurred so the abbreivated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(realWebpageStream, WRONG_URL);
+        NewsContentExtractor.extractContentFromHtml(realWebpageStream,
+                                                    NEWS_ARTICLE_WITH_WRONG_URL.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
-    Assert.assertNotEquals(newsArticle.getUrl(), NEWS_ARTICLE.getUrl());
-    Assert.assertEquals(newsArticle.getUrl(), WRONG_URL);
-    Assert.assertTrue(newsArticle.getContent().contains(NEWS_ARTICLE.getContent()));
-    Assert.assertNull(newsArticle.getAbbreviatedContent());
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_WRONG_URL);
   }
 
   @Test
@@ -97,13 +101,11 @@ public final class NewsContentExtractorTest {
     when(alwaysValidStream.read(anyObject(), anyInt(), anyInt()))
         .thenReturn(END_OF_STREAM_INDICATOR);
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(alwaysValidStream, URL);
+        NewsContentExtractor.extractContentFromHtml(alwaysValidStream,
+                                                    NEWS_ARTICLE_WITH_EMPTY_CONTENT.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle.getTitle(), EMPTY);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), EMPTY);
-    Assert.assertNull(newsArticle.getAbbreviatedContent());
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_EMPTY_CONTENT);
   }
 
   @Test
