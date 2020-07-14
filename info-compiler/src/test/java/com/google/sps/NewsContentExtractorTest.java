@@ -38,6 +38,7 @@ public final class NewsContentExtractorTest {
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private final static String WRONG_URL =
     "https://www.wrong.com";
+  private final static String EMPTY = "";
   private final static NewsArticle NEWS_ARTICLE =
       new NewsArticle(
           "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - " +
@@ -46,20 +47,21 @@ public final class NewsContentExtractorTest {
           "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
           "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
           "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
-  private InputStream validWebpageStream;
+  private final static int END_OF_STREAM_INDICATOR = -1;
+  private InputStream realWebpageStream;
 
   @Before
   public void createInputStream() throws IOException {
-    validWebpageStream = new URL(URL).openStream();
+    realWebpageStream = new URL(URL).openStream();
   }
 
   @Test
-  public void extractContentFromHtml_validWebpage() {
-    // Extract content and meta data from a valid webpage. The extracted information should be
-    // consistent with {@code URL} and {@code NEWS_ARTICLE}. Content processing hasn't occurred
+  public void extractContentFromHtml_realValidWebpage() {
+    // Extract content and meta data from a real, valid webpage. The extracted information should
+    // be consistent with {@code URL} and {@code NEWS_ARTICLE}. Content processing hasn't occurred
     // so the abbreviated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(validWebpageStream, URL);
+        NewsContentExtractor.extractContentFromHtml(realWebpageStream, URL);
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
@@ -69,20 +71,38 @@ public final class NewsContentExtractorTest {
   }
 
   @Test
-  public void extractContentFromHtml_validWebpageWithWrongUrlParam() {
-    // Extract content and meta data from a valid webpage, but the URL passed in is incorrect.
+  public void extractContentFromHtml_realValidWebpageWithWrongUrlParam() {
+    // Extract content and meta data from a real, valid webpage, but the URL passed in is incorrect.
     // The extraction process is correct, but the constructed {@code NewsArticle} has the incorrect
     // URL. Other information should be consistent with {@code URL} and {@code NEWS_ARTICLE}.
     // Content processing hasn't occurred so the abbreivated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(validWebpageStream, WRONG_URL);
+        NewsContentExtractor.extractContentFromHtml(realWebpageStream, WRONG_URL);
     Assert.assertTrue(potentialNewsArticle.isPresent());
-
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle.getTitle(), NEWS_ARTICLE.getTitle());
     Assert.assertNotEquals(newsArticle.getUrl(), NEWS_ARTICLE.getUrl());
     Assert.assertEquals(newsArticle.getUrl(), WRONG_URL);
     Assert.assertTrue(newsArticle.getContent().contains(NEWS_ARTICLE.getContent()));
+    Assert.assertNull(newsArticle.getAbbreviatedContent());
+  }
+
+  @Test
+  public void extractContentFromHtml_alwaysValidWebpage() throws IOException {
+    // Extract content and meta data from an always valid webpage that contains no content. The
+    // extraction process is correct, and extracted title and content are {@code EMPTY}. URL is
+    // set correctly to {@code URL}. Content processing hasn't occurred so the abbreivated content
+    // is null.
+    InputStream alwaysValidStream = mock(InputStream.class);
+    when(alwaysValidStream.read(anyObject(), anyInt(), anyInt()))
+        .thenReturn(END_OF_STREAM_INDICATOR);
+    Optional<NewsArticle> potentialNewsArticle =
+        NewsContentExtractor.extractContentFromHtml(alwaysValidStream, URL);
+    Assert.assertTrue(potentialNewsArticle.isPresent());
+    NewsArticle newsArticle = potentialNewsArticle.get();
+    Assert.assertEquals(newsArticle.getTitle(), EMPTY);
+    Assert.assertEquals(newsArticle.getUrl(), URL);
+    Assert.assertEquals(newsArticle.getContent(), EMPTY);
     Assert.assertNull(newsArticle.getAbbreviatedContent());
   }
 
@@ -134,6 +154,6 @@ public final class NewsContentExtractorTest {
 
   @After
   public void closeInputStream() throws IOException {
-    validWebpageStream.close();
+    realWebpageStream.close();
   }
 }
