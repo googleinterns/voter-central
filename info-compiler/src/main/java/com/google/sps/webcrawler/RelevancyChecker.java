@@ -44,9 +44,7 @@ public class RelevancyChecker {
     this(LanguageServiceClient.create());
   }
 
-  /**
-   * For testing purposes.
-   */
+  /** For testing purposes. */
   RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }

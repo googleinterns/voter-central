@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,14 +65,29 @@ public final class WebCrawlerTest {
 
   private static WebCrawler webCrawler;
   private static LocalDatastoreHelper datastoreHelper;
+  private static Datastore datastore;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
-    Datastore datastore = datastoreHelper.getOptions().getService();
+    datastore = datastoreHelper.getOptions().getService();
     webCrawler = new WebCrawler(datastore);
     NEWS_ARTICLE.setAbbreviatedContent(ABBREVIATED_CONTENT);
+  }
+
+  /**
+   * Resets the internal state of the Datastore emulator and then {@code datastore}. Also resets
+   * {@code webCrawler}. We choose to reset, instead of creating/destroying the Datastore emulator
+   * at each test is because {@code datastoreHelper.stop()} sometimes generates a {@code
+   * java.net.ConnectException}, when making HTTP requests. Hence we try to limit the number of
+   * times {@code datastoreHelper} is created/destroyed.
+   */
+  @Before
+  public void resetDatastore() throws IOException {
+    datastoreHelper.reset();
+    datastore = datastoreHelper.getOptions().getService();
+    webCrawler = new WebCrawler(datastore);
   }
 
   // @TODO [Implement unit tests for getting URLs from the Custom Search engine.]
@@ -185,7 +201,6 @@ public final class WebCrawlerTest {
     // said entity into the database. Use a Datastore emulator to simulate operations, as
     // opposed to a Mockito mock of Datastore which does not provide mocking of all required
     // operations.
-    Datastore datastore = resetDatastore();
     webCrawler.storeInDatabase(CANDIDATE_ID, NEWS_ARTICLE);
     Query<Entity> query =
         Query.newEntityQueryBuilder()
@@ -212,14 +227,6 @@ public final class WebCrawlerTest {
     Assert.assertEquals(newsArticleEntity.getString("content"), NEWS_ARTICLE.getContent());
     Assert.assertEquals(newsArticleEntity.getString("abbreviatedContent"),
                         NEWS_ARTICLE.getAbbreviatedContent());
-  }
-
-  /** Resets the internal state of the Datastore emulator and resets {@code webCrawler}. */
-  private Datastore resetDatastore() throws IOException {
-    datastoreHelper.reset();
-    Datastore datastore = this.datastoreHelper.getOptions().getService();
-    webCrawler = new WebCrawler(datastore);
-    return datastore;
   }
 
   // {@code newKeyFactory()} is deemed an abtract method and thus cannot be mocked directly or

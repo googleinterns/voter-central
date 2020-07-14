@@ -59,12 +59,9 @@ public final class RelevancyCheckerTest {
   }
 
   @Test
-  public void computeSalienceOfName_checkWithMockComputationThatFindsEverythingRelevant() {
+  public void computeSalienceOfName_findsEverythingRelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
-    // score higher than {@code SALIENCE_THRESHOLD}. The mock will determine relevancy by
-    // comparing the fake salience score with {@code SALIENCE_THRESHOLD} as a real relevancy
-    // checker would. As a result, both {@code RELEVANT_CONTENT} and {@code IRRELEVANT_CONTENT}
-    // will be deemed relevant.
+    // score higher than {@code SALIENCE_THRESHOLD}.
     NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
     NewsArticle irrelevantNewsArticle = new NewsArticle(TITLE, URL, IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
@@ -76,12 +73,9 @@ public final class RelevancyCheckerTest {
   }
 
   @Test
-  public void computeSalienceOfName_checkWithMockComputationThatFindsEverythingIrrelevant() {
+  public void computeSalienceOfName_findsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
-    // score lower than {@code SALIENCE_THRESHOLD}. The mock will determine relevancy by
-    // comparing the fake salience score with {@code SALIENCE_THRESHOLD} as a real relevancy
-    // checker would. As a result, both {@code RELEVANT_CONTENT} and {@code IRRELEVANT_CONTENT}
-    // will be deemed irrelevant.
+    // score lower than {@code SALIENCE_THRESHOLD}.
     NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
     NewsArticle irrelevantNewsArticle = new NewsArticle(TITLE, URL, IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
@@ -113,7 +107,7 @@ public final class RelevancyCheckerTest {
   // method calls within {@code computeSalienceOfName()}.
   //
   // @Test
-  // public void computeSalienceOfName_checkWithMockClientThatFindsEverythingRelevant() {
+  // public void computeSalienceOfName_clientThatFindsEverythingRelevant() {
   //   // Check content relevancy with a mock Natural Language API client that computes a salience
   //   // score higher than {@code SALIENCE_THRESHOLD}. Both {@code RELEVANT_CONTENT} and
   //   // {@code IRRELEVANT_CONTENT} will be deemed relevant. {@code thenReturn} does not take
@@ -137,7 +131,7 @@ public final class RelevancyCheckerTest {
   //   Assert.assertTrue(relevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME));
   // }
   // @Test
-  // public void computeSalienceOfName_checkWithMockClientThatFindsEverythingIrrelevant() {
+  // public void computeSalienceOfName_clientThatFindsEverythingIrrelevant() {
   //   // Check content relevancy with a mock Natural Language API client that computes a salience
   //   // score lower than {@code SALIENCE_THRESHOLD}. Both {@code RELEVANT_CONTENT} and
   //   // {@code IRRELEVANT_CONTENT} will be deemed irrelevant. {@code thenReturn} does not take
@@ -156,7 +150,7 @@ public final class RelevancyCheckerTest {
   // {@code com.google.api.gax.rpc.PermissionDeniedException}.
   //
   // @Test
-  // public void isRelevant_checkWithRealClient() {
+  // public void isRelevant_realClient() {
   //   // Check content relevancy with a Natural Language API client. {@code RELEVANT_CONTENT} will
   //   // be deemed relevant, and {@code IRRELEVANT_CONTENT} irrelevant.
   //   NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
