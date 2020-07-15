@@ -41,6 +41,7 @@ public final class NewsContentProcessorTest {
 
   @Before
   public void createContent() {
+    // Construct content strings.
     LONG_CONTENT = "";
     for (int i = 0; i < NewsContentProcessor.MAX_WORD_COUNT + 1; i++) {
       LONG_CONTENT += WORD + " ";
@@ -54,7 +55,7 @@ public final class NewsContentProcessorTest {
       }
     }
     SHORT_CONTENT = WORD;
-
+    // Construct the expected news articles.
     MAX_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, LONG_CONTENT);
     MAX_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(MAX_CONTENT);
     SHORT_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, SHORT_CONTENT);
