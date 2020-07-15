@@ -70,7 +70,7 @@ public final class NewsContentProcessorTest {
     // content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(processedNewsArticle, MAX_CONTENT_NEWS_ARTICLE);
+    Assert.assertEquals(MAX_CONTENT_NEWS_ARTICLE, processedNewsArticle);
   }
 
   @Test
@@ -80,7 +80,7 @@ public final class NewsContentProcessorTest {
     // title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(processedNewsArticle, SHORT_CONTENT_NEWS_ARTICLE);
+    Assert.assertEquals(SHORT_CONTENT_NEWS_ARTICLE, processedNewsArticle);
   }
 
   @Test
@@ -89,6 +89,6 @@ public final class NewsContentProcessorTest {
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(processedNewsArticle, EMPTY_CONTENT_NEWS_ARTICLE);
+    Assert.assertEquals(EMPTY_CONTENT_NEWS_ARTICLE, processedNewsArticle);
   }
 }

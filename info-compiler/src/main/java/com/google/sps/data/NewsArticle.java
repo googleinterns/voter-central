@@ -67,13 +67,13 @@ public class NewsArticle {
    */
   @Override
   public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
     if (!(obj instanceof NewsArticle)) {
       return false;
     }
     NewsArticle other = (NewsArticle) obj;
-    if (other == this) {
-      return true;
-    }
     return this.title.equals(other.getTitle())
         && this.url.equals(other.getUrl())
         && (this.content.contains(other.getContent()) || other.getContent().contains(this.content))

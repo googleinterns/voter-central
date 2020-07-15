@@ -60,11 +60,21 @@ public class NewsContentExtractor {
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
-      parser.parse(htmlFileStream, boilerpipeHandler, metadata);
-      TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
+      return extractContentFromHtml(boilerpipeHandler, metadata, htmlFileStream, url);
     } catch (IOException | SAXException | TikaException e) {
       return Optional.empty();
     }
+  }
+
+  /**
+   * Extracts textual content from HTML with {@code boilerpipeHandler} and packages data into
+   * {@code NewsArticle}. This method is made default for testing purposes.
+   */
+  Optional<NewsArticle> extractContentFromHtml(BoilerpipeContentHandler boilerpipeHandler,
+      Metadata metadata, InputStream htmlFileStream, String url)
+      throws IOException, SAXException, TikaException {
+    parser.parse(htmlFileStream, boilerpipeHandler, metadata);
+    TextDocument textDocument = boilerpipeHandler.getTextDocument();
+    return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
   }
 }

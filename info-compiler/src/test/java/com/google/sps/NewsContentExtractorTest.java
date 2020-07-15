@@ -15,11 +15,16 @@
 package com.google.sps.webcrawler;
 
 import com.google.sps.data.NewsArticle;
+import de.l3s.boilerpipe.document.TextBlock;
+import de.l3s.boilerpipe.document.TextDocument;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.html.BoilerpipeContentHandler;
 import org.apache.tika.parser.html.HtmlParser;
 import org.junit.Assert;
@@ -41,14 +46,83 @@ public final class NewsContentExtractorTest {
   private final static String WRONG_URL =
     "https://www.wrong.com";
   private final static String EMPTY = "";
-  private final static NewsArticle NEWS_ARTICLE_WITH_EMPTY_CONTENT =
+  private final static String TITLE = "News Article Title";
+  private final static String CONTENT = "News article content.";
+  private final static TextBlock TEXT_BLOCK = new TextBlock(CONTENT);
+  private final static TextDocument TEXT_DOC_REGULAR =
+      new TextDocument(TITLE, Arrays.asList(TEXT_BLOCK));
+  private final static TextDocument TEXT_DOC_WITHOUT_TITLE =
+      new TextDocument(Arrays.asList(TEXT_BLOCK));
+  private final static NewsArticle NEWS_ARTICLE_REGULAR =
+      new NewsArticle(TITLE, URL, CONTENT);
+  private final static NewsArticle NEWS_ARTICLE_REGULAR_WRONG_URL =
+      new NewsArticle(TITLE, WRONG_URL, CONTENT);
+  private final static NewsArticle NEWS_ARTICLE_WITHOUT_TITLE =
+      new NewsArticle(EMPTY, URL, CONTENT);
+  private final static NewsArticle NEWS_ARTICLE_WITH_EMPTY_TITLE_CONTENT =
       new NewsArticle(EMPTY, URL, EMPTY);
-  private InputStream realWebpageStream;
+  private InputStream webpageStream;
   private NewsContentExtractor realNewsContentExtractor = new NewsContentExtractor();
 
   @Before
   public void createInputStream() throws IOException {
-    realWebpageStream = new URL(URL).openStream();
+    webpageStream = new URL(URL).openStream();
+  }
+
+  @Test
+  public void extractContentFromHtml_regularTextDoc() throws IOException, SAXException,
+      TikaException {
+    // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
+    // TEXT_DOC_REGULAR}. The results should be consistent with {@code NEWS_ARTICLE_REGULAR}.
+    // Content processing hasn't occurred so the abbreivated content is null.
+    HtmlParser parser = mock(HtmlParser.class);
+    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
+    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
+    Metadata metadata = new Metadata();
+    Optional<NewsArticle> potentialNewsArticle =
+        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
+                                                    URL);
+    Assert.assertTrue(potentialNewsArticle.isPresent());
+    Assert.assertEquals(NEWS_ARTICLE_REGULAR, potentialNewsArticle.get());
+  }
+
+  @Test
+  public void extractContentFromHtml_regularTextDocWrongUrlParam() throws IOException,
+      SAXException, TikaException {
+    // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
+    // TEXT_DOC_REGULAR} while passing in {@code WRONG_UFL}. The results should be consistent with
+    // {@code NEWS_ARTICLE_REGULAR_WRONG_URL}.
+    // Content processing hasn't occurred so the abbreivated content is null.
+    HtmlParser parser = mock(HtmlParser.class);
+    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
+    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
+    Metadata metadata = new Metadata();
+    Optional<NewsArticle> potentialNewsArticle =
+        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
+                                                    WRONG_URL);
+    Assert.assertTrue(potentialNewsArticle.isPresent());
+    Assert.assertEquals(NEWS_ARTICLE_REGULAR_WRONG_URL, potentialNewsArticle.get());
+  }
+
+  @Test
+  public void extractContentFromHtml_textDocWithoutTitle() throws IOException, SAXException,
+      TikaException {
+    // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
+    // TEXT_DOC_WITHOUT_TITLE}. Results should be consistent with {@code
+    // NEWS_ARTICLE_WITHOUT_TITLE}.
+    // Content processing hasn't occurred so the abbreivated content is null.
+    HtmlParser parser = mock(HtmlParser.class);
+    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
+    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_WITHOUT_TITLE);
+    Metadata metadata = new Metadata();
+    Optional<NewsArticle> potentialNewsArticle =
+        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
+                                                    URL);
+    Assert.assertTrue(potentialNewsArticle.isPresent());
+    Assert.assertEquals(NEWS_ARTICLE_WITHOUT_TITLE, potentialNewsArticle.get());
   }
 
   @Test
@@ -67,11 +141,10 @@ public final class NewsContentExtractorTest {
             }).when(parser).parse(anyObject(), anyObject(), anyObject());
     NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
     Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(realWebpageStream,
-                                                    NEWS_ARTICLE_WITH_EMPTY_CONTENT.getUrl());
+        newsContentExtractor.extractContentFromHtml(
+            webpageStream, NEWS_ARTICLE_WITH_EMPTY_TITLE_CONTENT.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
-    NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_EMPTY_CONTENT);
+    Assert.assertEquals(NEWS_ARTICLE_WITH_EMPTY_TITLE_CONTENT, potentialNewsArticle.get());
   }
 
   @Test
@@ -122,6 +195,6 @@ public final class NewsContentExtractorTest {
 
   @After
   public void closeInputStream() throws IOException {
-    realWebpageStream.close();
+    webpageStream.close();
   }
 }

@@ -52,7 +52,7 @@ public final class WebCrawlerTest {
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private final static String VALID_URL_ROBOTS_TXT =
     "https://www.cnn.com/robots.txt";
-  private final static NewsArticle NEWS_ARTICLE =
+  private final static NewsArticle EXPECTED_NEWS_ARTICLE =
     new NewsArticle(
         "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - " +
         "CNNPolitics",
@@ -96,7 +96,8 @@ public final class WebCrawlerTest {
   @Test
   public void scrapeAndExtractFromHtml_validUrl() throws IOException {
     // Scrape and extract news article content from {@code VALID_URL}. The content and metadata
-    // packaged in {@code NewsArticle} should be consistent with that in {@code NEWS_ARTICLE}.
+    // packaged in {@code NewsArticle} should be consistent with that in {@code
+    // EXPECTED_NEWS_ARTICLE}.
     // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
     // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
     // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
@@ -104,8 +105,7 @@ public final class WebCrawlerTest {
     URL url = new URL(VALID_URL);
     Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
     Assert.assertTrue(potentialNewsArticle.isPresent());
-    NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle, NEWS_ARTICLE);
+    Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
   }
 
   // For the following two methods:
@@ -167,7 +167,7 @@ public final class WebCrawlerTest {
     // {@code Grant}. The required delay should be documented in {@code nextAccessTimes}. It is 
     // keyed by {@code VALID_URL_ROBOTS_TXT}, which is the robots.txt file corresponding to
     // {@code VALID_URL}. The extracted content and metadata in {@code newsArticle} should be
-    // consistent with those of {@code NEWS_ARTICLE}.
+    // consistent with those of {@code EXPECTED_NEWS_ARTICLE}.
     // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
     // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
     // {@code NewsContentExtractor} to aid test-driven development.
@@ -180,20 +180,19 @@ public final class WebCrawlerTest {
     Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
         grant, robotsUrl, url);
     Assert.assertTrue(potentialNewsArticle.isPresent());
-    NewsArticle newsArticle = potentialNewsArticle.get();
-    Assert.assertEquals(newsArticle, NEWS_ARTICLE);
+    Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
     Assert.assertTrue(webCrawler.getNextAccessTimes().containsKey(VALID_URL_ROBOTS_TXT));
   }
 
   @Test
   public void storeInDatabase_checkDatastoreEntityConstructionFromNewsArticle()
       throws IOException {
-    // Check that the Datastore service extracts the correct information from {@code NEWS_ARTICLE},
-    // constructs the correct key and entity for storing that information, and successfully stores
-    // said entity into the database. Use a Datastore emulator to simulate operations, as
-    // opposed to a Mockito mock of Datastore which does not provide mocking of all required
-    // operations.
-    webCrawler.storeInDatabase(CANDIDATE_ID, NEWS_ARTICLE);
+    // Check that the Datastore service extracts the correct information from {@code
+    // EXPECTED_NEWS_ARTICLE}, constructs the correct key and entity for storing that information,
+    // and successfully stores said entity into the database. Use a Datastore emulator to simulate
+    // operations, as opposed to a Mockito mock of Datastore which does not provide mocking of all
+    // required operations.
+    webCrawler.storeInDatabase(CANDIDATE_ID, EXPECTED_NEWS_ARTICLE);
     Query<Entity> query =
         Query.newEntityQueryBuilder()
             .setKind("NewsArticle")
@@ -206,19 +205,18 @@ public final class WebCrawlerTest {
         datastore
             .newKeyFactory()
             .setKind("NewsArticle")
-            .newKey((long) NEWS_ARTICLE.getUrl().hashCode());
+            .newKey((long) EXPECTED_NEWS_ARTICLE.getUrl().hashCode());
     Key candidateKey =
         datastore
             .newKeyFactory()
             .setKind("Candidate")
             .newKey(CANDIDATE_ID);
-    Assert.assertEquals(newsArticleEntity.getKey(), newsArticleKey);
-    Assert.assertEquals(newsArticleEntity.getKey("candidateId"), candidateKey);
-    Assert.assertEquals(newsArticleEntity.getString("title"), NEWS_ARTICLE.getTitle());
-    Assert.assertEquals(newsArticleEntity.getString("url"), NEWS_ARTICLE.getUrl());
-    Assert.assertEquals(newsArticleEntity.getString("content"), NEWS_ARTICLE.getContent());
-    Assert.assertEquals(newsArticleEntity.getString("abbreviatedContent"),
-                        EMPTY_ABBREVIATED_CONTENT);
+    Assert.assertEquals(newsArticleKey, newsArticleEntity.getKey());
+    Assert.assertEquals(candidateKey, newsArticleEntity.getKey("candidateId"));
+    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getTitle(), newsArticleEntity.getString("title"));
+    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getUrl(), newsArticleEntity.getString("url"));
+    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getContent(), newsArticleEntity.getString("content"));
+    Assert.assertEquals(EMPTY_ABBREVIATED_CONTENT, newsArticleEntity.getString("abbreviatedContent"));
   }
 
   // {@code newKeyFactory()} is deemed an abtract method and thus cannot be mocked directly or
@@ -231,7 +229,7 @@ public final class WebCrawlerTest {
   //   // Verify that the Datastore service create two keys, one for the news article to be inserted
   //   // and the other for constructing a foreign reference key to the corresponding candidate.
   //   // Verify that the Datastore service stores an entity in the database.
-  //   webCrawler.storeInDatabase(CANDIDATE_ID, NEWS_ARTICLE);
+  //   webCrawler.storeInDatabase(CANDIDATE_ID, EXPECTED_NEWS_ARTICLE);
   //   verify(datastore, times(2)).newKeyFactory();
   //   verify(datastore, times(1)).put(any(Entity.class));
   // }
