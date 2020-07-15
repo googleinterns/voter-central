@@ -26,8 +26,7 @@ import java.io.IOException;
   */
 public class InfoCompilerFunction implements HttpFunction {
   @Override
-  public void service(HttpRequest request, HttpResponse response) 
-      throws IOException { // The full package is used here to prevent naming conflicts.
+  public void service(HttpRequest request, HttpResponse response) throws IOException {
     InfoCompiler infoCompiler = new InfoCompiler();
     infoCompiler.compileInfo();
     BufferedWriter writer = response.getWriter();
