@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/** 
+/**
  * Queries the backend database and serves candidate-specific information for the candidate page.
  */
 @WebServlet("/candidate")
@@ -45,16 +45,15 @@ public class CandidateServlet extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     // Extract candidate ID.
     String candidateId = request.getParameter("candidateId");
-
+    String electionName = request.getParameter("electionName");
     // @TODO [Get (1) official election/candidate information.]
-
+    Candidate candidateData = getCandidateData(candidateId, electionName);
     // Get (2) news article information.
     List<NewsArticle> newsArticlesData = findNewsArticles(candidateId);
-
     // @TODO [Get (3) social media feed.]
-
     // Find candidate-specific information. Package and convert the data to JSON.
-    CandidatePageDataPackage dataPackage = new CandidatePageDataPackage(null, newsArticlesData);
+    CandidatePageDataPackage dataPackage =
+        new CandidatePageDataPackage(candidateData, newsArticlesData);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
 
@@ -64,24 +63,71 @@ public class CandidateServlet extends HttpServlet {
   }
 
   // @TODO [Function for getting (1) official election/candidate information from the database.]
+  private Candidate getCandidateData(String candidateId, String electionName) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    Query candidateQuery =
+        new Query("Candidate")
+            .setFilter(
+                new FilterPredicate(
+                    "__key__",
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+    PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
+    Entity candidateData = candidateQueryResult.asSingleEntity();
+
+    Query electionQuery =
+        new Query("Election")
+            .setFilter(
+                new FilterPredicate(
+                    "__key__",
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Election", electionName)));
+    PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
+    Entity election = electionQueryResult.asSingleEntity();
+    List<String> electionCandidateIdList = (List<String>) election.getProperty("candidateIds");
+    List<String> electionPositionList = (List<String>) election.getProperty("candidatePositions");
+    List<Boolean> electionIsIncumbentList =
+        (List<Boolean>) election.getProperty("candidateIncumbency");
+    int candidateIdIndex = electionCandidateIdList.indexOf(candidateId);
+    boolean candidateIncumbency = electionIsIncumbentList.get(candidateIdIndex);
+    String candidatePosition = electionPositionList.get(candidateIdIndex);
+
+    return new Candidate(
+        candidateId,
+        (String) candidateData.getProperty("name"),
+        (String) candidateData.getProperty("partyAffiliation"),
+        (String) candidateData.getProperty("email"),
+        (String) candidateData.getProperty("phone number"),
+        (String) candidateData.getProperty("photoURL"),
+        candidatePosition,
+        (String) candidateData.getProperty("website"),
+        (String) candidateData.getProperty("Twitter handle"),
+        candidateIncumbency);
+  }
 
   /**
    * Queries the database for news articles about the candidate represented by {@code candidateId}.
    */
   private List<NewsArticle> findNewsArticles(String candidateId) {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    Query newsArticleQuery = new Query("NewsArticle")
-        .setFilter(new FilterPredicate("candidateId", FilterOperator.EQUAL,
-                   KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+    Query newsArticleQuery =
+        new Query("NewsArticle")
+            .setFilter(
+                new FilterPredicate(
+                    "candidateId", 
+                    FilterOperator.EQUAL,
+                    KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
     PreparedQuery newsArticleQueryResult = datastore.prepare(newsArticleQuery);
     List<Entity> newsArticles = newsArticleQueryResult.asList(FetchOptions.Builder.withDefaults());
     List<NewsArticle> newsArticlesData = new ArrayList<>(newsArticles.size());
     for (Entity newsArticle : newsArticles) {
-      NewsArticle newsArticleData = new NewsArticle((String) newsArticle.getProperty("title"),
-                                                    (String) newsArticle.getProperty("url"),
-                                                    (String) newsArticle.getProperty("publisher"),
-                                                    (Date) newsArticle.getProperty("publishedDate"),
-                                                    (String) newsArticle.getProperty("content"));
+      NewsArticle newsArticleData =
+          new NewsArticle(
+              (String) newsArticle.getProperty("title"),
+              (String) newsArticle.getProperty("url"),
+              (String) newsArticle.getProperty("publisher"),
+              (Date) newsArticle.getProperty("publishedDate"),
+              (String) newsArticle.getProperty("content"));
       newsArticlesData.add(newsArticleData);
     }
     return newsArticlesData;
@@ -94,8 +140,7 @@ public class CandidateServlet extends HttpServlet {
     private Candidate candidateData;
     private List<NewsArticle> newsArticlesData;
 
-    CandidatePageDataPackage(Candidate candidateData,
-        List<NewsArticle> newsArticlesData) {
+    CandidatePageDataPackage(Candidate candidateData, List<NewsArticle> newsArticlesData) {
       this.candidateData = candidateData;
       this.newsArticlesData = newsArticlesData;
     }
