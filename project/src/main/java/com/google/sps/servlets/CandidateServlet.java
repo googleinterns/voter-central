@@ -101,8 +101,8 @@ public class CandidateServlet extends HttpServlet {
         (String) candidateData.getProperty("photoURL"),
         candidatePosition,
         (String) candidateData.getProperty("website"),
-        (String) candidateData.getProperty("Twitter handle")
-        candidateIncumbency));
+        (String) candidateData.getProperty("Twitter handle"),
+        candidateIncumbency);
   }
 
   /**
