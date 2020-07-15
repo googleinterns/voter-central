@@ -53,31 +53,26 @@ public final class NewsContentExtractorTest {
       new TextDocument(TITLE, Arrays.asList(TEXT_BLOCK));
   private final static TextDocument TEXT_DOC_WITHOUT_TITLE =
       new TextDocument(Arrays.asList(TEXT_BLOCK));
-  private final static NewsArticle NEWS_ARTICLE_REGULAR =
-      new NewsArticle(TITLE, URL, CONTENT);
-  private final static NewsArticle NEWS_ARTICLE_REGULAR_WRONG_URL =
-      new NewsArticle(TITLE, WRONG_URL, CONTENT);
-  private final static NewsArticle NEWS_ARTICLE_WITHOUT_TITLE =
-      new NewsArticle(EMPTY, URL, CONTENT);
-  private final static NewsArticle NEWS_ARTICLE_WITH_EMPTY_TITLE_CONTENT =
-      new NewsArticle(EMPTY, URL, EMPTY);
+
   private InputStream webpageStream;
+  private HtmlParser parser;
   private NewsContentExtractor realNewsContentExtractor = new NewsContentExtractor();
+  private NewsContentExtractor newsContentExtractor;
+  private BoilerpipeContentHandler boilerpipeHandler;
 
   @Before
   public void createInputStream() {
     webpageStream = mock(InputStream.class);
+    parser = mock(HtmlParser.class);
+    newsContentExtractor = new NewsContentExtractor(parser);
+    boilerpipeHandler = mock(BoilerpipeContentHandler.class);
   }
 
   @Test
   public void extractContentFromHtml_regularTextDoc() throws IOException, SAXException,
       TikaException {
     // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
-    // TEXT_DOC_REGULAR}.
-    // Content processing hasn't occurred so the abbreivated content is null.
-    HtmlParser parser = mock(HtmlParser.class);
-    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
-    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    // TEXT_DOC_REGULAR}. Content processing hasn't occurred so the abbreivated content is null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
     Metadata metadata = new Metadata();
     Optional<NewsArticle> potentialNewsArticle =
@@ -91,11 +86,8 @@ public final class NewsContentExtractorTest {
   public void extractContentFromHtml_regularTextDocWrongUrlParam() throws IOException,
       SAXException, TikaException {
     // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
-    // TEXT_DOC_REGULAR} while passing in {@code WRONG_URL}.
-    // Content processing hasn't occurred so the abbreivated content is null.
-    HtmlParser parser = mock(HtmlParser.class);
-    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
-    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    // TEXT_DOC_REGULAR} while passing in {@code WRONG_URL}. Content processing hasn't occurred so
+    // the abbreivated content is null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
     Metadata metadata = new Metadata();
     Optional<NewsArticle> potentialNewsArticle =
@@ -109,11 +101,8 @@ public final class NewsContentExtractorTest {
   public void extractContentFromHtml_textDocWithoutTitle() throws IOException, SAXException,
       TikaException {
     // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
-    // TEXT_DOC_WITHOUT_TITLE}.
-    // Content processing hasn't occurred so the abbreivated content is null.
-    HtmlParser parser = mock(HtmlParser.class);
-    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
-    BoilerpipeContentHandler boilerpipeHandler = mock(BoilerpipeContentHandler.class);
+    // TEXT_DOC_WITHOUT_TITLE}. Content processing hasn't occurred so the abbreivated content is
+    // null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_WITHOUT_TITLE);
     Metadata metadata = new Metadata();
     Optional<NewsArticle> potentialNewsArticle =
@@ -130,17 +119,14 @@ public final class NewsContentExtractorTest {
     // receive an end-of-document notification via {@code endDocument()}. Therefore, an empty
     // article will be extracted, while the URL is set correctly to the passed in parameter.
     // Content processing hasn't occurred so the abbreivated content is null.
-    HtmlParser parser = mock(HtmlParser.class);
     doAnswer(parseInvocation -> {
                BoilerpipeContentHandler boilerpipeHandler =
                    (BoilerpipeContentHandler) parseInvocation.getArguments()[1];
                boilerpipeHandler.endDocument();
                return null;
             }).when(parser).parse(anyObject(), anyObject(), anyObject());
-    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
     Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(
-            webpageStream, NEWS_ARTICLE_WITH_EMPTY_TITLE_CONTENT.getUrl());
+        newsContentExtractor.extractContentFromHtml(webpageStream, URL);
     Assert.assertTrue(potentialNewsArticle.isPresent());
     Assert.assertEquals(new NewsArticle(EMPTY, URL, EMPTY), potentialNewsArticle.get());
   }
@@ -149,10 +135,9 @@ public final class NewsContentExtractorTest {
   public void extractContentFromHtml_IOExceptionStream() throws IOException {
     // The webpage stream throws {@code IOException} when being read. This exception should be
     // caught and no content will be extracted.
-    InputStream badStream = mock(InputStream.class);
-    when(badStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
+    when(webpageStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
     Optional<NewsArticle> potentialNewsArticle =
-        realNewsContentExtractor.extractContentFromHtml(badStream, URL);
+        realNewsContentExtractor.extractContentFromHtml(webpageStream, URL);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
 
@@ -163,10 +148,5 @@ public final class NewsContentExtractorTest {
     Optional<NewsArticle> potentialNewsArticle =
         realNewsContentExtractor.extractContentFromHtml(null, URL);
     Assert.assertFalse(potentialNewsArticle.isPresent());
-  }
-
-  @After
-  public void closeInputStream() throws IOException {
-    webpageStream.close();
   }
 }

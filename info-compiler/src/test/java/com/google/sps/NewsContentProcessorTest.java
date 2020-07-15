@@ -32,6 +32,7 @@ public final class NewsContentProcessorTest {
   private final static String URL = "https://www.cnn.com/index.html";
   private final static String WORD = "word";
   private final static String EMPTY_CONTENT = "";
+
   private String LONG_CONTENT;
   private String MAX_CONTENT;
   private String SHORT_CONTENT;
