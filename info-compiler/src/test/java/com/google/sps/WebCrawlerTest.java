@@ -66,13 +66,17 @@ public final class WebCrawlerTest {
   private static WebCrawler webCrawler;
   private static LocalDatastoreHelper datastoreHelper;
   private static Datastore datastore;
+  private static NewsContentExtractor newsContentExtractor;
+  private static RelevancyChecker relevancyChecker;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
-    webCrawler = new WebCrawler(datastore);
+    newsContentExtractor = mock(NewsContentExtractor.class);
+    relevancyChecker = mock(RelevancyChecker.class);
+    webCrawler = new WebCrawler(datastore, newsContentExtractor, relevancyChecker);
   }
 
   /**
@@ -86,27 +90,12 @@ public final class WebCrawlerTest {
   public void resetDatastore() throws IOException {
     datastoreHelper.reset();
     datastore = datastoreHelper.getOptions().getService();
-    webCrawler = new WebCrawler(datastore);
+    webCrawler = new WebCrawler(datastore, newsContentExtractor, relevancyChecker);
   }
 
   // @TODO [Implement unit tests for getting URLs from the Custom Search engine.]
   @Test
   public void getUrlsFromCustomSearch() {}
-
-  @Test
-  public void scrapeAndExtractFromHtml_validUrl() throws IOException {
-    // Scrape and extract news article content from {@code VALID_URL}. The content and metadata
-    // packaged in {@code NewsArticle} should be consistent with that in {@code
-    // EXPECTED_NEWS_ARTICLE}.
-    // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
-    // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-    // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-    // {@code NewsContentExtractor} to aid test-driven development.
-    URL url = new URL(VALID_URL);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
-  }
 
   // For the following two methods:
   // Mocking {@code URL}, which is a final class requires additional Mockito configuration.
@@ -149,15 +138,12 @@ public final class WebCrawlerTest {
     // {@code Grant}. The URLs for robots.txt and the webpage are irrelevant and set to those
     // corresponding to {@code VALID_URL}. An empty {@code Optional} should be returned as the
     // result.
-    // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-    // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-    // {@code NewsContentExtractor} to aid test-driven development.
     URL url = new URL(VALID_URL);
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(false);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
-        grant, robotsUrl, url);
+    Optional<NewsArticle> potentialNewsArticle =
+        webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
 
@@ -168,17 +154,15 @@ public final class WebCrawlerTest {
     // keyed by {@code VALID_URL_ROBOTS_TXT}, which is the robots.txt file corresponding to
     // {@code VALID_URL}. The extracted content and metadata in {@code newsArticle} should be
     // consistent with those of {@code EXPECTED_NEWS_ARTICLE}.
-    // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-    // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-    // {@code NewsContentExtractor} to aid test-driven development.
     URL url = new URL(VALID_URL);
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(true);
     when(grant.getCrawlDelay()).thenReturn(DELAY);
-    WebCrawler webCrawlerSpy = spy(webCrawler);
-    Optional<NewsArticle> potentialNewsArticle = webCrawler.politelyScrapeAndExtractFromHtml(
-        grant, robotsUrl, url);
+    when(newsContentExtractor.extractContentFromHtml(anyObject(), anyString()))
+        .thenReturn(Optional.of(EXPECTED_NEWS_ARTICLE));
+    Optional<NewsArticle> potentialNewsArticle =
+        webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
     Assert.assertTrue(potentialNewsArticle.isPresent());
     Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
     Assert.assertTrue(webCrawler.getNextAccessTimes().containsKey(VALID_URL_ROBOTS_TXT));

@@ -66,14 +66,16 @@ public class WebCrawler {
    *     of permission to access required libraries.
    */
   public WebCrawler() throws IOException {
-    this(DatastoreOptions.getDefaultInstance().getService());
+    this(DatastoreOptions.getDefaultInstance().getService(), new NewsContentExtractor(),
+         new RelevancyChecker());
   }
 
   /** For testing purposes. */
-  WebCrawler(Datastore datastore) throws IOException {
+  WebCrawler(Datastore datastore, NewsContentExtractor newsContentExtractor,
+      RelevancyChecker relevancyChecker) throws IOException {
     this.datastore = datastore;
-    this.newsContentExtractor = new NewsContentExtractor();
-    this.relevancyChecker = new RelevancyChecker();
+    this.newsContentExtractor = newsContentExtractor;
+    this.relevancyChecker = relevancyChecker;
   }
 
   /**
