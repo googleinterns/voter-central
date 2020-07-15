@@ -26,8 +26,8 @@ import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
- * A {@code RelevancyChecker} that performs entity analysis to check the relevancy of news article
- * content to a candidate.
+ * A utility class that performs entity analysis to check the relevancy of news article content to a
+ * candidate.
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]

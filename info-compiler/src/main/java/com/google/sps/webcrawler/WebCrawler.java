@@ -53,6 +53,7 @@ public class WebCrawler {
   private static final String TEST_URL =
       "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private Datastore datastore;
+  private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
   // Mappings of (website robots.txt URL, the next allowed time to access, in milliseconds) for
   // respecting the required crawl delay.
@@ -71,6 +72,7 @@ public class WebCrawler {
   /** For testing purposes. */
   WebCrawler(Datastore datastore) throws IOException {
     this.datastore = datastore;
+    this.newsContentExtractor = new NewsContentExtractor();
     this.relevancyChecker = new RelevancyChecker();
   }
 
@@ -198,7 +200,7 @@ public class WebCrawler {
         }
         InputStream webpageStream = url.openStream();
         Optional<NewsArticle> potentialNewsArticle =
-            NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+            newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
         webpageStream.close();
         return potentialNewsArticle;
       } else {

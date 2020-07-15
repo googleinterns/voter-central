@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.parser.html.BoilerpipeContentHandler;
+import org.apache.tika.parser.html.HtmlParser;
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -59,6 +61,7 @@ public final class NewsContentExtractorTest {
       new NewsArticle(EMPTY, URL, EMPTY);
   private final static int END_OF_STREAM_INDICATOR = -1;
   private InputStream realWebpageStream;
+  private NewsContentExtractor realNewsContentExtractor = new NewsContentExtractor();
 
   @Before
   public void createInputStream() throws IOException {
@@ -71,7 +74,7 @@ public final class NewsContentExtractorTest {
     // be consistent with {@code URL} and {@code NEWS_ARTICLE}. Content processing hasn't occurred
     // so the abbreviated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(realWebpageStream, NEWS_ARTICLE.getUrl());
+        realNewsContentExtractor.extractContentFromHtml(realWebpageStream, NEWS_ARTICLE.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle, NEWS_ARTICLE);
@@ -84,25 +87,48 @@ public final class NewsContentExtractorTest {
     // URL. Other information should be consistent with {@code URL} and {@code NEWS_ARTICLE}.
     // Content processing hasn't occurred so the abbreivated content is null.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(realWebpageStream,
-                                                    NEWS_ARTICLE_WITH_WRONG_URL.getUrl());
+        realNewsContentExtractor.extractContentFromHtml(realWebpageStream,
+                                                        NEWS_ARTICLE_WITH_WRONG_URL.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_WRONG_URL);
   }
 
   @Test
-  public void extractContentFromHtml_alwaysValidWebpage() throws IOException {
-    // Extract content and meta data from an always valid webpage that contains no content. The
-    // extraction process is correct, and extracted title and content are {@code EMPTY}. URL is
-    // set correctly to {@code URL}. Content processing hasn't occurred so the abbreivated content
-    // is null.
-    InputStream alwaysValidStream = mock(InputStream.class);
-    when(alwaysValidStream.read(anyObject(), anyInt(), anyInt()))
+  public void extractContentFromHtml_emptyDocParser() throws IOException, SAXException,
+      TikaException {
+    // Extract content and meta data using a parser that modifies the content handler to
+    // receive an end-of-document notification via {@code endDocument()}. Therefore, an empty
+    // article will be extracted, while the URL is set correctly to the passed in parameter.
+    // Content processing hasn't occurred so the abbreivated content is null.
+    HtmlParser parser = mock(HtmlParser.class);
+    doAnswer(parseInvocation -> {
+               BoilerpipeContentHandler boilerpipeHandler =
+                   (BoilerpipeContentHandler) parseInvocation.getArguments()[1];
+               boilerpipeHandler.endDocument();
+               return null;
+            }).when(parser).parse(anyObject(), anyObject(), anyObject());
+    NewsContentExtractor newsContentExtractor = new NewsContentExtractor(parser);
+    Optional<NewsArticle> potentialNewsArticle =
+        newsContentExtractor.extractContentFromHtml(realWebpageStream,
+                                                    NEWS_ARTICLE_WITH_EMPTY_CONTENT.getUrl());
+    Assert.assertTrue(potentialNewsArticle.isPresent());
+    NewsArticle newsArticle = potentialNewsArticle.get();
+    Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_EMPTY_CONTENT);
+  }
+
+  @Test
+  public void extractContentFromHtml_alwaysValidAndEmptyWebpageStream() throws IOException {
+    // Extract content and meta data from an always valid and empty webpage that contains no
+    // content. The extraction process is correct, and extracted title and content are {@code
+    // EMPTY}. URL is set correctly to {@code URL}. Content processing hasn't occurred so the
+    // abbreivated content is null.
+    InputStream alwaysValidAndEmptyStream = mock(InputStream.class);
+    when(alwaysValidAndEmptyStream.read(anyObject(), anyInt(), anyInt()))
         .thenReturn(END_OF_STREAM_INDICATOR);
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(alwaysValidStream,
-                                                    NEWS_ARTICLE_WITH_EMPTY_CONTENT.getUrl());
+        realNewsContentExtractor.extractContentFromHtml(alwaysValidAndEmptyStream,
+                                                        NEWS_ARTICLE_WITH_EMPTY_CONTENT.getUrl());
     Assert.assertTrue(potentialNewsArticle.isPresent());
     NewsArticle newsArticle = potentialNewsArticle.get();
     Assert.assertEquals(newsArticle, NEWS_ARTICLE_WITH_EMPTY_CONTENT);
@@ -115,7 +141,7 @@ public final class NewsContentExtractorTest {
     InputStream badStream = mock(InputStream.class);
     when(badStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(badStream, URL);
+        realNewsContentExtractor.extractContentFromHtml(badStream, URL);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
 
@@ -128,7 +154,7 @@ public final class NewsContentExtractorTest {
   //   InputStream badStream = mock(InputStream.class);
   //   when(badStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new SAXException());
   //   Optional<NewsArticle> potentialNewsArticle =
-  //       NewsContentExtractor.extractContentFromHtml(badStream, URL);
+  //       realNewsContentExtractor.extractContentFromHtml(badStream, URL);
   //   Assert.assertFalse(potentialNewsArticle.isPresent());
   // }
 
@@ -141,7 +167,7 @@ public final class NewsContentExtractorTest {
   //   InputStream badStream = mock(InputStream.class);
   //   when(badStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new TikaException(""));
   //   Optional<NewsArticle> potentialNewsArticle =
-  //       NewsContentExtractor.extractContentFromHtml(badStream, URL);
+  //       realNewsContentExtractor.extractContentFromHtml(badStream, URL);
   //   Assert.assertFalse(potentialNewsArticle.isPresent());
   // }
 
@@ -150,7 +176,7 @@ public final class NewsContentExtractorTest {
     // The webpage stream is null, and it will cause a {@code NullPointerException}. No content
     // can be extracted.
     Optional<NewsArticle> potentialNewsArticle =
-        NewsContentExtractor.extractContentFromHtml(null, URL);
+        realNewsContentExtractor.extractContentFromHtml(null, URL);
     Assert.assertFalse(potentialNewsArticle.isPresent());
   }
 

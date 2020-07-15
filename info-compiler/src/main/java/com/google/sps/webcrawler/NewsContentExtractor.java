@@ -30,16 +30,28 @@ import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
-/** Static utilities for extracting textual content from HTML pages. */
+/** A utility class for extracting textual content from HTML pages. */
 public class NewsContentExtractor {
-  private static final HtmlParser PARSER = new HtmlParser();
+  private HtmlParser parser;
+
+  /**
+   * Constructs a {@code NewsContentExtractor} instance to use Boilerpipe extraction.
+   */
+  public NewsContentExtractor() {
+    this(new HtmlParser());
+  }
+
+  /** For testing purposes. */
+  NewsContentExtractor(HtmlParser parser) {
+    this.parser = parser;
+  }
 
   /**
    * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
    * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors such
    * as failure in reading in the HTML source code from {@code htmlFileStream}.
    */
-  public static Optional<NewsArticle> extractContentFromHtml(
+  public Optional<NewsArticle> extractContentFromHtml(
       InputStream htmlFileStream, String url) {
     if (htmlFileStream == null) {
       return Optional.empty();
@@ -48,7 +60,7 @@ public class NewsContentExtractor {
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
-      PARSER.parse(htmlFileStream, boilerpipeHandler, metadata);
+      parser.parse(htmlFileStream, boilerpipeHandler, metadata);
       TextDocument textDocument = boilerpipeHandler.getTextDocument();
       return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
     } catch (IOException | SAXException | TikaException e) {
