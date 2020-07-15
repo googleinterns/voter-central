@@ -35,9 +35,6 @@ public final class NewsContentProcessorTest {
   private String LONG_CONTENT;
   private String MAX_CONTENT;
   private String SHORT_CONTENT;
-  private NewsArticle MAX_CONTENT_NEWS_ARTICLE;
-  private NewsArticle SHORT_CONTENT_NEWS_ARTICLE;
-  private NewsArticle EMPTY_CONTENT_NEWS_ARTICLE;
 
   @Before
   public void createContent() {
@@ -55,13 +52,6 @@ public final class NewsContentProcessorTest {
       }
     }
     SHORT_CONTENT = WORD;
-    // Construct the expected news articles.
-    MAX_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    MAX_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(MAX_CONTENT);
-    SHORT_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    SHORT_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(SHORT_CONTENT);
-    EMPTY_CONTENT_NEWS_ARTICLE = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    EMPTY_CONTENT_NEWS_ARTICLE.setAbbreviatedContent(EMPTY_CONTENT);
   }
 
   @Test
@@ -71,7 +61,9 @@ public final class NewsContentProcessorTest {
     // content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(MAX_CONTENT_NEWS_ARTICLE, processedNewsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(MAX_CONTENT);
+    Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 
   @Test
@@ -81,7 +73,9 @@ public final class NewsContentProcessorTest {
     // title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(SHORT_CONTENT_NEWS_ARTICLE, processedNewsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
+    Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 
   @Test
@@ -90,6 +84,8 @@ public final class NewsContentProcessorTest {
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(EMPTY_CONTENT_NEWS_ARTICLE, processedNewsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
+    Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 }

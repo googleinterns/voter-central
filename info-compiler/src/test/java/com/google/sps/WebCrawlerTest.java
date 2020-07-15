@@ -219,37 +219,6 @@ public final class WebCrawlerTest {
     Assert.assertEquals(EMPTY_ABBREVIATED_CONTENT, newsArticleEntity.getString("abbreviatedContent"));
   }
 
-  // {@code newKeyFactory()} is deemed an abtract method and thus cannot be mocked directly or
-  // invoked as a real method. Thus, that method will return null and subsequently cause a
-  // {@code NullPointerException}. Up to now, have not found a mock-able alternative method that
-  // realizes the same functionality as {@code newKeyFactory()}.
-  //
-  // @Test
-  // public void storeInDatabase_verifyDatastoreOperations() {
-  //   // Verify that the Datastore service create two keys, one for the news article to be inserted
-  //   // and the other for constructing a foreign reference key to the corresponding candidate.
-  //   // Verify that the Datastore service stores an entity in the database.
-  //   webCrawler.storeInDatabase(CANDIDATE_ID, EXPECTED_NEWS_ARTICLE);
-  //   verify(datastore, times(2)).newKeyFactory();
-  //   verify(datastore, times(1)).put(any(Entity.class));
-  // }
-
-  // Integrated test.
-  //
-  // @Test
-  // public void compileNewsArticles_oneCandidate() {
-  //   // Execute the entire news articles compilation process, starting from getting URLs about
-  //   // {@code CANDIDATE_NAME}, and ending with storing processed news articles content in the
-  //   // database.
-  //   try {
-  //     myWebCrawler = new WebCrawler();
-  //   } catch (IOException e) {
-  //     System.out.println("[ERROR] " + e);
-  //     return;
-  //   }
-  //   myWebCrawler.compileNewsArticle(CANDIDATE_NAME, CANDIDATE_ID);
-  // }
-
   @AfterClass
   public static void cleanup() throws InterruptedException, IOException, TimeoutException {
     datastoreHelper.stop();
