@@ -20,12 +20,14 @@ public class NewsArticle {
   private String url;
   private String content;
   private String abbreviatedContent;
+  private String summarizedContent;
 
   public NewsArticle(String title, String url, String content) {
     this.title = (title == null) ? "" : title;
     this.url = (url == null) ? "" : url;
     this.content = (content == null) ? "" : content;
     this.abbreviatedContent = null;
+    this.summarizedContent = null;
   }
 
   public NewsArticle(NewsArticle newsArticle) {
@@ -33,6 +35,7 @@ public class NewsArticle {
     this.url = newsArticle.getUrl();
     this.content = newsArticle.getContent();
     this.abbreviatedContent = newsArticle.getAbbreviatedContent();
+    this.summarizedContent = newsArticle.getSummarizedContent();
   }
 
   public String getTitle() {
@@ -51,12 +54,20 @@ public class NewsArticle {
     return this.abbreviatedContent;
   }
 
+  public String getSummarizedContent() {
+    return this.summarizedContent;
+  }
+
   public void setContent(String content) {
     this.content = content;
   }
 
   public void setAbbreviatedContent(String abbreviatedContent) {
     this.abbreviatedContent = abbreviatedContent;
+  }
+
+  public void setSummarizedContent(String summarizedContent) {
+    this.summarizedContent = summarizedContent;
   }
 
   /**
@@ -79,6 +90,9 @@ public class NewsArticle {
         && (this.content.contains(other.getContent()) || other.getContent().contains(this.content))
         && ((this.abbreviatedContent == null && other.getAbbreviatedContent() == null)
             || (this.abbreviatedContent != null && other.getAbbreviatedContent() != null
-                && this.abbreviatedContent.equals(other.getAbbreviatedContent())));
+                && this.abbreviatedContent.equals(other.getAbbreviatedContent())))
+        && ((this.summarizedContent == null && other.getSummarizedContent() == null)
+            || (this.summarizedContent != null && other.getSummarizedContent() != null
+                && this.summarizedContent.equals(other.getSummarizedContent())));
   }
 }

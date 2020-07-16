@@ -32,6 +32,26 @@ public final class NewsContentProcessorTest {
   private final static String URL = "https://www.cnn.com/index.html";
   private final static String WORD = "word";
   private final static String EMPTY_CONTENT = "";
+  private final static String REGULAR_CONTENT =
+      "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
+      "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
+      "primary election on Tuesday for New York's 14th Congressional District, CNN projects. " +
+      "The district, which includes parts of the Bronx and Queens, is heavily Democratic and " +
+      "considered to be a reliably blue seat. It was formerly held for years by veteran " +
+      "Democrat Joe Crowley, who Ocasio-Cortez defeated in a major upset in the 2018 midterm " +
+      "elections. Ocasio-Cortez, who has in her first term in office become a national " +
+      "progressive icon, had significant advantages in the race, including strong national " +
+      "name recognition, devoted supporters and significant fundraising. She had raised more " +
+      "than $10.5 million, an amount that vastly exceeds the fundraising totals of any of her " +
+      "challengers. In comparison, Caruso-Cabrera had raised more than $2 million, according " +
+      "to the latest data from the Federal Election Commission.";
+  private final static String SUMMARIZED_CONTENT =
+      "The district, which includes parts of the Bronx and Queens, is heavily Democratic and " +
+      "considered to be a reliably blue seat. It was formerly held for years by veteran Democrat" +
+      " Joe Crowley, who Ocasio-Cortez defeated in a major upset in the 2018 midterm elections. " +
+      "Ocasio-Cortez, who has in her first term in office become a national progressive icon, " +
+      "had significant advantages in the race, including strong national name recognition, " +
+      "devoted supporters and significant fundraising."; // The 2nd, 3rd, 4th sentences.
 
   private String LONG_CONTENT;
   private String MAX_CONTENT;
@@ -87,6 +107,18 @@ public final class NewsContentProcessorTest {
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
+    Assert.assertEquals(expectedArticle, processedNewsArticle);
+  }
+
+  @Test
+  public void summarize_regularContent() throws Exception {
+    // Summarize {@code REGULAR_CONTENT} and extract content as {@code SUMMARIZED_CONTENT}.
+    // After content processing, the title, URL and content remain the same.
+    NewsArticle newsArticle = new NewsArticle(TITLE, URL, REGULAR_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.summarize(newsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setSummarizedContent(SUMMARIZED_CONTENT);
+    Assert.assertEquals(SUMMARIZED_CONTENT, processedNewsArticle.getSummarizedContent());
     Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 }
