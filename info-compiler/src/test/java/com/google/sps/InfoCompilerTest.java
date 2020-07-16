@@ -136,7 +136,7 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         infoCompiler.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
-    Assert.assertEquals(json, ELECTION_JSON);
+    Assert.assertEquals(ELECTION_JSON, json);
   }
 
   @Test
@@ -164,12 +164,12 @@ public final class InfoCompilerTest {
     Assert.assertTrue(queryResult.hasNext());
     Entity electionEntity = queryResult.next();
     Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(electionEntity.getKey().getName(), election.get("name").getAsString());
-    Assert.assertEquals(electionEntity.getString("queryId"), election.get("id").getAsString());
-    Assert.assertEquals(electionEntity.getTimestamp("date").toDate(), date);
-    Assert.assertEquals(electionEntity.getList("candidatePositions"), Arrays.asList());
-    Assert.assertEquals(electionEntity.getList("candidateIds"), Arrays.asList());
-    Assert.assertEquals(electionEntity.getList("candidateIncumbency"), Arrays.asList());
+    Assert.assertEquals(election.get("name").getAsString(), electionEntity.getKey().getName());
+    Assert.assertEquals(election.get("id").getAsString(), electionEntity.getString("queryId"));
+    Assert.assertEquals(date, electionEntity.getTimestamp("date").toDate());
+    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidatePositions"));
+    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidateIds"));
+    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidateIncumbency"));
   }
 
   @Test
@@ -199,21 +199,21 @@ public final class InfoCompilerTest {
     Entity electionEntity = datastore.run(electionQuery).next();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
-    Assert.assertEquals(candidatePositions.size(), 1);
-    Assert.assertEquals(candidatePositions,
-                        Arrays.asList(
+    Assert.assertEquals(1, candidatePositions.size());
+    Assert.assertEquals(Arrays.asList(
                             StringValue.newBuilder(
-                                SINGLE_CONTEST_JSON.get("office").getAsString()).build()));
+                                SINGLE_CONTEST_JSON.get("office").getAsString()).build()),
+                        candidatePositions);
     List<Value<String>> candidateIds =
         new ArrayList<>(electionEntity.getList("candidateIds"));
-    Assert.assertEquals(candidateIds.size(), 1);
-    Assert.assertEquals(candidateIds,
-                        Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()));
+    Assert.assertEquals(1, candidateIds.size());
+    Assert.assertEquals(Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()),
+                        candidateIds);
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
-    Assert.assertEquals(candidateIncumbency.size(), 1);
-    Assert.assertEquals(candidateIncumbency,
-                        Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()));
+    Assert.assertEquals(1, candidateIncumbency.size());
+    Assert.assertEquals(Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()),
+                        candidateIncumbency);
     // Check candidate data.
     Query<Entity> candidateQuery =
         Query.newEntityQueryBuilder()
@@ -223,40 +223,14 @@ public final class InfoCompilerTest {
     Assert.assertTrue(queryResult.hasNext());
     Entity candidateEntity = queryResult.next();
     Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(candidateEntity.getKey().getId(), candidateId);
-    Assert.assertEquals(candidateEntity.getString("name"), candidate.get("name").getAsString());
-    Assert.assertEquals(candidateEntity.getString("partyAffiliation"),
-                        candidate.get("party").getAsString() + " Party");
+    Assert.assertEquals(candidateId, candidateEntity.getKey().getId());
+    Assert.assertEquals(candidate.get("name").getAsString(), candidateEntity.getString("name"));
+    Assert.assertEquals(candidate.get("party").getAsString() + " Party",
+                        candidateEntity.getString("partyAffiliation"));
   }
 
-  // Integrated tests.
-  //
-  // @Test
-  // public void queryAndStoreBaseElectionInfo() {
-  //   // Execute the entire process of querying and storing base election information. Should execute
-  //   // without exceptions and the database should be populated correctly. This confirms the validity
-  //   // of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreBaseElectionInfo();
-  // }
-  // @Test
-  // public void queryAndStoreElectionContestInfo() {
-  //   // Execute the entire process of querying and storing election/position/candidate information.
-  //   // This step is intended to run right after {@code queryAndStoreBaseElectionInfo()}.
-  //   // Should execute without exceptions and the database should be populated correctly. This
-  //   // confirms the validity of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreElectionContestInfo();
-  // }
-  // @Test
-  // public void queryAndStoreLocationBasedInfo() {
-  //   // Execute the entire process of querying and storing location-based information. Should
-  //   // execute without exceptions and the database should be populated correctly. This confirms the
-  //   // validity of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreBaseElectionInfo();
-  //   infoCompiler.queryAndStoreElectionContestInfo();
-  // }
+  // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
+  // information, eg. {@code queryAndStoreBaseElectionInfo()}.]
 
   @AfterClass
   public static void cleanup() throws InterruptedException, IOException, TimeoutException {
