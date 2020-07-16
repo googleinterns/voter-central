@@ -14,15 +14,15 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
 import com.google.sps.data.NewsArticle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.xml.sax.SAXException;
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for news article content processing.
@@ -65,7 +65,7 @@ public final class NewsContentProcessorTest {
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(MAX_CONTENT);
-    assertThat(expectedArticle).isEqualTo(processedNewsArticle);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
@@ -77,7 +77,7 @@ public final class NewsContentProcessorTest {
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
-    assertThat(expectedArticle).isEqualTo(processedNewsArticle);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
@@ -88,6 +88,6 @@ public final class NewsContentProcessorTest {
     NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
-    assertThat(expectedArticle).isEqualTo(processedNewsArticle);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 }

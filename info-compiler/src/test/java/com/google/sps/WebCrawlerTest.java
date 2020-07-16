@@ -14,6 +14,9 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
@@ -33,13 +36,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for web scrawler's news article compilation process, excluding content extraction,
  * content processing and relevancy checking which are defined in standalone classes.
+ * (It's recommended to run WebCrawlerTest indenpendently, not together with other tests in the
+ * package. There is instability with Datastore emulators, potentially due to HTTP communication.)
  */
 @RunWith(JUnit4.class)
 public final class WebCrawlerTest {
@@ -129,8 +131,7 @@ public final class WebCrawlerTest {
         .thenReturn(Optional.of(EXPECTED_NEWS_ARTICLE));
     Optional<NewsArticle> potentialNewsArticle =
         webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    assertThat(potentialNewsArticle).isPresent();
-    assertThat(EXPECTED_NEWS_ARTICLE).isEqualTo(potentialNewsArticle.get());
+    assertThat(potentialNewsArticle).hasValue(EXPECTED_NEWS_ARTICLE);
     assertThat(webCrawler.getNextAccessTimes()).containsKey(VALID_URL_ROBOTS_TXT);
   }
 
@@ -161,12 +162,12 @@ public final class WebCrawlerTest {
             .newKeyFactory()
             .setKind("Candidate")
             .newKey(CANDIDATE_ID);
-    assertThat(newsArticleKey).isEqualTo(newsArticleEntity.getKey());
-    assertThat(candidateKey).isEqualTo(newsArticleEntity.getKey("candidateId"));
-    assertThat(EXPECTED_NEWS_ARTICLE.getTitle()).isEqualTo(newsArticleEntity.getString("title"));
-    assertThat(EXPECTED_NEWS_ARTICLE.getUrl()).isEqualTo(newsArticleEntity.getString("url"));
-    assertThat(EXPECTED_NEWS_ARTICLE.getContent()).isEqualTo(newsArticleEntity.getString("content"));
-    assertThat(EMPTY_ABBREVIATED_CONTENT).isEqualTo(newsArticleEntity.getString("abbreviatedContent"));
+    assertThat(newsArticleEntity.getKey()).isEqualTo(newsArticleKey);
+    assertThat(newsArticleEntity.getKey("candidateId")).isEqualTo(candidateKey);
+    assertThat(newsArticleEntity.getString("title")).isEqualTo(EXPECTED_NEWS_ARTICLE.getTitle());
+    assertThat(newsArticleEntity.getString("url")).isEqualTo(EXPECTED_NEWS_ARTICLE.getUrl());
+    assertThat(newsArticleEntity.getString("content")).isEqualTo(EXPECTED_NEWS_ARTICLE.getContent());
+    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
   }
 
   @AfterClass
