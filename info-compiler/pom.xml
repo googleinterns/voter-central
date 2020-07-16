@@ -42,9 +42,21 @@
       <version>2.8.6</version>
     </dependency>
     <dependency>
-        <groupId>com.panforge</groupId>
-        <artifactId>robots</artifactId>
-        <version>1.4.3</version>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth.extensions</groupId>
+      <artifactId>truth-java8-extension</artifactId>
+      <version>0.32</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.panforge</groupId>
+      <artifactId>robots</artifactId>
+      <version>1.4.3</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -58,9 +70,9 @@
       <version>4.5.12</version>
     </dependency>
     <dependency>
-        <groupId>org.apache.tika</groupId>
-        <artifactId>tika-core</artifactId>
-        <version>1.18</version>
+      <groupId>org.apache.tika</groupId>
+      <artifactId>tika-core</artifactId>
+      <version>1.18</version>
     </dependency>
     <dependency>
       <groupId>org.apache.tika</groupId>

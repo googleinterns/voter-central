@@ -41,13 +41,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
+import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth8.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -136,7 +137,7 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         infoCompiler.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
-    Assert.assertEquals(ELECTION_JSON, json);
+    assertThat(ELECTION_JSON).isEqualTo(json);
   }
 
   @Test
@@ -161,15 +162,15 @@ public final class InfoCompilerTest {
             .setKind("Election")
             .build();
     QueryResults<Entity> queryResult = datastore.run(query);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity electionEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(election.get("name").getAsString(), electionEntity.getKey().getName());
-    Assert.assertEquals(election.get("id").getAsString(), electionEntity.getString("queryId"));
-    Assert.assertEquals(date, electionEntity.getTimestamp("date").toDate());
-    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidatePositions"));
-    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidateIds"));
-    Assert.assertEquals(Arrays.asList(), electionEntity.getList("candidateIncumbency"));
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(election.get("name").getAsString()).isEqualTo(electionEntity.getKey().getName());
+    assertThat(election.get("id").getAsString()).isEqualTo(electionEntity.getString("queryId"));
+    assertThat(date).isEqualTo(electionEntity.getTimestamp("date").toDate());
+    assertThat(Arrays.asList()).isEqualTo(electionEntity.getList("candidatePositions"));
+    assertThat(Arrays.asList()).isEqualTo(electionEntity.getList("candidateIds"));
+    assertThat(Arrays.asList()).isEqualTo(electionEntity.getList("candidateIncumbency"));
   }
 
   @Test
@@ -199,34 +200,33 @@ public final class InfoCompilerTest {
     Entity electionEntity = datastore.run(electionQuery).next();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
-    Assert.assertEquals(1, candidatePositions.size());
-    Assert.assertEquals(Arrays.asList(
-                            StringValue.newBuilder(
-                                SINGLE_CONTEST_JSON.get("office").getAsString()).build()),
-                        candidatePositions);
+    assertThat(1).isEqualTo(candidatePositions.size());
+    assertThat(Arrays.asList(StringValue.newBuilder(
+                                 SINGLE_CONTEST_JSON.get("office").getAsString()).build()))
+        .isEqualTo(candidatePositions);
     List<Value<String>> candidateIds =
         new ArrayList<>(electionEntity.getList("candidateIds"));
-    Assert.assertEquals(1, candidateIds.size());
-    Assert.assertEquals(Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()),
-                        candidateIds);
+    assertThat(1).isEqualTo(candidateIds.size());
+    assertThat(Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()))
+        .isEqualTo(candidateIds);
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
-    Assert.assertEquals(1, candidateIncumbency.size());
-    Assert.assertEquals(Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()),
-                        candidateIncumbency);
+    assertThat(1).isEqualTo(candidateIncumbency.size());
+    assertThat(Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()))
+        .isEqualTo(candidateIncumbency);
     // Check candidate data.
     Query<Entity> candidateQuery =
         Query.newEntityQueryBuilder()
             .setKind("Candidate")
             .build();
     QueryResults<Entity> queryResult = datastore.run(candidateQuery);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity candidateEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(candidateId, candidateEntity.getKey().getId());
-    Assert.assertEquals(candidate.get("name").getAsString(), candidateEntity.getString("name"));
-    Assert.assertEquals(candidate.get("party").getAsString() + " Party",
-                        candidateEntity.getString("partyAffiliation"));
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(candidateId).isEqualTo(candidateEntity.getKey().getId());
+    assertThat(candidate.get("name").getAsString()).isEqualTo(candidateEntity.getString("name"));
+    assertThat(candidate.get("party").getAsString() + " Party")
+        .isEqualTo(candidateEntity.getString("partyAffiliation"));
   }
 
   // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
