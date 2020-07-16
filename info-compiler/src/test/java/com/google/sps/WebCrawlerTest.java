@@ -44,10 +44,6 @@ import static org.mockito.Mockito.*;
 public final class WebCrawlerTest {
   private final static String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
   private final static String CANDIDATE_ID = "1";
-  private final static String VALID_PROTOCOL = "https";
-  private final static String INVALID_PROTOCOL = "htttttps";
-  private final static String VALID_HOST = "www.cnn.com";
-  private final static String INVALID_HOST = "www.cnn.cooooom";
   private final static String VALID_URL =
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private final static String VALID_URL_ROBOTS_TXT =
@@ -97,40 +93,9 @@ public final class WebCrawlerTest {
   @Test
   public void getUrlsFromCustomSearch() {}
 
-  // For the following two methods:
-  // Mocking {@code URL}, which is a final class requires additional Mockito configuration.
-  // @TODO [Might try the configuration. Alternatively might wrap URL, and mock the wrapper class.]
-  //
-  // @Test
-  // public void scrapeAndExtractHtml_invalidProtocolUrl() throws IOException {
-  //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
-  //   // protocol. The invalid {@code URL} would cause an {@code IOException} getting read. This
-  //   // exception should be caught and an empty {@code Optional} should be returned.
-  //   // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
-  //   // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-  //   // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-  //   // {@code NewsContentExtractor} to aid test-driven development.
-  //   URL url = mock(URL.class);
-  //   when(url.getProtocol()).thenReturn(INVALID_PROTOCOL);
-  //   when(url.getHost()).thenReturn(VALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
-  //   Assert.assertFalse(potentialNewsArticle.isPresent());
-  // }
-  // @Test
-  // public void scrapeAndExtractHtml_invalidHostUrl() throws IOException {
-  //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
-  //   // host. The invalid {@code URL} would cause an {@code IOException} getting read. This
-  //   // exception should be caught and an empty {@code Optional} should be returned.
-  //   // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
-  //   // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-  //   // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-  //   // {@code NewsContentExtractor} to aid test-driven development.
-  //   URL url = mock(URL.class);
-  //   when(url.getProtocol()).thenReturn(VALID_PROTOCOL);
-  //   when(url.getHost()).thenReturn(INVALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
-  //   Assert.assertFalse(potentialNewsArticle.isPresent());
-  // }
+  // @TODO [Write tests that test invalid URL protocols and invalid hosts, either by mocking
+  // {@code URL}, which is a final class that requires additional Mockito configuration, or by
+  // writing a wrapper class for URL.]
 
   @Test
   public void scrapeAndExtractHtml_nonscrapableWebpage() throws IOException {

@@ -25,8 +25,7 @@ public class NewsContentProcessor {
   /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
   public static NewsArticle process(NewsArticle originalNewsArticle) {
     NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
-    String rawContent = newsArticle.getContent();
-    String[] splitContent = rawContent.split(" ");
+    String[] splitContent = newsArticle.getContent().split(" ");
     int wordCount = splitContent.length;
     int allowedLength = Math.min(wordCount, MAX_WORD_COUNT);
     String processedContent =
