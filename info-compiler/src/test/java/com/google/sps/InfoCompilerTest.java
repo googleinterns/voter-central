@@ -17,6 +17,7 @@ package com.google.sps.infocompiler;
 import static com.google.common.truth.Truth.*;
 import static com.google.common.truth.Truth8.*;
 import static org.mockito.Mockito.*;
+
 import com.google.cloud.datastore.BooleanValue;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
@@ -54,7 +55,8 @@ import org.mockito.ArgumentCaptor;
 /**
  * A tester for the location-based information compiler.
  * (It's recommended to run InfoCompilerTest indenpendently, not together with other tests in the
- * package. There is instability with Datastore emulators, potentially due to HTTP communication.)
+ * package that use Datastore emulators. There is instability with Datastore emulators, potentially
+ * due to HTTP communication.)
  */
 @RunWith(JUnit4.class)
 public final class InfoCompilerTest {
@@ -170,9 +172,9 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
     assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
     assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
-    assertThat(electionEntity.getList("candidatePositions")).isEqualTo(Arrays.asList());
-    assertThat(electionEntity.getList("candidateIds")).isEqualTo(Arrays.asList());
-    assertThat(electionEntity.getList("candidateIncumbency")).isEqualTo(Arrays.asList());
+    assertThat(electionEntity.getList("candidatePositions")).containsExactly();
+    assertThat(electionEntity.getList("candidateIds")).containsExactly();
+    assertThat(electionEntity.getList("candidateIncumbency")).containsExactly();
   }
 
   @Test
@@ -202,20 +204,20 @@ public final class InfoCompilerTest {
     Entity electionEntity = datastore.run(electionQuery).next();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
-    assertThat(candidatePositions.size()).isEqualTo(1);
+    assertThat(candidatePositions).hasSize(1);
     assertThat(candidatePositions)
-        .isEqualTo(Arrays.asList(StringValue.newBuilder(
-                                 SINGLE_CONTEST_JSON.get("office").getAsString()).build()));
+        .containsExactly(StringValue.newBuilder(
+                         SINGLE_CONTEST_JSON.get("office").getAsString()).build());
     List<Value<String>> candidateIds =
         new ArrayList<>(electionEntity.getList("candidateIds"));
-    assertThat(candidateIds.size()).isEqualTo(1);
+    assertThat(candidateIds).hasSize(1);
     assertThat(candidateIds)
-        .isEqualTo(Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()));
+        .containsExactly(StringValue.newBuilder(candidateId.toString()).build());
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
-    assertThat(candidateIncumbency.size()).isEqualTo(1);
+    assertThat(candidateIncumbency).hasSize(1);
     assertThat(candidateIncumbency)
-        .isEqualTo(Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()));
+        .containsExactly(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build());
     // Check candidate data.
     Query<Entity> candidateQuery =
         Query.newEntityQueryBuilder()

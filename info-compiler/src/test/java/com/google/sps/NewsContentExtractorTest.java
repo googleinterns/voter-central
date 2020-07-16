@@ -17,6 +17,7 @@ package com.google.sps.webcrawler;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.*;
+
 import com.google.sps.data.NewsArticle;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;

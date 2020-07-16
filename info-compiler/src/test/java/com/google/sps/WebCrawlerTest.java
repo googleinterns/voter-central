@@ -17,6 +17,7 @@ package com.google.sps.webcrawler;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.*;
+
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
@@ -41,7 +42,8 @@ import org.junit.runners.JUnit4;
  * A tester for web scrawler's news article compilation process, excluding content extraction,
  * content processing and relevancy checking which are defined in standalone classes.
  * (It's recommended to run WebCrawlerTest indenpendently, not together with other tests in the
- * package. There is instability with Datastore emulators, potentially due to HTTP communication.)
+ * package that use Datastore emulators. There is instability with Datastore emulators, potentially
+ * due to HTTP communication.)
  */
 @RunWith(JUnit4.class)
 public final class WebCrawlerTest {
