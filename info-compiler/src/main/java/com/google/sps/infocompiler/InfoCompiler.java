@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -56,8 +57,8 @@ public class InfoCompiler {
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s", CIVIC_INFO_API_KEY);
   private final static String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
-  private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds;
+  private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  private List<String> electionQueryIds = new LinkedList<>();
   // For testing purposes (not to add too much information to the database).
   // Will include all 50 states.
   private List<String> states = Arrays.asList("NY");

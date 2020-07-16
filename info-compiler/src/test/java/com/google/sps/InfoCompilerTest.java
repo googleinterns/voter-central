@@ -53,6 +53,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * A tester for the location-based information compiler.
+ * (It's recommended to run this set of tests indepedently.)
  */
 @RunWith(JUnit4.class)
 public final class InfoCompilerTest {

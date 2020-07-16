@@ -28,12 +28,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -109,7 +110,7 @@ public final class WebCrawlerTest {
     when(grant.hasAccess()).thenReturn(false);
     Optional<NewsArticle> potentialNewsArticle =
         webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    Assert.assertFalse(potentialNewsArticle.isPresent());
+    assertThat(potentialNewsArticle).isEmpty();
   }
 
   @Test
@@ -128,9 +129,9 @@ public final class WebCrawlerTest {
         .thenReturn(Optional.of(EXPECTED_NEWS_ARTICLE));
     Optional<NewsArticle> potentialNewsArticle =
         webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
-    Assert.assertTrue(webCrawler.getNextAccessTimes().containsKey(VALID_URL_ROBOTS_TXT));
+    assertThat(potentialNewsArticle).isPresent();
+    assertThat(EXPECTED_NEWS_ARTICLE).isEqualTo(potentialNewsArticle.get());
+    assertThat(webCrawler.getNextAccessTimes()).containsKey(VALID_URL_ROBOTS_TXT);
   }
 
   @Test
@@ -147,9 +148,9 @@ public final class WebCrawlerTest {
             .setKind("NewsArticle")
             .build();
     QueryResults<Entity> queryResult = datastore.run(query);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity newsArticleEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isFalse();
     Key newsArticleKey =
         datastore
             .newKeyFactory()
@@ -160,12 +161,12 @@ public final class WebCrawlerTest {
             .newKeyFactory()
             .setKind("Candidate")
             .newKey(CANDIDATE_ID);
-    Assert.assertEquals(newsArticleKey, newsArticleEntity.getKey());
-    Assert.assertEquals(candidateKey, newsArticleEntity.getKey("candidateId"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getTitle(), newsArticleEntity.getString("title"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getUrl(), newsArticleEntity.getString("url"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getContent(), newsArticleEntity.getString("content"));
-    Assert.assertEquals(EMPTY_ABBREVIATED_CONTENT, newsArticleEntity.getString("abbreviatedContent"));
+    assertThat(newsArticleKey).isEqualTo(newsArticleEntity.getKey());
+    assertThat(candidateKey).isEqualTo(newsArticleEntity.getKey("candidateId"));
+    assertThat(EXPECTED_NEWS_ARTICLE.getTitle()).isEqualTo(newsArticleEntity.getString("title"));
+    assertThat(EXPECTED_NEWS_ARTICLE.getUrl()).isEqualTo(newsArticleEntity.getString("url"));
+    assertThat(EXPECTED_NEWS_ARTICLE.getContent()).isEqualTo(newsArticleEntity.getString("content"));
+    assertThat(EMPTY_ABBREVIATED_CONTENT).isEqualTo(newsArticleEntity.getString("abbreviatedContent"));
   }
 
   @AfterClass
