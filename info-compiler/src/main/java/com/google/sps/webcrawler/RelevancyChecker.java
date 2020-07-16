@@ -26,12 +26,12 @@ import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
- * A {@code RelevancyChecker} that performs entity analysis to check the relevancy of news article
- * content to a candidate.
+ * A utility class that performs entity analysis to check the relevancy of news article content to a
+ * candidate.
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
-  private static final double SALIENCE_THRESHOLD = 0.5;
+  static final double SALIENCE_THRESHOLD = 0.5;
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -41,10 +41,11 @@ public class RelevancyChecker {
    *   lack of permission to access the library.
    */
   public RelevancyChecker() throws IOException {
-    this.languageServiceClient = LanguageServiceClient.create();
+    this(LanguageServiceClient.create());
   }
 
-  public RelevancyChecker(LanguageServiceClient languageServiceClient) {
+  /** For testing purposes. */
+  RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }
 
@@ -63,7 +64,7 @@ public class RelevancyChecker {
    * {@code content}. Salience has range [0, 1], with higher salience indicating higher relevance
    * of {@code candidateName} to {@code content} overall.
    */
-  private double computeSalienceOfName(String content, String candidateName) {
+  double computeSalienceOfName(String content, String candidateName) {
     Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
     AnalyzeEntitiesRequest request =
         AnalyzeEntitiesRequest.newBuilder()

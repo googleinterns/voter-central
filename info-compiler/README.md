@@ -6,8 +6,11 @@ be configured:
 gcloud config set project <projectId>
 ```
 
-To compile and execute WebCrawler's main, execute this command:
-
+To run unit tests, execute this command:
 ```bash
-mvn clean compile exec:java
+mvn test
+```
+To run a specific test class, execute this command:
+```bash
+mvn test -Dtest=<testClass>
 ```

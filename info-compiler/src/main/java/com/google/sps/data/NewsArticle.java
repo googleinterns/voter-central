@@ -22,10 +22,17 @@ public class NewsArticle {
   private String abbreviatedContent;
 
   public NewsArticle(String title, String url, String content) {
-    this.title = title;
-    this.url = url;
-    this.content = content;
+    this.title = (title == null) ? "" : title;
+    this.url = (url == null) ? "" : url;
+    this.content = (content == null) ? "" : content;
     this.abbreviatedContent = null;
+  }
+
+  public NewsArticle(NewsArticle newsArticle) {
+    this.title = newsArticle.getTitle();
+    this.url = newsArticle.getUrl();
+    this.content = newsArticle.getContent();
+    this.abbreviatedContent = newsArticle.getAbbreviatedContent();
   }
 
   public String getTitle() {
@@ -50,5 +57,28 @@ public class NewsArticle {
 
   public void setAbbreviatedContent(String abbreviatedContent) {
     this.abbreviatedContent = abbreviatedContent;
+  }
+
+  /**
+   * Compares whether individual instance variables are equal, with the exception that content
+   * can be the substring of another without being exactly the same. The exception is allowed
+   * because, when scraping real webpages, the scraped content also includes the actual news
+   * articles body as well as changing content such as ads, descriptions of other articles.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof NewsArticle)) {
+      return false;
+    }
+    NewsArticle other = (NewsArticle) obj;
+    return this.title.equals(other.getTitle())
+        && this.url.equals(other.getUrl())
+        && (this.content.contains(other.getContent()) || other.getContent().contains(this.content))
+        && ((this.abbreviatedContent == null && other.getAbbreviatedContent() == null)
+            || (this.abbreviatedContent != null && other.getAbbreviatedContent() != null
+                && this.abbreviatedContent.equals(other.getAbbreviatedContent())));
   }
 }
