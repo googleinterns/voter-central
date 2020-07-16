@@ -83,20 +83,20 @@ public class NewsContentProcessor {
   }
 
   /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
-  public static NewsArticle process(NewsArticle originalNewsArticle) {
+  public static NewsArticle abbreviate(NewsArticle originalNewsArticle) {
     NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
     String rawContent = newsArticle.getContent();
     String[] splitContent = rawContent.split(" ");
     int wordCount = splitContent.length;
     int allowedLength = Math.min(wordCount, MAX_WORD_COUNT);
-    String processedContent =
+    String abbreviatedContent =
         String.join(" ", Arrays.asList(splitContent).subList(0, allowedLength));
-    newsArticle.setAbbreviatedContent(processedContent);
+    newsArticle.setAbbreviatedContent(abbreviatedContent);
     return newsArticle;
   }
 
   /**
-   * Extractively summarize the news article content by computing inter-sentence similarity and
+   * Extractively summarizes the news article content by computing inter-sentence similarity and
    * applying PageRank to find the most meaningful sentences. The chosen sentences are arranged
    * in the original order they appeared in.
    *
@@ -110,6 +110,10 @@ public class NewsContentProcessor {
     NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
     String rawContent = newsArticle.getContent();
     String[] sentences = breakIntoSentences(rawContent);
+    if (sentences.length <= SUMMARIZATION_MAX_SENTENCE_NUMBER) {
+      newsArticle.setSummarizedContent(rawContent);
+      return newsArticle;
+    }
     Graph<IntValue, StringValue, DoubleValue> similarityGraph = buildSimilarityGraph(sentences);
     List<PageRank.Result<IntValue>> ranking = getRanking(similarityGraph);
     String summarizedContent = extractSentencesBasedOnRanking(ranking, sentences);

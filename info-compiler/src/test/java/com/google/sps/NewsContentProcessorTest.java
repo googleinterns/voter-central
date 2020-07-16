@@ -76,35 +76,35 @@ public final class NewsContentProcessorTest {
   }
 
   @Test
-  public void process_longContent() {
+  public void abbreviate_longContent() {
     // Process {@code LONG_CONTENT} and extract abbreviated content as {@code MAX_CONTENT}, which
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
     // content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(MAX_CONTENT);
     Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 
   @Test
-  public void process_shortContent() {
+  public void abbreviate_shortContent() {
     // Process {@code SHORT_CONTENT} and extract abbreviated content as {@code SHORT_CONTENT},
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
     // title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
     Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 
   @Test
-  public void process_emptyContent() {
+  public void abbreviate_emptyContent() {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
     Assert.assertEquals(expectedArticle, processedNewsArticle);
@@ -118,7 +118,17 @@ public final class NewsContentProcessorTest {
     NewsArticle processedNewsArticle = NewsContentProcessor.summarize(newsArticle);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     expectedArticle.setSummarizedContent(SUMMARIZED_CONTENT);
-    Assert.assertEquals(SUMMARIZED_CONTENT, processedNewsArticle.getSummarizedContent());
+    Assert.assertEquals(expectedArticle, processedNewsArticle);
+  }
+
+  @Test
+  public void summarize_emptyContent() throws Exception {
+    // Summarize {@code EMPTY_CONTENT} and extract content as {@code EMPTY_CONTENT}.
+    // After content processing, the title, URL and content remain the same.
+    NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.summarize(newsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setSummarizedContent(EMPTY_CONTENT);
     Assert.assertEquals(expectedArticle, processedNewsArticle);
   }
 }
