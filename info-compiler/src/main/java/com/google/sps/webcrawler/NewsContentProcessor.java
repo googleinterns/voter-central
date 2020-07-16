@@ -44,22 +44,24 @@ import org.apache.flink.types.DoubleValue;
 import org.apache.flink.types.IntValue;
 import org.apache.flink.types.StringValue;
 
-/** Static utilities for processing textual content, such as abbreviation. */
+/** Static utilities for processing textual content, such as abbreviations. */
 public class NewsContentProcessor {
   static final int MAX_WORD_COUNT = 100;
-  private final static String SENTENCE_DETECTOR_FILE = Config.OpenNLP_SENTENCE_DETECTOR_FILE;
-  private final static String TOKENIZER_FILE = Config.OpenNLP_TOKENIZER_FILE;
-  private final static double PAGERANK_DAMPEN_FACTOR = 0.1;
-  private final static int PAGERANK_MAX_ITER = 100;
-  private final static double PAGERANK_CONVERGENCE_THRESHOLD = 0.0001;
-  private final static boolean PAGERANK_INCLUDE_ZERO_DEGREES_VERTICES = true;
-  private final static double SIMILARITY_THRESHOLD = 0.2;
-  private final static int SUMMARIZATION_MAX_SENTENCE_NUMBER = 3;
-  private static class PAGERANK_SCORE_DESCENDING implements Comparator<PageRank.Result> {
+  private static final String SENTENCE_DETECTOR_FILE = Config.OpenNLP_SENTENCE_DETECTOR_FILE;
+  private static final String TOKENIZER_FILE = Config.OpenNLP_TOKENIZER_FILE;
+  private static final int SUMMARIZATION_MAX_SENTENCE_NUMBER = 3;
+  private static final int PAGERANK_MAX_ITER = 100;
+  private static final double PAGERANK_DAMPEN_FACTOR = 0.1;
+  private static final double PAGERANK_CONVERGENCE_THRESHOLD = 0.0001;
+  private static final double SIMILARITY_THRESHOLD = 0.2;
+  private static final boolean PAGERANK_INCLUDE_ZERO_DEGREES_VERTICES = true;
+
+  private static final Comparator<PageRank.Result> PAGERANK_SCORE_DESCENDING =
+      new Comparator<PageRank.Result>() {
     @Override
     public int compare(PageRank.Result a, PageRank.Result b) {
-      // Higher score comes first. With the same score, smaller index (sentences that appear early)
-      // comes first.
+      // Higher score comes first. With the same score, smaller index (sentences that appear
+      // early) comes first.
       if (a.getPageRankScore().getValue() < b.getPageRankScore().getValue() ||
           (a.getPageRankScore().getValue() == b.getPageRankScore().getValue() && 
               ((IntValue) a.getVertexId0()).getValue()
@@ -69,8 +71,10 @@ public class NewsContentProcessor {
         return -1;
       }
     }
-  }
-  private static class SENTENCES_ORIGINAL_ORDER implements Comparator<PageRank.Result> {
+  };
+
+  private static final Comparator<PageRank.Result> SENTENCES_ORIGINAL_ORDER =
+      new Comparator<PageRank.Result>() {
     @Override
     public int compare(PageRank.Result a, PageRank.Result b) {
       // Smaller index (sentences that appear early) comes first.
@@ -80,7 +84,7 @@ public class NewsContentProcessor {
         return -1;
       }
     }
-  }
+  };
 
   /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
   public static NewsArticle abbreviate(NewsArticle originalNewsArticle) {
@@ -173,7 +177,7 @@ public class NewsContentProcessor {
     List<PageRank.Result<IntValue>> pageRankResults =
         pageRank.setIncludeZeroDegreeVertices(PAGERANK_INCLUDE_ZERO_DEGREES_VERTICES)
             .run(similarityGraph).collect();
-    Collections.sort(pageRankResults, new PAGERANK_SCORE_DESCENDING());
+    Collections.sort(pageRankResults, PAGERANK_SCORE_DESCENDING);
     return pageRankResults;
   }
 
@@ -186,7 +190,7 @@ public class NewsContentProcessor {
       String[] sentences) {
     int sentenceNumber = Math.min(SUMMARIZATION_MAX_SENTENCE_NUMBER, sentences.length);
     List<PageRank.Result<IntValue>> subRanking = ranking.subList(0, sentenceNumber);
-    Collections.sort(subRanking, new SENTENCES_ORIGINAL_ORDER());
+    Collections.sort(subRanking, SENTENCES_ORIGINAL_ORDER);
     String summarizedContent = "";
     for (int i = 0; i < sentenceNumber; i++) {
       int sentenceIndex = subRanking.get(i).getVertexId0().getValue();
@@ -195,7 +199,6 @@ public class NewsContentProcessor {
         summarizedContent += " ";
       }
     }
-    System.out.println(summarizedContent);
     return summarizedContent;
   }
 

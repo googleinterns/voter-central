@@ -41,17 +41,17 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(JUnit4.class)
 public final class NewsContentExtractorTest {
-  private final static String URL =
+  private static final String URL =
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
-  private final static String WRONG_URL =
+  private static final String WRONG_URL =
     "https://www.wrong.com";
-  private final static String EMPTY = "";
-  private final static String TITLE = "News Article Title";
-  private final static String CONTENT = "News article content.";
-  private final static TextBlock TEXT_BLOCK = new TextBlock(CONTENT);
-  private final static TextDocument TEXT_DOC_REGULAR =
+  private static final String EMPTY = "";
+  private static final String TITLE = "News Article Title";
+  private static final String CONTENT = "News article content.";
+  private static final TextBlock TEXT_BLOCK = new TextBlock(CONTENT);
+  private static final TextDocument TEXT_DOC_REGULAR =
       new TextDocument(TITLE, Arrays.asList(TEXT_BLOCK));
-  private final static TextDocument TEXT_DOC_WITHOUT_TITLE =
+  private static final TextDocument TEXT_DOC_WITHOUT_TITLE =
       new TextDocument(Arrays.asList(TEXT_BLOCK));
 
   private InputStream webpageStream;

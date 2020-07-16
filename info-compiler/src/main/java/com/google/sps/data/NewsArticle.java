@@ -89,10 +89,10 @@ public class NewsArticle {
         && this.url.equals(other.getUrl())
         && (this.content.contains(other.getContent()) || other.getContent().contains(this.content))
         && ((this.abbreviatedContent == null && other.getAbbreviatedContent() == null)
-            || (this.abbreviatedContent != null && other.getAbbreviatedContent() != null
+            || (this.abbreviatedContent != null
                 && this.abbreviatedContent.equals(other.getAbbreviatedContent())))
         && ((this.summarizedContent == null && other.getSummarizedContent() == null)
-            || (this.summarizedContent != null && other.getSummarizedContent() != null
+            || (this.summarizedContent != null
                 && this.summarizedContent.equals(other.getSummarizedContent())));
   }
 }
