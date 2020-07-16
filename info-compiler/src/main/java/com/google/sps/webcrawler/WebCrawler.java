@@ -18,8 +18,6 @@ package com.google.sps.webcrawler;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
-import com.google.cloud.datastore.FullEntity;
-import com.google.cloud.datastore.IncompleteKey;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.StringValue;
 import com.google.gson.Gson;
@@ -32,7 +30,6 @@ import com.panforge.robotstxt.RobotsTxt;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -49,15 +46,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-/**
- * A web crawler for compiling candidate-specifc news articles information.
- */
+/** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private final static String CUSTOM_SEARCH_KEY = "";
-  private final static String CUSTOM_SEARCH_ENGINE_ID = "";
-  private final static String TEST_URL =
+  private static final String CUSTOM_SEARCH_KEY = "";
+  private static final String CUSTOM_SEARCH_ENGINE_ID = "";
+  private static final String TEST_URL =
       "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private Datastore datastore;
+  private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
   // Mappings of (website robots.txt URL, the next allowed time to access, in milliseconds) for
   // respecting the required crawl delay.
@@ -70,16 +66,16 @@ public class WebCrawler {
    *     of permission to access required libraries.
    */
   public WebCrawler() throws IOException {
-    this(DatastoreOptions.getDefaultInstance().getService());
-    this.relevancyChecker = new RelevancyChecker();
+    this(DatastoreOptions.getDefaultInstance().getService(), new NewsContentExtractor(),
+         new RelevancyChecker());
   }
 
-  /**
-   * For testing purposes.
-   */
-  public WebCrawler(Datastore datastore) throws IOException {
+  /** For testing purposes. */
+  WebCrawler(Datastore datastore, NewsContentExtractor newsContentExtractor,
+      RelevancyChecker relevancyChecker) throws IOException {
     this.datastore = datastore;
-    this.relevancyChecker = new RelevancyChecker();
+    this.newsContentExtractor = newsContentExtractor;
+    this.relevancyChecker = relevancyChecker;
   }
 
   /**
@@ -96,7 +92,7 @@ public class WebCrawler {
   public void compileNewsArticle(String candidateName, String candidateId) {
     List<URL> urls = getUrlsFromCustomSearch(candidateName);
     for (URL url : urls) {
-      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractHtml(url);
+      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractFromHtml(url);
       if (!potentialNewsArticle.isPresent()) {
         continue;
       }
@@ -134,111 +130,103 @@ public class WebCrawler {
    * access to the engine. In order for the web crawler to be tested from beginning to end, this
    * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
    *
-   * @see <a href=
-   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
-   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
+   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
     List<URL> urls = Arrays.asList();
     String request =
-        String.format("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
+        String.format(
+            "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
     CloseableHttpClient httpclient = HttpClients.createDefault();
     try {
       urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
-      ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-        @Override
-        public String handleResponse(final HttpResponse response) throws IOException {
-          int status = response.getStatusLine().getStatusCode();
-          if (status >= 200 && status < 300) {
-              HttpEntity entity = response.getEntity();
-              return entity != null ? EntityUtils.toString(entity) : null;
-          } else {
-              httpclient.close();
-              throw new ClientProtocolException("Unexpected response status: " + status);
-          }
-        }
+      ResponseHandler<String> responseHandler =
+          new ResponseHandler<String>() {
+              @Override
+              public String handleResponse(final HttpResponse response) throws IOException {
+                int status = response.getStatusLine().getStatusCode();
+                if (status >= 200 && status < 300) {
+                    HttpEntity entity = response.getEntity();
+                    return entity != null ? EntityUtils.toString(entity) : null;
+                } else {
+                    httpclient.close();
+                    throw new ClientProtocolException("Unexpected response status: " + status);
+                }
+              }
       };
       String responseBody = httpclient.execute(httpGet, responseHandler);
       httpclient.close();
       Gson gson = new Gson();
       Object jsonResponse = gson.fromJson(responseBody, Object.class);
-      //@TODO [Unpack {@code jsonResponse} and find URLs.]
-    } catch (IOException e){
+      // @TODO [Unpack {@code jsonResponse} and find URLs.]
+    } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
     }
     return urls;
   }
 
-  /** 
+  /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
    * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  public Optional<NewsArticle> scrapeAndExtractHtml(URL url) {
+  public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
     try {
-      URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
-          "/robots.txt");
+      URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = robotsUrl.openStream();
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
+      robotsTxtStream.close();
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null && grant.getCrawlDelay() != null &&
-            !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          return Optional.empty();
-        }
-        InputStream webpageStream = url.openStream();
-        return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
-      } else {
-        return Optional.empty();
-      }
+      return politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
     } catch (Exception e) {
-      System.out.println("[ERROR] Error occured during web scraping: " + e);
-      return Optional.empty();
-    }
-  }
-
-  /** 
-   * For testing purposes.
-   */
-  public Optional<NewsArticle> scrapeAndExtractHtml(URL url, Grant grant) {
-    try {
-      URL robotsUrl = new URL(url.getProtocol(), url.getHost(),
-          "/robots.txt");
-      // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null && grant.getCrawlDelay() != null &&
-            !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          return Optional.empty();
-        }
-        InputStream webpageStream = url.openStream();
-        return NewsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
-      } else {
-        return Optional.empty();
-      }
-    } catch (Exception e) {
-      System.out.println("[ERROR] Error occured during web scraping: " + e);
+      System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
       return Optional.empty();
     }
   }
 
   /**
-   * Waits for the required crawl delay to pass if necessary and makes a note of the required
-   * crawl delay. Returns true if the aforementioned process succeeded. {@code grant} is expected
-   * to non-null. This method is made public for testing purposes.
+   * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
+   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
    */
-  public boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+  Optional<NewsArticle> politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl, URL url) {
+    try {
+      // Check permission to access and respect the required crawl delay.
+      if (grant == null || grant.hasAccess()) {
+        if (grant != null
+            && grant.getCrawlDelay() != null
+            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
+          return Optional.empty();
+        }
+        InputStream webpageStream = url.openStream();
+        Optional<NewsArticle> potentialNewsArticle =
+            newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+        webpageStream.close();
+        return potentialNewsArticle;
+      } else {
+        return Optional.empty();
+      }
+    } catch (Exception e) {
+      System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Waits for the required crawl delay to pass if necessary and makes a note of the required crawl
+   * delay. Returns true if the aforementioned process succeeded. {@code grant} is expected to be
+   * non-null. This method is made default for testing purposes.
+   */
+  boolean waitForAndSetCrawlDelay(Grant grant, String url) {
     if (nextAccessTimes.containsKey(url)) {
       if (!waitIfNecessary(url)) {
         return false;
       }
-      nextAccessTimes.replace(url,
-                              System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+      nextAccessTimes.replace(url, System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     } else {
-      nextAccessTimes.put(url,
-                          System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
+      nextAccessTimes.put(url, System.currentTimeMillis() + grant.getCrawlDelay() * 1000);
     }
     return true;
   }
@@ -261,39 +249,28 @@ public class WebCrawler {
   // @TODO [Fill in other properties: published date, publisher.]
   /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
-   * database schema.
-   * Requires "gcloud config set project project-ID" to be set correctly.
-   * {@code content} and {@code abbreviatedContent} are excluded form database indexes, which are
+   * database schema. Requires "gcloud config set project project-ID" to be set correctly. {@code
+   * content} and {@code abbreviatedContent} are excluded form database indexes, which are
    * additional data structures built to enable efficient lookup on non-keyed properties. Because
    * we will not query {@code NewsArticle} Datastore entities via {@code content} or
    * {@code abbreviatedContent}, we will not use indexes regardless.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
-    Key newsArticleKey = datastore.newKeyFactory()
-        .setKind("NewsArticle")
-        .newKey((long) newsArticle.getUrl().hashCode());
-    Entity newsArticleEntity = Entity.newBuilder(newsArticleKey)
-        .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
-        .set("title", newsArticle.getTitle())
-        .set("url", newsArticle.getUrl())
-        .set("content", excludeStringFromIndexes(newsArticle.getContent()))
-        .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
-        .build();
+    Key newsArticleKey =
+        datastore
+            .newKeyFactory()
+            .setKind("NewsArticle")
+            .newKey((long) newsArticle.getUrl().hashCode());
+    Entity newsArticleEntity =
+        Entity.newBuilder(newsArticleKey)
+            .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
+            .set("title", newsArticle.getTitle())
+            .set("url", newsArticle.getUrl())
+            .set("content", excludeStringFromIndexes(newsArticle.getContent()))
+            .set(
+                "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .build();
     datastore.put(newsArticleEntity);
-  }
-
-  /**
-   * For testing purposes.
-   */
-  public FullEntity storeInDatabase(String candidateId, NewsArticle newsArticle,
-      IncompleteKey newsArticleKey) {
-    FullEntity newsArticleEntity = Entity.newBuilder(newsArticleKey)
-        .set("title", newsArticle.getTitle())
-        .set("url", newsArticle.getUrl())
-        .set("content", excludeStringFromIndexes(newsArticle.getContent()))
-        .set("abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
-        .build();
-    return newsArticleEntity;
   }
 
   /**
@@ -301,10 +278,14 @@ public class WebCrawler {
    * the 1500-byte size limit for indexed data.
    */
   private StringValue excludeStringFromIndexes(String content) {
-    return StringValue.newBuilder(content).setExcludeFromIndexes(true).build();
+    return StringValue
+        .newBuilder(content == null ? "" : content)
+        .setExcludeFromIndexes(true)
+        .build();
   }
 
-  public Map<String, Long> getNextAccessTimes() {
+  /** For testing purposes. */
+  Map<String, Long> getNextAccessTimes() {
     return this.nextAccessTimes;
   }
 }

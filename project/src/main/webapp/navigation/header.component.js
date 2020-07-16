@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+//Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.sps.data;
+// use modern JavaScript (ES5)
+"use strict"
 
-import java.util.Date;
-import java.util.List;
-
-/**
- * Represents an election's information on the directory page. An election contains one or more
- * positions.
- */
-public class Election {
-  private String electionName;
-  private Date date;
-  private List<Position> positions;
-
-  public Election(String electionName, Date date, List<Position> positions) {
-    this.electionName = electionName;
-    this.date = date;
-    this.positions = positions;
+angular.module('navigation').component('header', {
+  template: `<h1>Voter Central</h1>`,
+  controller: function headerController() {
+    // Generate any dynamic info for header
   }
-}
+});

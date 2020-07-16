@@ -83,12 +83,10 @@ public class DataServlet extends HttpServlet {
                     KeyFactory.createKey("Election", electionName)));
       PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
       Entity election = electionQueryResult.asSingleEntity();
-      List<DirectoryCandidate> candidates =
-          extractCandidateInformation((List<String>) election.getProperty("candidateIds"),
-                                      (List<String>) election.getProperty("candidateIncumbency"));
       List<Position> positions =
           extractPositionInformation((List<String>) election.getProperty("candidatePositions"),
-                                     candidates);
+                                     (List<String>) election.getProperty("candidateIds"),
+                                     (List<Boolean>) election.getProperty("candidateIncumbency"));
       electionsData.add(new Election(election.getKey().getName(),
                                      (Date) election.getProperty("date"),
                                      positions));
@@ -97,43 +95,44 @@ public class DataServlet extends HttpServlet {
   }
 
   /**
-   * Queries the database for (brief version) candidate information based on ID and formats the
-   * data as {@code DirectoryCandidate} objects.
-   */
-  private List<DirectoryCandidate> extractCandidateInformation(List<String> candidateIds,
-      List<String> candidateIncumbency) {
-    List<DirectoryCandidate> candidates = new ArrayList<>(candidateIds.size());
-    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    for (int i = 0; i < candidateIds.size(); i++) {
-      String id = candidateIds.get(i);
-      String incumbency = candidateIncumbency.get(i);
-      Query candidateQuery = new Query("Candidate")
-          .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
-                      KeyFactory.createKey("Candidate", Long.parseLong(id))));
-      PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
-      Entity candidate = candidateQueryResult.asSingleEntity();
-      candidates.add(new DirectoryCandidate(id, 
-                                            (String) candidate.getProperty("name"),
-                                            (String) candidate.getProperty("partyAffiliation"),
-                                            incumbency));
-    }
-    return candidates;
-  }
-
-  /**
-   * Formats position and its associated candidates' information as {@code Position}. Correlates
-   * one {@code Position} object with one or more {@code DierctoryCandidate}.
+   * Formats a list of positions and their associated candidates' information. Correlates
+   * a {@code Position} object with one or more {@code DierctoryCandidate}. Candidates running
+   * for the same position are assumed to be consecutive in {@code candidateIds} and
+   * {@code candidateIncumbency}.
    */
   private List<Position> extractPositionInformation(List<String> candidatePositions,
-      List<DirectoryCandidate> candidates) {
+      List<String> candidateIds, List<Boolean> candidateIncumbency) {
     Set<String> distinctPositions = new HashSet<>(candidatePositions);
     List<Position> positions = new ArrayList<>(distinctPositions.size());
     for (String positionName : distinctPositions) {
       int startIndex = candidatePositions.indexOf(positionName);
       int endIndex = candidatePositions.lastIndexOf(positionName);
+      List<DirectoryCandidate> candidates = new ArrayList<>(endIndex - startIndex + 1);
+      for (int i = startIndex; i <= endIndex; i++) {
+        candidates.add(extractCandidateInformation(candidateIds.get(i),
+                                                   candidateIncumbency.get(i)));
+      }
       positions.add(new Position(positionName, candidates));
     }
     return positions;
+  }
+
+  /**
+   * Queries the database for (brief version) candidate information based on ID and formats the
+   * data as a {@code DirectoryCandidate} object.
+   */
+  private DirectoryCandidate extractCandidateInformation(String candidateId,
+      boolean isIncumbent) {
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    Query candidateQuery = new Query("Candidate")
+        .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
+                   KeyFactory.createKey("Candidate", Long.parseLong(candidateId))));
+    PreparedQuery candidateQueryResult = datastore.prepare(candidateQuery);
+    Entity candidate = candidateQueryResult.asSingleEntity();
+    return new DirectoryCandidate(candidateId, 
+                                  (String) candidate.getProperty("name"),
+                                  (String) candidate.getProperty("partyAffiliation"),
+                                  isIncumbent);
   }
 
   // Class to package together different types of data as a HTTP response.
