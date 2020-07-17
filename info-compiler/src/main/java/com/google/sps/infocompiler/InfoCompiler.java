@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -56,11 +57,20 @@ public class InfoCompiler {
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s", CIVIC_INFO_API_KEY);
   private final static String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
-  private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds;
+  private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  private List<String> electionQueryIds = new LinkedList<>();
   // For testing purposes (not to add too much information to the database).
   // Will include all 50 states.
   private List<String> states = Arrays.asList("NY");
+
+  public InfoCompiler() throws IOException {
+    this(DatastoreOptions.getDefaultInstance().getService());
+  }
+
+  /** For testing purposes. */
+  public InfoCompiler(Datastore datastore) throws IOException {
+    this.datastore = datastore;
+  }
 
   /**
    * Queries the ElectionQuery of the Civic Information API for a basic subset of election
@@ -129,14 +139,25 @@ public class InfoCompiler {
    * Queries the Civic Information API and retrieves JSON response as {@code JsonObject}.
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
-   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
-   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
-    CloseableHttpClient httpclient = HttpClients.createDefault();
+    CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    ResponseHandler<String> responseHandler =
-        new ResponseHandler<String>() {
+    return requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+  }
+
+  /** 
+   * Makes HTTP GET request to the Civic Information API amd converts HTTP JSON response as {@code
+   * JsonObject}.
+   *
+   * @throws ClientProtocolException if the GET request to the Civic Information API fails.
+   * @see <a href=
+   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
+   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   */
+  JsonObject requestHttpAndBuildJsonResponseFromCivicInformation(CloseableHttpClient httpClient,
+      HttpGet httpGet) throws IOException {
+    ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
         public String handleResponse(final HttpResponse response) throws IOException {
           int status = response.getStatusLine().getStatusCode();
@@ -144,13 +165,13 @@ public class InfoCompiler {
               HttpEntity entity = response.getEntity();
               return entity != null ? EntityUtils.toString(entity) : null;
           } else {
-              httpclient.close();
+              httpClient.close();
               throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
     };
-    String responseBody = httpclient.execute(httpGet, responseHandler);
-    httpclient.close();
+    String responseBody = httpClient.execute(httpGet, responseHandler);
+    httpClient.close();
     JsonObject json = new JsonParser().parse(responseBody).getAsJsonObject();
     return json;
   }
@@ -160,11 +181,10 @@ public class InfoCompiler {
    * of the election day is "YYYY-MM-DD", and the specific hour/minute/second is irrelevant. By
    * default, stores the election day at the beginning of the day in EDT timezone.
    */
-  private void storeBaseElectionInDatabase(JsonObject election) {
-    Key electionKey =
-        datastore.newKeyFactory()
-            .setKind("Election")
-            .newKey(election.get("name").getAsString());
+  void storeBaseElectionInDatabase(JsonObject election) {
+    Key electionKey = datastore.newKeyFactory()
+        .setKind("Election")
+        .newKey(election.get("name").getAsString());
     String electionQueryId = election.get("id").getAsString();
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date =
@@ -191,7 +211,7 @@ public class InfoCompiler {
    * candidate names and party affiliations. Updates {@code Election} entities and creates {@code
    * Candidate} entities.
    */
-  private void storeElectionContestInDatabase(String electionQueryId, JsonObject contest) {
+  void storeElectionContestInDatabase(String electionQueryId, JsonObject contest) {
     JsonArray candidates = contest.getAsJsonArray("candidates");
     if (candidates == null) {
       return;
@@ -253,14 +273,5 @@ public class InfoCompiler {
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
-  }
-
-  // For testing purposes.
-  public static void main(String[] args) {
-    InfoCompiler myInfoCompiler = new InfoCompiler();
-    myInfoCompiler.queryAndStoreBaseElectionInfo();
-    myInfoCompiler.queryAndStoreElectionContestInfo();
-    // Prevent {@code java.lang.IllegalThreadStateException}.
-    System.exit(0);
   }
 }
