@@ -43,7 +43,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -140,7 +139,7 @@ public final class InfoCompilerTest {
         ArgumentCaptor.forClass(ResponseHandler.class);
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
-        infoCompiler.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+        InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
     assertThat(json).isEqualTo(ELECTION_JSON);
   }
 
