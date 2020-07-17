@@ -29,7 +29,6 @@ angular.module('candidatePage').component('candidatePage', {
 async function getCandidateInformation(scope) {
   const candidateId = location.search.substring(
       location.search.indexOf('=') + 1, location.search.indexOf('&'));
-
   const electionName =
       location.search.substring(location.search.lastIndexOf('=') + 1);
   // Send GET request to /candidate and fetch JSON formatted data for the given
