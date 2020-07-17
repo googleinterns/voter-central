@@ -172,9 +172,9 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
     assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
     assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
-    assertThat(electionEntity.getList("candidatePositions")).containsExactly();
-    assertThat(electionEntity.getList("candidateIds")).containsExactly();
-    assertThat(electionEntity.getList("candidateIncumbency")).containsExactly();
+    assertThat(electionEntity.getList("candidatePositions")).isEmpty();
+    assertThat(electionEntity.getList("candidateIds")).isEmpty();
+    assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
   }
 
   @Test
