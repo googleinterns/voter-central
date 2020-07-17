@@ -1,89 +1,28 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" ng-app="voterCentral">
   <head>
     <meta charset="utf-8">
     <meta name="Voter Central Election Directory Page"
           content="The directory page of Voter Central, a website
                    for centralizing voting information">
     <link rel="stylesheet" href="style.css">
+    <script src="/node_modules/angular/angular.js"></script>
     <script src="config.js"></script>
+    <script src="app.module.js"></script>
     <script src="script.js"></script>
-    <script src="navigation.js"></script>
+    <script src="/navigation/navigation.module.js"></script>
+    <script src="/navigation/nav-bar.component.js"></script>
+    <script src="/navigation/header.component.js"></script>
+    <script src="/directory-page/directory-page.module.js"></script>
+    <script src="/directory-page/directory-page.component.js"></script>
+    <script src="/candidate-page/candidate-page.module.js"></script>
     <title>Voter Central Directory Page</title>
   </head>
-  <body onload="addBriefElectionCandidateInformation()">
-    <div id="header-container"></div>
-    <div id="navbar-container"></div>
-    <h2>Voter Central Directory Page</h2>
-    <div id="elections-container">
-      <div id="election-1">
-        <h3>Election name</h3>
-        <time>Election date</time>
-        <div id="election-1-positions">
-          <ul>
-            <li>
-              <h4>Position 1</h4>
-              <p>Table of Candidates</p>
-              <table class="candidates-table">
-                <tr>
-                  <th>Candidate Name</th>
-                  <th>Party Affiliation</th>
-                  <th>Incumbent?</th>
-                </tr>
-              </table>
-            </li>
-            <li>
-              <h4>Position 2...</h4>
-            </li>
-          </ul>
-        </div>
-        <hr>
-      </div>
-      <div id="election-2">
-        <h3>New York's 14th Congressional District Election</h3>
-        <time>2020-11-03</time>
-        <div id="election-2-positions">
-          <ul>
-            <li>
-              <h4>U.S. Representative</h4>
-              <p>Table of Candidates</p>
-              <table class="candidates-table">
-                <tr>
-                  <th>Candidate Name</th>
-                  <th>Party Affiliation</th>
-                  <th>Incumbent?</th>
-                </tr>
-                <tr>
-                  <td><a href="candidate.html">Alexandria Ocasio-Cortez</a></td>
-                  <td>Democratic Party</td>
-                  <td>Yes</td>
-                </tr>
-                <tr>
-                  <td><a href="URL">John Cummings</a></td>
-                  <td>Republican Party</td>
-                  <td>No</td>
-                </tr>
-                <tr>
-                  <td><a href="URL">Michelle Caruso-Cabrera</a></td>
-                  <td>Serve America Movement Party</td>
-                  <td>No</td>
-                </tr>
-                <tr>
-                  <td><a href="URL">Miguel Hernandez</a></td>
-                  <td>Independent</td>
-                  <td>No</td>
-                </tr>
-                <tr>
-                  <td><a href="URL">Antoine Tucker</a></td>
-                  <td>Republican Party</td>
-                  <td>No</td>
-                </tr>
-              </table>
-            </li>
-          </ul>
-        </div>
-        <hr>
-      </div>
-    </div>
+  <body>
+    <header></header>
+    <nav-bar></nav-bar>
+    <main role="main">
+      <directory-page id="elections-container"></directory-page>
+    </main>
   </body>
 </html>

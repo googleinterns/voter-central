@@ -14,6 +14,10 @@
 
 package com.google.sps.infocompiler;
 
+import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth8.*;
+import static org.mockito.Mockito.*;
+
 import com.google.cloud.datastore.BooleanValue;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
@@ -41,17 +45,18 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for the location-based information compiler.
+ * (It's recommended to run InfoCompilerTest indenpendently, not together with other tests in the
+ * package that use Datastore emulators. There is instability with Datastore emulators, potentially
+ * due to HTTP communication.)
  */
 @RunWith(JUnit4.class)
 public final class InfoCompilerTest {
@@ -136,7 +141,7 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         infoCompiler.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
-    Assert.assertEquals(json, ELECTION_JSON);
+    assertThat(json).isEqualTo(ELECTION_JSON);
   }
 
   @Test
@@ -161,15 +166,15 @@ public final class InfoCompilerTest {
             .setKind("Election")
             .build();
     QueryResults<Entity> queryResult = datastore.run(query);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity electionEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(electionEntity.getKey().getName(), election.get("name").getAsString());
-    Assert.assertEquals(electionEntity.getString("queryId"), election.get("id").getAsString());
-    Assert.assertEquals(electionEntity.getTimestamp("date").toDate(), date);
-    Assert.assertEquals(electionEntity.getList("candidatePositions"), Arrays.asList());
-    Assert.assertEquals(electionEntity.getList("candidateIds"), Arrays.asList());
-    Assert.assertEquals(electionEntity.getList("candidateIncumbency"), Arrays.asList());
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
+    assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
+    assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
+    assertThat(electionEntity.getList("candidatePositions")).isEmpty();
+    assertThat(electionEntity.getList("candidateIds")).isEmpty();
+    assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
   }
 
   @Test
@@ -199,64 +204,37 @@ public final class InfoCompilerTest {
     Entity electionEntity = datastore.run(electionQuery).next();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
-    Assert.assertEquals(candidatePositions.size(), 1);
-    Assert.assertEquals(candidatePositions,
-                        Arrays.asList(
-                            StringValue.newBuilder(
-                                SINGLE_CONTEST_JSON.get("office").getAsString()).build()));
+    assertThat(candidatePositions).hasSize(1);
+    assertThat(candidatePositions)
+        .containsExactly(StringValue.newBuilder(
+                         SINGLE_CONTEST_JSON.get("office").getAsString()).build());
     List<Value<String>> candidateIds =
         new ArrayList<>(electionEntity.getList("candidateIds"));
-    Assert.assertEquals(candidateIds.size(), 1);
-    Assert.assertEquals(candidateIds,
-                        Arrays.asList(StringValue.newBuilder(candidateId.toString()).build()));
+    assertThat(candidateIds).hasSize(1);
+    assertThat(candidateIds)
+        .containsExactly(StringValue.newBuilder(candidateId.toString()).build());
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
-    Assert.assertEquals(candidateIncumbency.size(), 1);
-    Assert.assertEquals(candidateIncumbency,
-                        Arrays.asList(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build()));
+    assertThat(candidateIncumbency).hasSize(1);
+    assertThat(candidateIncumbency)
+        .containsExactly(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build());
     // Check candidate data.
     Query<Entity> candidateQuery =
         Query.newEntityQueryBuilder()
             .setKind("Candidate")
             .build();
     QueryResults<Entity> queryResult = datastore.run(candidateQuery);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity candidateEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
-    Assert.assertEquals(candidateEntity.getKey().getId(), candidateId);
-    Assert.assertEquals(candidateEntity.getString("name"), candidate.get("name").getAsString());
-    Assert.assertEquals(candidateEntity.getString("partyAffiliation"),
-                        candidate.get("party").getAsString() + " Party");
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
+    assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
+    assertThat(candidateEntity.getString("partyAffiliation"))
+        .isEqualTo(candidate.get("party").getAsString() + " Party");
   }
 
-  // Integrated tests.
-  //
-  // @Test
-  // public void queryAndStoreBaseElectionInfo() {
-  //   // Execute the entire process of querying and storing base election information. Should execute
-  //   // without exceptions and the database should be populated correctly. This confirms the validity
-  //   // of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreBaseElectionInfo();
-  // }
-  // @Test
-  // public void queryAndStoreElectionContestInfo() {
-  //   // Execute the entire process of querying and storing election/position/candidate information.
-  //   // This step is intended to run right after {@code queryAndStoreBaseElectionInfo()}.
-  //   // Should execute without exceptions and the database should be populated correctly. This
-  //   // confirms the validity of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreElectionContestInfo();
-  // }
-  // @Test
-  // public void queryAndStoreLocationBasedInfo() {
-  //   // Execute the entire process of querying and storing location-based information. Should
-  //   // execute without exceptions and the database should be populated correctly. This confirms the
-  //   // validity of the query URLs and HTTP requests to the Civic Information API.
-  //   // This is an integrated test.
-  //   infoCompiler.queryAndStoreBaseElectionInfo();
-  //   infoCompiler.queryAndStoreElectionContestInfo();
-  // }
+  // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
+  // information, eg. {@code queryAndStoreBaseElectionInfo()}.]
 
   @AfterClass
   public static void cleanup() throws InterruptedException, IOException, TimeoutException {

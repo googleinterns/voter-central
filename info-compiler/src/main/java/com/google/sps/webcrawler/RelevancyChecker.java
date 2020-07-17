@@ -20,19 +20,18 @@ import com.google.cloud.language.v1.Document;
 import com.google.cloud.language.v1.Document.Type;
 import com.google.cloud.language.v1.EncodingType;
 import com.google.cloud.language.v1.Entity;
-import com.google.cloud.language.v1.EntityMention;
 import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.sps.data.NewsArticle;
 import java.io.IOException;
 
 // @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
- * A {@code RelevancyChecker} that performs entity analysis to check the relevancy of news
- * article content to a candidate.
+ * A utility class that performs entity analysis to check the relevancy of news article content to a
+ * candidate.
  */
 public class RelevancyChecker {
   // @TODO [Calculate a meaningful salience threshold.]
-  public static final double SALIENCE_THRESHOLD = 0.5;
+  static final double SALIENCE_THRESHOLD = 0.5;
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -45,17 +44,15 @@ public class RelevancyChecker {
     this(LanguageServiceClient.create());
   }
 
-  /**
-   * For testing purposes.
-   */
-  public RelevancyChecker(LanguageServiceClient languageServiceClient) {
+  /** For testing purposes. */
+  RelevancyChecker(LanguageServiceClient languageServiceClient) {
     this.languageServiceClient = languageServiceClient;
   }
 
   /**
-   * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of
-   * interest. Defines relevancy as the salience of {@code candidateName} in the content,
-   * and defines sufficient relevancy with {@code SALIENCE_THRESHOLD}.
+   * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of interest.
+   * Defines relevancy as the salience of {@code candidateName} in the content, and defines
+   * sufficient relevancy with {@code SALIENCE_THRESHOLD}.
    */
   public boolean isRelevant(NewsArticle newsArticle, String candidateName) {
     double salience = computeSalienceOfName(newsArticle.getContent(), candidateName);
@@ -64,10 +61,10 @@ public class RelevancyChecker {
 
   /**
    * Performs entity analysis, and computes the salience score of {@code candidateName} in the
-   * {@code content}. Salience has range [0, 1], with higher salience indicating higher
-   * relevance of {@code candidateName} to {@code content} overall.
+   * {@code content}. Salience has range [0, 1], with higher salience indicating higher relevance
+   * of {@code candidateName} to {@code content} overall.
    */
-  public double computeSalienceOfName(String content, String candidateName) {
+  double computeSalienceOfName(String content, String candidateName) {
     Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
     AnalyzeEntitiesRequest request =
         AnalyzeEntitiesRequest.newBuilder()

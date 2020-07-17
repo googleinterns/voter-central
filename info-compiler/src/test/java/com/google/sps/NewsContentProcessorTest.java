@@ -14,14 +14,16 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
+
 import com.google.sps.data.NewsArticle;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.xml.sax.SAXException;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for news article content processing.
@@ -32,14 +34,15 @@ public final class NewsContentProcessorTest {
   private final static String URL = "https://www.cnn.com/index.html";
   private final static String WORD = "word";
   private final static String EMPTY_CONTENT = "";
+
   private String LONG_CONTENT;
   private String MAX_CONTENT;
   private String SHORT_CONTENT;
 
   @Before
   public void createContent() {
+    // Construct content strings.
     LONG_CONTENT = "";
-    
     for (int i = 0; i < NewsContentProcessor.MAX_WORD_COUNT + 1; i++) {
       LONG_CONTENT += WORD + " ";
     }
@@ -60,11 +63,10 @@ public final class NewsContentProcessorTest {
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
     // content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), LONG_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), MAX_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(MAX_CONTENT);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
@@ -73,11 +75,10 @@ public final class NewsContentProcessorTest {
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
     // title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), SHORT_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), SHORT_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
@@ -85,10 +86,9 @@ public final class NewsContentProcessorTest {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
     // After content processing, the title, URL and content remain the same.
     NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsContentProcessor.process(newsArticle);
-    Assert.assertEquals(newsArticle.getTitle(), TITLE);
-    Assert.assertEquals(newsArticle.getUrl(), URL);
-    Assert.assertEquals(newsArticle.getContent(), EMPTY_CONTENT);
-    Assert.assertEquals(newsArticle.getAbbreviatedContent(), EMPTY_CONTENT);
+    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
+    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
   }
 }
