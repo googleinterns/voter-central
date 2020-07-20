@@ -25,11 +25,16 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.sps.data.DirectoryCandidate;
 import com.google.sps.data.Election;
 import com.google.sps.data.Position;
 import java.io.IOException;
 import java.lang.Boolean;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -40,6 +45,14 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 /** 
  * Queries the backend database and serves location-based search results of (brief)
@@ -47,6 +60,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 @WebServlet("/data")
 public class DataServlet extends HttpServlet {
+  private final static String VOTER_INFO_QUERY_URL =
+      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", Config.CIVIC_INFO_API_KEY);
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -102,6 +117,66 @@ public class DataServlet extends HttpServlet {
   }
 
   /**
+   * Takes an {@code Entity} object which represents an election, and returns true if
+   * this election is deemed relevant to the given {@code address}. If the {@code listAll}
+   * parameter is true, then the election is always deemed relevant.
+   */
+  private boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
+    if (listAllElections) {
+      return true;
+    } else {
+      // Query the Civic Information API for whether {@code election} is relevant to
+      // {@code address}.
+      String queryUrl =
+        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
+                      address.replace(" ", "%20"), (String) election.getProperty("queryId"));
+      JsonObject addressElectionResponse;
+      try {
+        addressElectionResponse = queryCivicInformation(queryUrl);
+      } catch (IOException e) {
+        return false;
+      }
+      if (addressElectionResponse.has("contests")) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  /** 
+   * Queries the Civic Information API and retrieves JSON response as {@code JsonObject}.
+   *
+   * @throws ClientProtocolException if the GET request to the Civic Information API fails.
+   * @throws SocketException if {@code queryUrl} is ill-constructed, such as with a null value
+   *     as the election query ID, causing {@code httpclient.execute(httpGet, responseHandler);}
+   *     to fail.
+   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
+   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   */
+  private JsonObject queryCivicInformation(String queryUrl) throws IOException, SocketException {
+    CloseableHttpClient httpclient = HttpClients.createDefault();
+    HttpGet httpGet = new HttpGet(queryUrl);
+    ResponseHandler<String> responseHandler =
+        new ResponseHandler<String>() {
+          @Override
+          public String handleResponse(final HttpResponse response) throws IOException {
+            int status = response.getStatusLine().getStatusCode();
+            if (status >= 200 && status < 300) {
+                HttpEntity entity = response.getEntity();
+                return entity != null ? EntityUtils.toString(entity) : null;
+            } else {
+                httpclient.close();
+                throw new ClientProtocolException("Unexpected response status: " + status);
+            }
+          }
+    };
+    String responseBody = httpclient.execute(httpGet, responseHandler);
+    httpclient.close();
+    return new JsonParser().parse(responseBody).getAsJsonObject();
+  }
+
+  /**
    * Formats a list of positions and their associated candidates' information. Correlates
    * a {@code Position} object with one or more {@code DirectoryCandidate}. Candidates running
    * for the same position are assumed to be consecutive in {@code candidateIds} and
@@ -141,21 +216,6 @@ public class DataServlet extends HttpServlet {
                                   (String) candidate.getProperty("name"),
                                   (String) candidate.getProperty("partyAffiliation"),
                                   isIncumbent);
-  }
-
-  /**
-   * Takes an {@code Entity} object which represents an election, and returns true if
-   * this election is deemed relevant to the given {@code address}. If the {@code listAll}
-   * parameter is true, then the election is always deemed relevant.
-   */
-  private boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
-    if (listAllElections) {
-      return true;
-    } else {
-      // TODO: Add code which uses the Civic Information API to determine whether a given
-      // election is relevant.
-      return false;
-    }
   }
 
   // Class to package together different types of data as a HTTP response.
