@@ -51,14 +51,11 @@ public class DataServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String address = request.getParameter("address");
-    boolean listAll = Boolean.parseBoolean(request.getParameter("listAll"));
-    // Resolve {@code address} to a list of election names.
-    // @TODO [Need to call the Civic Information API]
-    List<String> electionNames = Arrays.asList("New York's 14th Congressional District Election");
+    boolean listAllElections = Boolean.parseBoolean(request.getParameter("listAllElections"));
 
     // Find election/candidate information. Package and convert the data to JSON.
-    List<Election> electionsData = extractElectionInformation(address, listAll);
-    DirectoryPageDataPackage dataPackage = new DirectoryPageDataPackage(electionsData);
+    List<Election> elections = extractElectionInformation(address, listAllElections);
+    DirectoryPageDataPackage dataPackage = new DirectoryPageDataPackage(elections);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
 
@@ -75,14 +72,14 @@ public class DataServlet extends HttpServlet {
    * formats the data as {@code Election} objects. Correlates one {@code Election} with one or more
    * {@code Position}.
    */
-  private List<Election> extractElectionInformation(String address, boolean listAll) {
+  private List<Election> extractElectionInformation(String address, boolean listAllElections) {
     List<Election> elections = new ArrayList<>();
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     Query electionQuery = new Query("Election");
     PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
     List<Entity> electionsData = electionQueryResult.asList(FetchOptions.Builder.withDefaults());
     for (Entity election : electionsData) {
-      if (!isRelevantElection(election, address, listAll)) {
+      if (!isRelevantElection(election, address, listAllElections)) {
         continue;
       }
       List<String> candidatePositionsData = 
@@ -96,10 +93,10 @@ public class DataServlet extends HttpServlet {
         continue;
       }
       List<Position> positions =
-          extractPositionInformation(
-                  candidatePositionsData, candidateIdsData, candidateIncumbencyData);
+          extractPositionInformation(candidatePositionsData, candidateIdsData,
+                                    candidateIncumbencyData);
       elections.add(new Election(election.getKey().getName(),
-          (Date) election.getProperty("date"), positions));
+                                (Date) election.getProperty("date"), positions));
     }
     return elections;
   }
@@ -147,12 +144,12 @@ public class DataServlet extends HttpServlet {
   }
 
   /**
-   * Takes an {@code Entity} object which represents an elections, and returns true if
-   * this election is deemed relevant to the given address. If the {@code listAll} parameter
-   * is true, then the election is always deemed relevant.
+   * Takes an {@code Entity} object which represents an election, and returns true if
+   * this election is deemed relevant to the given {@code address}. If the {@code listAll}
+   * parameter is true, then the election is always deemed relevant.
    */
-  private boolean isRelevantElection(Entity election, String address, boolean listAll) {
-    if (listAll) {
+  private boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
+    if (listAllElections) {
       return true;
     } else {
       // TODO: Add code which uses the Civic Information API to determine whether a given
