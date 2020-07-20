@@ -85,10 +85,19 @@ public class DataServlet extends HttpServlet {
       if (!isRelevantElection(election, address, listAll)) {
         continue;
       }
+      List<String> candidatePositionsData = 
+          (List<String>) election.getProperty("candidatePositions");
+      List<String> candidateIdsData = 
+          (List<String>) election.getProperty("candidateIds");
+      List<Boolean> candidateIncumbencyData = 
+          (List<Boolean>) election.getProperty("candidateIncumbency");
+      if (candidatePositionsData == null || candidateIdsData == null 
+          || candidateIncumbencyData == null) {
+        continue;
+      }
       List<Position> positions =
-          extractPositionInformation((List<String>) election.getProperty("candidatePositions"),
-          (List<String>) election.getProperty("candidateIds"),
-          (List<Boolean>) election.getProperty("candidateIncumbency"));
+          extractPositionInformation(
+                  candidatePositionsData, candidateIdsData, candidateIncumbencyData);
       elections.add(new Election(election.getKey().getName(),
           (Date) election.getProperty("date"), positions));
     }
@@ -97,12 +106,13 @@ public class DataServlet extends HttpServlet {
 
   /**
    * Formats a list of positions and their associated candidates' information. Correlates
-   * a {@code Position} object with one or more {@code DierctoryCandidate}. Candidates running
+   * a {@code Position} object with one or more {@code DirectoryCandidate}. Candidates running
    * for the same position are assumed to be consecutive in {@code candidateIds} and
    * {@code candidateIncumbency}.
    */
   private List<Position> extractPositionInformation(List<String> candidatePositions,
       List<String> candidateIds, List<Boolean> candidateIncumbency) {
+    System.out.println(candidatePositions);
     Set<String> distinctPositions = new HashSet<>(candidatePositions);
     List<Position> positions = new ArrayList<>(distinctPositions.size());
     for (String positionName : distinctPositions) {
@@ -147,7 +157,7 @@ public class DataServlet extends HttpServlet {
     } else {
       // TODO: Add code which uses the Civic Information API to determine whether a given
       // election is relevant.
-      return true;
+      return false;
     }
   }
 
