@@ -13,5 +13,5 @@ jobs:
         with:
           java-version: 11
       - name: Run unit tests for info-compiler
-        run: mvn test --file info-compiler/pom.xml
+        run: gcloud config set project voter-central; mvn test --file info-compiler/pom.xml
 
