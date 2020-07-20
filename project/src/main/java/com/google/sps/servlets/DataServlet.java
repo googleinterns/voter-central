@@ -29,6 +29,7 @@ import com.google.sps.data.DirectoryCandidate;
 import com.google.sps.data.Election;
 import com.google.sps.data.Position;
 import java.io.IOException;
+import java.lang.Boolean;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -50,13 +51,13 @@ public class DataServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String address = request.getParameter("address");
-
+    boolean listAll = Boolean.parseBoolean(request.getParameter("listAll"));
     // Resolve {@code address} to a list of election names.
     // @TODO [Need to call the Civic Information API]
     List<String> electionNames = Arrays.asList("New York's 14th Congressional District Election");
 
     // Find election/candidate information. Package and convert the data to JSON.
-    List<Election> electionsData = extractElectionInformation(electionNames);
+    List<Election> electionsData = extractElectionInformation(address, listAll);
     DirectoryPageDataPackage dataPackage = new DirectoryPageDataPackage(electionsData);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
@@ -74,24 +75,24 @@ public class DataServlet extends HttpServlet {
    * formats the data as {@code Election} objects. Correlates one {@code Election} with one or more
    * {@code Position}.
    */
-  private List<Election> extractElectionInformation(List<String> electionNames) {
-    List<Election> electionsData = new ArrayList<>(electionNames.size());
+  private List<Election> extractElectionInformation(String address, boolean listAll) {
+    List<Election> elections = new ArrayList<>();
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    for (String electionName : electionNames) {
-      Query electionQuery = new Query("Election")
-          .setFilter(new FilterPredicate("__key__", FilterOperator.EQUAL,
-                    KeyFactory.createKey("Election", electionName)));
-      PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
-      Entity election = electionQueryResult.asSingleEntity();
+    Query electionQuery = new Query("Election");
+    PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
+    List<Entity> electionsData = electionQueryResult.asList(FetchOptions.Builder.withDefaults());
+    for (Entity election : electionsData) {
+      if (!isRelevantElection(election, address, listAll)) {
+        continue;
+      }
       List<Position> positions =
           extractPositionInformation((List<String>) election.getProperty("candidatePositions"),
-                                     (List<String>) election.getProperty("candidateIds"),
-                                     (List<Boolean>) election.getProperty("candidateIncumbency"));
-      electionsData.add(new Election(election.getKey().getName(),
-                                     (Date) election.getProperty("date"),
-                                     positions));
+          (List<String>) election.getProperty("candidateIds"),
+          (List<Boolean>) election.getProperty("candidateIncumbency"));
+      elections.add(new Election(election.getKey().getName(),
+          (Date) election.getProperty("date"), positions));
     }
-    return electionsData;
+    return elections;
   }
 
   /**
@@ -133,6 +134,21 @@ public class DataServlet extends HttpServlet {
                                   (String) candidate.getProperty("name"),
                                   (String) candidate.getProperty("partyAffiliation"),
                                   isIncumbent);
+  }
+
+  /**
+   * Takes an {@code Entity} object which represents an elections, and returns true if
+   * this election is deemed relevant to the given address. If the {@code listAll} parameter
+   * is true, then the election is always deemed relevant.
+   */
+  private boolean isRelevantElection(Entity election, String address, boolean listAll) {
+    if (listAll) {
+      return true;
+    } else {
+      // TODO: Add code which uses the Civic Information API to determine whether a given
+      // election is relevant.
+      return true;
+    }
   }
 
   // Class to package together different types of data as a HTTP response.

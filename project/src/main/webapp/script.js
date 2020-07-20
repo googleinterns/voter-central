@@ -46,10 +46,13 @@
  *   </div>
  */
 async function addBriefElectionCandidateInformation() {
-  const address = location.search.substring(location.search.indexOf('=') + 1);
+  const address = location.search.substring(location.search.indexOf('=') + 1,
+      location.search.indexOf('&'));
+  const listAll =
+      location.search.substring(location.search.lastIndexOf('=') + 1);
 
-  // Send GET request to /data with address.
-  const response = await fetch(`/data?address=${address}`);
+  // Send GET request to /data with address and whether to list all elections.
+  const response = await fetch(`/data?address=${address}&listAll=${listAll}`);
   const dataPackage = await response.json();
   const elections = dataPackage.electionsData;
 
