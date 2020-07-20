@@ -106,17 +106,17 @@ public final class WebCrawlerTest {
     //   ]
     //   ...
     // }
-    CUSTOM_SEARCH_JSON = new JsonObject();
-    JsonArray items = new JsonArray(1);
-    JsonObject item = new JsonObject();
-    JsonObject pagemap = new JsonObject();
-    JsonArray metatags = new JsonArray(1);
     JsonObject urlMetadata = new JsonObject();
     urlMetadata.addProperty(WebCrawler.CUSTOM_SEARCH_URL_METATAG, VALID_URL);
+    JsonArray metatags = new JsonArray();
     metatags.add(urlMetadata);
+    JsonObject pagemap = new JsonObject();
     pagemap.add("metatags", metatags);
+    JsonObject item = new JsonObject();
     item.add("pagemap", pagemap);
+    JsonArray items = new JsonArray();
     items.add(item);
+    CUSTOM_SEARCH_JSON = new JsonObject();
     CUSTOM_SEARCH_JSON.add("items", items);
   }
 

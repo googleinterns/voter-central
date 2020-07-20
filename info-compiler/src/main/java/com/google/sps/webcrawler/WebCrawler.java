@@ -54,10 +54,9 @@ import org.apache.http.util.EntityUtils;
 
 /** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private static final String CUSTOM_SEARCH_KEY = Config.CUSTOM_SEARCH_KEY;
-  private static final String CUSTOM_SEARCH_ENGINE_ID = Config.CUSTOM_SEARCH_ENGINE_ID;
   private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
+
   // @TODO [Extract publisher and published date.]
   // private static final String CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
   //     Arrays.asList("article:published_time", "article:modified_time", "modified", og:pubdate",
@@ -153,7 +152,8 @@ public class WebCrawler {
     String request =
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
-            CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
+            Config.CUSTOM_SEARCH_KEY, Config.CUSTOM_SEARCH_ENGINE_ID,
+            candidateName.replace(" ", "%20"));
     CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
       HttpGet httpGet = new HttpGet(request);

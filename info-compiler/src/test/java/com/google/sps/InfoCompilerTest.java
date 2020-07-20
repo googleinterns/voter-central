@@ -90,23 +90,23 @@ public final class InfoCompilerTest {
     datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
 
-    ELECTION_JSON = new JsonObject();
-    ELECTION_JSON.addProperty("kind", "civicinfo#electionsqueryresponse");
-    JsonArray elections = new JsonArray(1);
     JsonObject election = new JsonObject();
     election.addProperty("id", "2000");
     election.addProperty("name", "VIP Test Election");
     election.addProperty("electionDay", "2013-06-06");
+    JsonArray elections = new JsonArray();
     elections.add(election);
+    ELECTION_JSON = new JsonObject();
+    ELECTION_JSON.addProperty("kind", "civicinfo#electionsqueryresponse");
     ELECTION_JSON.add("elections", elections);
 
-    SINGLE_CONTEST_JSON = new JsonObject();
-    SINGLE_CONTEST_JSON.addProperty("office", "Governor");
-    JsonArray candidates = new JsonArray(1);
     JsonObject candidate = new JsonObject();
     candidate.addProperty("name", "Andrew Cuomo");
     candidate.addProperty("party", "Democratic");
+    JsonArray candidates = new JsonArray();
     candidates.add(candidate);
+    SINGLE_CONTEST_JSON = new JsonObject();
+    SINGLE_CONTEST_JSON.addProperty("office", "Governor");
     SINGLE_CONTEST_JSON.add("candidates", candidates);
   }
 
