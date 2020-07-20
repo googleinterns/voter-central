@@ -14,17 +14,19 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
+
 import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.sps.data.NewsArticle;
 import java.io.IOException;
 import java.util.Arrays;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.xml.sax.SAXException;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for the relevancy checker of news articles.
@@ -58,8 +60,8 @@ public final class RelevancyCheckerTest {
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD + 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString()))
         .thenCallRealMethod();
-    Assert.assertTrue(mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME));
-    Assert.assertTrue(mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME));
+    assertThat(mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME)).isTrue();
+    assertThat(mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME)).isTrue();
   }
 
   @Test
@@ -72,8 +74,8 @@ public final class RelevancyCheckerTest {
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD - 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString()))
         .thenCallRealMethod();
-    Assert.assertFalse(mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME));
-    Assert.assertFalse(mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME));
+    assertThat(mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME)).isFalse();
+    assertThat(mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME)).isFalse();
   }
 
   // @TODO [Write tests that mocks {@code languageServiceClient.analyzeEntities()} and other

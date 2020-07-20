@@ -14,6 +14,10 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
+
 import com.google.sps.data.NewsArticle;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
@@ -27,14 +31,12 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.html.BoilerpipeContentHandler;
 import org.apache.tika.parser.html.HtmlParser;
-import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.xml.sax.SAXException;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for news article content extraction.
@@ -78,8 +80,7 @@ public final class NewsContentExtractorTest {
     Optional<NewsArticle> potentialNewsArticle =
         newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
                                                     URL);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(new NewsArticle(TITLE, URL, CONTENT), potentialNewsArticle.get());
+    assertThat(potentialNewsArticle).hasValue(new NewsArticle(TITLE, URL, CONTENT));
   }
 
   @Test
@@ -93,8 +94,7 @@ public final class NewsContentExtractorTest {
     Optional<NewsArticle> potentialNewsArticle =
         newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
                                                     WRONG_URL);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(new NewsArticle(TITLE, WRONG_URL, CONTENT), potentialNewsArticle.get());
+    assertThat(potentialNewsArticle).hasValue(new NewsArticle(TITLE, WRONG_URL, CONTENT));
   }
 
   @Test
@@ -108,8 +108,7 @@ public final class NewsContentExtractorTest {
     Optional<NewsArticle> potentialNewsArticle =
         newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
                                                     URL);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(new NewsArticle(EMPTY, URL, CONTENT), potentialNewsArticle.get());
+    assertThat(potentialNewsArticle).hasValue(new NewsArticle(EMPTY, URL, CONTENT));
   }
 
   @Test
@@ -127,8 +126,7 @@ public final class NewsContentExtractorTest {
             }).when(parser).parse(anyObject(), anyObject(), anyObject());
     Optional<NewsArticle> potentialNewsArticle =
         newsContentExtractor.extractContentFromHtml(webpageStream, URL);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(new NewsArticle(EMPTY, URL, EMPTY), potentialNewsArticle.get());
+    assertThat(potentialNewsArticle).hasValue(new NewsArticle(EMPTY, URL, EMPTY));
   }
 
   @Test
@@ -138,7 +136,7 @@ public final class NewsContentExtractorTest {
     when(webpageStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
     Optional<NewsArticle> potentialNewsArticle =
         realNewsContentExtractor.extractContentFromHtml(webpageStream, URL);
-    Assert.assertFalse(potentialNewsArticle.isPresent());
+    assertThat(potentialNewsArticle).isEmpty();
   }
 
   @Test
@@ -147,6 +145,6 @@ public final class NewsContentExtractorTest {
     // can be extracted.
     Optional<NewsArticle> potentialNewsArticle =
         realNewsContentExtractor.extractContentFromHtml(null, URL);
-    Assert.assertFalse(potentialNewsArticle.isPresent());
+    assertThat(potentialNewsArticle).isEmpty();
   }
 }
