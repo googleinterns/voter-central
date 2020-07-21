@@ -149,7 +149,6 @@ public class NewsContentProcessor {
       vertices.add(new Vertex(new IntValue(i), new StringValue(sentences[i])));
       for (int j = i; j < sentences.length; j++) {
         if (i == j) {
-          edges.add(new Edge(new IntValue(i), new IntValue(j), new DoubleValue(0)));
           continue;
         }
         String[] sentenceA = tokenizeSentence(sentences[i]);
