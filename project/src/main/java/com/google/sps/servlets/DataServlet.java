@@ -130,50 +130,71 @@ public class DataServlet extends HttpServlet {
       String queryUrl =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
                       address.replace(" ", "%20"), (String) election.getProperty("queryId"));
-      JsonObject addressElectionResponse;
+      String addressElectionResponse;
       try {
         addressElectionResponse = queryCivicInformation(queryUrl);
-      } catch (IOException e) {
+      } catch (Exception e) {
         return false;
       }
-      if (addressElectionResponse.has("contests")) {
-        return true;
-      } else {
-        return false;
-      }
+      return parseResponseForRelevancy(addressElectionResponse);
     }
   }
 
   /** 
-   * Queries the Civic Information API and retrieves JSON response as {@code JsonObject}.
+   * Queries the Civic Information API and retrieves JSON response as a String.
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
    * @throws SocketException if {@code queryUrl} is ill-constructed, such as with a null value
    *     as the election query ID, causing {@code httpclient.execute(httpGet, responseHandler);}
    *     to fail.
-   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
-   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  private JsonObject queryCivicInformation(String queryUrl) throws IOException, SocketException {
-    CloseableHttpClient httpclient = HttpClients.createDefault();
+  private String queryCivicInformation(String queryUrl) throws IOException, SocketException {
+    CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    ResponseHandler<String> responseHandler =
-        new ResponseHandler<String>() {
-          @Override
-          public String handleResponse(final HttpResponse response) throws IOException {
-            int status = response.getStatusLine().getStatusCode();
-            if (status >= 200 && status < 300) {
-                HttpEntity entity = response.getEntity();
-                return entity != null ? EntityUtils.toString(entity) : null;
-            } else {
-                httpclient.close();
-                throw new ClientProtocolException("Unexpected response status: " + status);
-            }
+    return requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+  }
+
+  /** 
+   * Makes HTTP GET request to the Civic Information API amd returns HTTP JSON response as a
+   * String. This method is given default visibility for testing purposes.
+   *
+   * @throws ClientProtocolException if the GET request to the Civic Information API fails.
+   * @throws SocketException if {@code queryUrl} is ill-constructed, such as with a null value
+   *     as the election query ID, causing {@code httpclient.execute(httpGet, responseHandler);}
+   *     to fail.
+   * @see <a href=
+   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
+   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   */
+  String requestHttpAndBuildJsonResponseFromCivicInformation(CloseableHttpClient httpClient,
+      HttpGet httpGet) throws IOException, SocketException {
+    ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+        @Override
+        public String handleResponse(final HttpResponse response) throws IOException {
+          int status = response.getStatusLine().getStatusCode();
+          if (status >= 200 && status < 300) {
+              HttpEntity entity = response.getEntity();
+              return entity != null ? EntityUtils.toString(entity) : null;
+          } else {
+              httpClient.close();
+              throw new ClientProtocolException("Unexpected response status: " + status);
           }
+        }
     };
-    String responseBody = httpclient.execute(httpGet, responseHandler);
-    httpclient.close();
-    return new JsonParser().parse(responseBody).getAsJsonObject();
+    String responseBody = httpClient.execute(httpGet, responseHandler);
+    httpClient.close();
+    return responseBody;
+  }
+
+  /**
+   * Parses JSON {@code addressElectionResponse} and checks if the election is relevant to the
+   * address according to the response structure of the Civic Information API: @see <a href=
+   * "https://developers.google.com/civic-information/docs/using_api#voterinfoquery-response:">
+   * response structure</a>. This method is given default visibility for testing purposes.
+   */
+  boolean parseResponseForRelevancy(String addressElectionResponse) {
+    JsonObject responseJson = new JsonParser().parse(addressElectionResponse).getAsJsonObject();
+    return responseJson.has("contests");
   }
 
   /**
