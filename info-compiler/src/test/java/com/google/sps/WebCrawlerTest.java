@@ -72,7 +72,7 @@ public final class WebCrawlerTest {
   private static Datastore datastore;
   private static NewsContentExtractor newsContentExtractor;
   private static RelevancyChecker relevancyChecker;
-  private static JsonObject CUSTOM_SEARCH_JSON;
+  private static JsonObject customSearchJson;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
@@ -83,7 +83,7 @@ public final class WebCrawlerTest {
     relevancyChecker = mock(RelevancyChecker.class);
     webCrawler = new WebCrawler(datastore, newsContentExtractor, relevancyChecker);
 
-    // {@code CUSTOM_SEARCH_JSON} has the following JSON structure (ellipsis represents other
+    // {@code customSearchJson} has the following JSON structure (ellipsis represents other
     // properties not shown). Insert {@code VALID_URL}.
     // {
     //   ...
@@ -116,8 +116,8 @@ public final class WebCrawlerTest {
     item.add("pagemap", pagemap);
     JsonArray items = new JsonArray();
     items.add(item);
-    CUSTOM_SEARCH_JSON = new JsonObject();
-    CUSTOM_SEARCH_JSON.add("items", items);
+    customSearchJson = new JsonObject();
+    customSearchJson.add("items", items);
   }
 
   /**
@@ -136,9 +136,9 @@ public final class WebCrawlerTest {
 
   @Test
   public void extractUrlsFromCustomSearchJson() throws IOException {
-    // Extract news article URL from {@code CUSTOM_SEARCH_JSON}, which is in format @see
+    // Extract news article URL from {@code customSearchJson}, which is in format @see
     // {@code initialize()}.
-    List<URL> urls = webCrawler.extractUrlsFromCustomSearchJson(CUSTOM_SEARCH_JSON);
+    List<URL> urls = webCrawler.extractUrlsFromCustomSearchJson(customSearchJson);
     assertThat(urls).containsExactly(new URL(VALID_URL));
   }
 

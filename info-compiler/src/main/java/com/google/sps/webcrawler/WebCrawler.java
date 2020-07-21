@@ -58,14 +58,7 @@ public class WebCrawler {
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
 
   // @TODO [Extract publisher and published date.]
-  // private static final String CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
-  //     Arrays.asList("article:published_time", "article:modified_time", "modified", og:pubdate",
-  //                   "pubdate", "published", "dcterms.modified", "dcterms.created");
-  // private static final String CUSTOM_SEARCH_PUBLISHER_METATAGS =
-  //     Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
-  //                   "dc.source");
   // @TODO [Decide between extracting title from Custom Search or NewsContentExtractor.]
-  // private static final String CUSTOM_SEARCH_TITLE_METATAG = "og:title";
   private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
