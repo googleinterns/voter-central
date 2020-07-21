@@ -94,9 +94,9 @@ public class DataServlet extends HttpServlet {
       }
       List<Position> positions =
           extractPositionInformation(candidatePositionsData, candidateIdsData,
-                                    candidateIncumbencyData);
+                                     candidateIncumbencyData);
       elections.add(new Election(election.getKey().getName(),
-                                (Date) election.getProperty("date"), positions));
+                                 (Date) election.getProperty("date"), positions));
     }
     return elections;
   }
@@ -109,7 +109,6 @@ public class DataServlet extends HttpServlet {
    */
   private List<Position> extractPositionInformation(List<String> candidatePositions,
       List<String> candidateIds, List<Boolean> candidateIncumbency) {
-    System.out.println(candidatePositions);
     Set<String> distinctPositions = new HashSet<>(candidatePositions);
     List<Position> positions = new ArrayList<>(distinctPositions.size());
     for (String positionName : distinctPositions) {
