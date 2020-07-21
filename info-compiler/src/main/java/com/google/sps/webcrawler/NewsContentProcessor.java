@@ -147,10 +147,7 @@ public class NewsContentProcessor {
         new ArrayList<Edge<IntValue, DoubleValue>>((int) Math.pow(sentences.length, 2));
     for (int i = 0; i < sentences.length; i++) {
       vertices.add(new Vertex(new IntValue(i), new StringValue(sentences[i])));
-      for (int j = i; j < sentences.length; j++) {
-        if (i == j) {
-          continue;
-        }
+      for (int j = i + 1; j < sentences.length; j++) {
         String[] sentenceA = tokenizeSentence(sentences[i]);
         String[] sentenceB = tokenizeSentence(sentences[j]);
         double similarity = computeInterSentenceSimilarity(sentenceA, sentenceB);
