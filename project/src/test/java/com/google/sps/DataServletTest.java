@@ -46,11 +46,27 @@ public class DataServletTest {
   // response structure</a>.
   private static final String RELEVANT_ADDRESS_ELECTION_RESPONSE =
       "{" +
-      "  contests: []" +
+      "  state: [" +
+      "    {" +
+      "      sources: [" +
+      "        {" +
+      "          name: \"Voting Information Project\"" +
+      "        }" +
+      "      ]" +
+      "    }" +
+      "  ]" +
       "}";
   private static final String IRRELEVANT_ADDRESS_ELECTION_RESPONSE =
       "{" +
-      "  states: []" +
+      "  state: [" +
+      "    {" +
+      "      sources: [" +
+      "        {" +
+      "          name: \"\"" +
+      "        }" +
+      "      ]" +
+      "    }" +
+      "  ]" +
       "}";
   private static final DataServlet dataServlet = new DataServlet();
 

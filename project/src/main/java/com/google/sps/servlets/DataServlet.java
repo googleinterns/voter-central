@@ -194,7 +194,10 @@ public class DataServlet extends HttpServlet {
    */
   boolean parseResponseForRelevancy(String addressElectionResponse) {
     JsonObject responseJson = new JsonParser().parse(addressElectionResponse).getAsJsonObject();
-    return responseJson.has("contests");
+    JsonArray sources =
+        ((JsonObject) responseJson.getAsJsonArray("state").get(0))
+            .getAsJsonArray("sources");
+    return !(((JsonObject)sources.get(0)).get("name").getAsString().equals(""));
   }
 
   /**
