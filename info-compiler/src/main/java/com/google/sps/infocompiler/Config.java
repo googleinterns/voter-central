@@ -12,23 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.sps.data;
-
-import java.util.Date;
-import java.util.List;
+package com.google.sps.infocompiler;
 
 /**
- * Represents an election's information on the directory page. An election contains one or more
- * positions.
+ * A configuration class for keeping hidden API keys and other configuration files.
  */
-public class Election {
-  private String electionName;
-  private Date date;
-  private List<Position> positions;
-
-  public Election(String electionName, Date date, List<Position> positions) {
-    this.electionName = electionName;
-    this.date = date;
-    this.positions = positions;
-  }
+public class Config {
+  public static final String CIVIC_INFO_API_KEY = "";
+  public static final String CUSTOM_SEARCH_KEY = "";
+  public static final String CUSTOM_SEARCH_ENGINE_ID = "";
+  public static final String OpenNLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
+  public static final String OpenNLP_TOKENIZER_FILE = "en-token.bin";
 }

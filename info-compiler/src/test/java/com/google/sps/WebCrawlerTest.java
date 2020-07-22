@@ -14,6 +14,10 @@
 
 package com.google.sps.webcrawler;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.*;
+
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
@@ -28,26 +32,23 @@ import java.util.concurrent.TimeoutException;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import static org.mockito.Mockito.*;
 
 /**
  * A tester for web scrawler's news article compilation process, excluding content extraction,
  * content processing and relevancy checking which are defined in standalone classes.
+ * (It's recommended to run WebCrawlerTest indenpendently, not together with other tests in the
+ * package that use Datastore emulators. There is instability with Datastore emulators, potentially
+ * due to HTTP communication.)
  */
 @RunWith(JUnit4.class)
 public final class WebCrawlerTest {
   private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
   private static final String CANDIDATE_ID = "1";
-  private static final String VALID_PROTOCOL = "https";
-  private static final String INVALID_PROTOCOL = "htttttps";
-  private static final String VALID_HOST = "www.cnn.com";
-  private static final String INVALID_HOST = "www.cnn.cooooom";
   private static final String VALID_URL =
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private static final String VALID_URL_ROBOTS_TXT =
@@ -97,40 +98,9 @@ public final class WebCrawlerTest {
   @Test
   public void getUrlsFromCustomSearch() {}
 
-  // For the following two methods:
-  // Mocking {@code URL}, which is a final class requires additional Mockito configuration.
-  // @TODO [Might try the configuration. Alternatively might wrap URL, and mock the wrapper class.]
-  //
-  // @Test
-  // public void scrapeAndExtractHtml_invalidProtocolUrl() throws IOException {
-  //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
-  //   // protocol. The invalid {@code URL} would cause an {@code IOException} getting read. This
-  //   // exception should be caught and an empty {@code Optional} should be returned.
-  //   // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
-  //   // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-  //   // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-  //   // {@code NewsContentExtractor} to aid test-driven development.
-  //   URL url = mock(URL.class);
-  //   when(url.getProtocol()).thenReturn(INVALID_PROTOCOL);
-  //   when(url.getHost()).thenReturn(VALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
-  //   Assert.assertFalse(potentialNewsArticle.isPresent());
-  // }
-  // @Test
-  // public void scrapeAndExtractHtml_invalidHostUrl() throws IOException {
-  //   // Scrape and extract news article content from an invalid {@code URL} that returns an invalid
-  //   // host. The invalid {@code URL} would cause an {@code IOException} getting read. This
-  //   // exception should be caught and an empty {@code Optional} should be returned.
-  //   // Assume that the libraries {@code URL} and {@code RobotsTxt} work as intended.
-  //   // Since Mockito doesn't support the mocking of static methods, {@code NewsContentExtractor}'s 
-  //   // {@code extractContentFromHtml()} is not insular to this "unit" test. @TODO [Might modify
-  //   // {@code NewsContentExtractor} to aid test-driven development.
-  //   URL url = mock(URL.class);
-  //   when(url.getProtocol()).thenReturn(VALID_PROTOCOL);
-  //   when(url.getHost()).thenReturn(INVALID_HOST);
-  //   Optional<NewsArticle> potentialNewsArticle = webCrawler.scrapeAndExtractFromHtml(url);
-  //   Assert.assertFalse(potentialNewsArticle.isPresent());
-  // }
+  // @TODO [Write tests that test invalid URL protocols and invalid hosts, either by mocking
+  // {@code URL}, which is a final class that requires additional Mockito configuration, or by
+  // writing a wrapper class for URL.]
 
   @Test
   public void scrapeAndExtractHtml_nonscrapableWebpage() throws IOException {
@@ -144,7 +114,7 @@ public final class WebCrawlerTest {
     when(grant.hasAccess()).thenReturn(false);
     Optional<NewsArticle> potentialNewsArticle =
         webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    Assert.assertFalse(potentialNewsArticle.isPresent());
+    assertThat(potentialNewsArticle).isEmpty();
   }
 
   @Test
@@ -163,9 +133,8 @@ public final class WebCrawlerTest {
         .thenReturn(Optional.of(EXPECTED_NEWS_ARTICLE));
     Optional<NewsArticle> potentialNewsArticle =
         webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    Assert.assertTrue(potentialNewsArticle.isPresent());
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE, potentialNewsArticle.get());
-    Assert.assertTrue(webCrawler.getNextAccessTimes().containsKey(VALID_URL_ROBOTS_TXT));
+    assertThat(potentialNewsArticle).hasValue(EXPECTED_NEWS_ARTICLE);
+    assertThat(webCrawler.getNextAccessTimes()).containsKey(VALID_URL_ROBOTS_TXT);
   }
 
   @Test
@@ -182,9 +151,9 @@ public final class WebCrawlerTest {
             .setKind("NewsArticle")
             .build();
     QueryResults<Entity> queryResult = datastore.run(query);
-    Assert.assertTrue(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isTrue();
     Entity newsArticleEntity = queryResult.next();
-    Assert.assertFalse(queryResult.hasNext());
+    assertThat(queryResult.hasNext()).isFalse();
     Key newsArticleKey =
         datastore
             .newKeyFactory()
@@ -195,12 +164,12 @@ public final class WebCrawlerTest {
             .newKeyFactory()
             .setKind("Candidate")
             .newKey(CANDIDATE_ID);
-    Assert.assertEquals(newsArticleKey, newsArticleEntity.getKey());
-    Assert.assertEquals(candidateKey, newsArticleEntity.getKey("candidateId"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getTitle(), newsArticleEntity.getString("title"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getUrl(), newsArticleEntity.getString("url"));
-    Assert.assertEquals(EXPECTED_NEWS_ARTICLE.getContent(), newsArticleEntity.getString("content"));
-    Assert.assertEquals(EMPTY_ABBREVIATED_CONTENT, newsArticleEntity.getString("abbreviatedContent"));
+    assertThat(newsArticleEntity.getKey()).isEqualTo(newsArticleKey);
+    assertThat(newsArticleEntity.getKey("candidateId")).isEqualTo(candidateKey);
+    assertThat(newsArticleEntity.getString("title")).isEqualTo(EXPECTED_NEWS_ARTICLE.getTitle());
+    assertThat(newsArticleEntity.getString("url")).isEqualTo(EXPECTED_NEWS_ARTICLE.getUrl());
+    assertThat(newsArticleEntity.getString("content")).isEqualTo(EXPECTED_NEWS_ARTICLE.getContent());
+    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
   }
 
   @AfterClass

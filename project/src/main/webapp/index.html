@@ -1,26 +1,32 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" ng-app="voterCentral">
   <head>
     <meta charset="utf-8">
     <meta name="Voter Central Homepage"
           content="The homepage of Voter Central, a website
                    for centralizing voting information">
     <link rel="stylesheet" href="style.css">
+    <script src="/node_modules/angular/angular.js"></script>
     <script src="config.js"></script>
-    <script src="script.js"></script>
-    <script src="navigation.js"></script>
+    <script src="app.module.js"></script>
+    <script src="/navigation/navigation.module.js"></script>
+    <script src="/navigation/nav-bar.component.js"></script>
+    <script src="/navigation/header.component.js"></script>
+    <script src="/directory-page/directory-page.module.js"></script>
+    <script src="/candidate-page/candidate-page.module.js"></script>
     <title>Voter Central Homepage</title>
   </head>
   <body>
-    <h2>Voter Central Home Page</h2>
-    <div id="header-container"></div>
-    <div id="navbar-container"></div>
-    <form id="location-input" action="/directory.html">
-      <label for="address">Enter your street address:</label>
-      <br>
-      <input type="text" id="address" name="address" placeholder="...your street address..."
-             required/>
-      <input type="submit" id="submit-address"/>
-    </form>
+    <header></header>
+    <nav-bar></nav-bar>
+    <main role="main">
+      <form id="location-input" action="/directory.html">
+        <label for="address">Enter your street address:</label>
+        <br>
+        <input type="text" id="address" name="address" placeholder="...your street address..."
+                required/>
+        <input type="submit" id="submit-address"/>
+      </form>
+    </main>
   </body>
 </html>
