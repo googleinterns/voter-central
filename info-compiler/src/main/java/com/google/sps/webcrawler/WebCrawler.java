@@ -63,15 +63,17 @@ import org.apache.http.util.EntityUtils;
 public class WebCrawler {
   private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
-  private static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
+  static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
       Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
                     "dc.source");
-  private static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
+  static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
       Arrays.asList("article:published_time", "article:published", "datepublished", "og:pubdate",
                     "pubdate", "published", "article:modified_time", "article:modified",
                     "modified");
-  private static final DateTimeFormatter dateTimeFormatter =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz");
+  private static final List<DateTimeFormatter> DATE_TIME_FORMATTERS =
+      Arrays.asList(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"),
+                    DateTimeFormatter.ISO_OFFSET_DATE_TIME);
   private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
   private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
   private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
@@ -208,12 +210,15 @@ public class WebCrawler {
    */
   private Date extractPublishedDateMetadata(JsonObject metadata) {
     for (String potentialDateMetatag : CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS) {
-      try {
-        String date = metadata.get(potentialDateMetatag).getAsString();
-        System.out.println(date);
-        System.out.println(Date.from(Instant.from(dateTimeFormatter.parse(date))));
-        return Date.from(Instant.from(dateTimeFormatter.parse(date)));
-      } catch (NullPointerException | IllegalArgumentException | DateTimeException e) {}
+      if (!metadata.has(potentialDateMetatag)) {
+        continue;
+      }
+      String date = metadata.get(potentialDateMetatag).getAsString();
+      for (DateTimeFormatter potentialDateTimeFormatter : DATE_TIME_FORMATTERS) {
+        try {
+          return Date.from(Instant.from(potentialDateTimeFormatter.parse(date)));
+        } catch (IllegalArgumentException | DateTimeException e) {}
+      }
     }
     return null;
   }
