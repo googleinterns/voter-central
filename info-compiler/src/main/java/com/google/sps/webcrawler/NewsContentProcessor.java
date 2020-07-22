@@ -23,14 +23,12 @@ public class NewsContentProcessor {
 
   // @TODO [Implement more advanced processing methods.]
   /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
-  public static NewsArticle process(NewsArticle originalNewsArticle) {
-    NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
+  public static void process(NewsArticle newsArticle) {
     String[] splitContent = newsArticle.getContent().split(" ");
     int wordCount = splitContent.length;
     int allowedLength = Math.min(wordCount, MAX_WORD_COUNT);
     String processedContent =
         String.join(" ", Arrays.asList(splitContent).subList(0, allowedLength));
     newsArticle.setAbbreviatedContent(processedContent);
-    return newsArticle;
   }
 }

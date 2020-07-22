@@ -33,11 +33,10 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class RelevancyCheckerTest {
-  private final static String TITLE = "title";
-  private final static String URL = "https://www.cnn.com/index.html";
-  private final static String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
-  private final static String IRRELEVANT_CONTENT = "Irrelevant content.";
-  private final static String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
+  private static final String URL = "https://www.cnn.com/index.html";
+  private static final String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
+  private static final String IRRELEVANT_CONTENT = "Irrelevant content.";
+  private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
 
   private LanguageServiceClient languageServiceClient;
   private RelevancyChecker mockRelevancyChecker;
@@ -54,8 +53,10 @@ public final class RelevancyCheckerTest {
   public void computeSalienceOfName_findsEverythingRelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score higher than {@code SALIENCE_THRESHOLD}.
-    NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
-    NewsArticle irrelevantNewsArticle = new NewsArticle(TITLE, URL, IRRELEVANT_CONTENT);
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null);
+    relevantNewsArticle.setContent(RELEVANT_CONTENT);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null);
+    irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD + 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString()))
@@ -68,8 +69,10 @@ public final class RelevancyCheckerTest {
   public void computeSalienceOfName_findsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score lower than {@code SALIENCE_THRESHOLD}.
-    NewsArticle relevantNewsArticle = new NewsArticle(TITLE, URL, RELEVANT_CONTENT);
-    NewsArticle irrelevantNewsArticle = new NewsArticle(TITLE, URL, IRRELEVANT_CONTENT);
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null);
+    relevantNewsArticle.setContent(RELEVANT_CONTENT);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null);
+    irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD - 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString()))

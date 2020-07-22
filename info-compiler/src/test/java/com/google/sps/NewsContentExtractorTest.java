@@ -43,17 +43,15 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class NewsContentExtractorTest {
-  private final static String URL =
+  private static final String URL =
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
-  private final static String WRONG_URL =
-    "https://www.wrong.com";
-  private final static String EMPTY = "";
-  private final static String TITLE = "News Article Title";
-  private final static String CONTENT = "News article content.";
-  private final static TextBlock TEXT_BLOCK = new TextBlock(CONTENT);
-  private final static TextDocument TEXT_DOC_REGULAR =
+  private static final String EMPTY = "";
+  private static final String TITLE = "News Article Title";
+  private static final String CONTENT = "News article content.";
+  private static final TextBlock TEXT_BLOCK = new TextBlock(CONTENT);
+  private static final TextDocument TEXT_DOC_REGULAR =
       new TextDocument(TITLE, Arrays.asList(TEXT_BLOCK));
-  private final static TextDocument TEXT_DOC_WITHOUT_TITLE =
+  private static final TextDocument TEXT_DOC_WITHOUT_TITLE =
       new TextDocument(Arrays.asList(TEXT_BLOCK));
 
   private InputStream webpageStream;
@@ -77,24 +75,13 @@ public final class NewsContentExtractorTest {
     // TEXT_DOC_REGULAR}. Content processing hasn't occurred so the abbreivated content is null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
     Metadata metadata = new Metadata();
-    Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
-                                                    URL);
-    assertThat(potentialNewsArticle).hasValue(new NewsArticle(TITLE, URL, CONTENT));
-  }
-
-  @Test
-  public void extractContentFromHtml_regularTextDocWrongUrlParam() throws IOException,
-      SAXException, TikaException {
-    // Extract content from a {@code BoilerpipeContentHandler} that returns {@code
-    // TEXT_DOC_REGULAR} while passing in {@code WRONG_URL}. Content processing hasn't occurred so
-    // the abbreivated content is null.
-    when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
-    Metadata metadata = new Metadata();
-    Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
-                                                    WRONG_URL);
-    assertThat(potentialNewsArticle).hasValue(new NewsArticle(TITLE, WRONG_URL, CONTENT));
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
+    newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
+                                                newsArticle);
+    expectedNewsArticle.setTitle(TITLE);
+    expectedNewsArticle.setContent(CONTENT);
+    assertThat(newsArticle).isEqualTo(expectedNewsArticle);
   }
 
   @Test
@@ -105,10 +92,13 @@ public final class NewsContentExtractorTest {
     // null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_WITHOUT_TITLE);
     Metadata metadata = new Metadata();
-    Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
-                                                    URL);
-    assertThat(potentialNewsArticle).hasValue(new NewsArticle(EMPTY, URL, CONTENT));
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
+    newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
+                                                newsArticle);
+    expectedNewsArticle.setTitle(EMPTY);
+    expectedNewsArticle.setContent(CONTENT);
+    assertThat(newsArticle).isEqualTo(expectedNewsArticle);
   }
 
   @Test
@@ -116,35 +106,38 @@ public final class NewsContentExtractorTest {
       TikaException {
     // Extract content and meta data using a parser that modifies the content handler to
     // receive an end-of-document notification via {@code endDocument()}. Therefore, an empty
-    // article will be extracted, while the URL is set correctly to the passed in parameter.
-    // Content processing hasn't occurred so the abbreivated content is null.
+    // article will be extracted. Content processing hasn't occurred so the abbreivated content is
+    // null.
     doAnswer(parseInvocation -> {
                BoilerpipeContentHandler boilerpipeHandler =
                    (BoilerpipeContentHandler) parseInvocation.getArguments()[1];
                boilerpipeHandler.endDocument();
                return null;
             }).when(parser).parse(anyObject(), anyObject(), anyObject());
-    Optional<NewsArticle> potentialNewsArticle =
-        newsContentExtractor.extractContentFromHtml(webpageStream, URL);
-    assertThat(potentialNewsArticle).hasValue(new NewsArticle(EMPTY, URL, EMPTY));
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
+    newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
+    expectedNewsArticle.setTitle(EMPTY);
+    expectedNewsArticle.setContent(EMPTY);
+    assertThat(newsArticle).isEqualTo(expectedNewsArticle);
   }
 
   @Test
   public void extractContentFromHtml_IOExceptionStream() throws IOException {
     // The webpage stream throws {@code IOException} when being read. This exception should be
-    // caught and no content will be extracted.
+    // caught and an empty content should be set.
     when(webpageStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
-    Optional<NewsArticle> potentialNewsArticle =
-        realNewsContentExtractor.extractContentFromHtml(webpageStream, URL);
-    assertThat(potentialNewsArticle).isEmpty();
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    realNewsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
+    assertThat(newsArticle.getContent()).isEqualTo(EMPTY);
   }
 
   @Test
   public void extractContentFromHtml_NullWebpageStream() {
-    // The webpage stream is null, and it will cause a {@code NullPointerException}. No content
-    // can be extracted.
-    Optional<NewsArticle> potentialNewsArticle =
-        realNewsContentExtractor.extractContentFromHtml(null, URL);
-    assertThat(potentialNewsArticle).isEmpty();
+    // The webpage stream is null, and it will cause a {@code NullPointerException}. An empty
+    // content should be set.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    realNewsContentExtractor.extractContentFromHtml(null, newsArticle);
+    assertThat(newsArticle.getContent()).isEqualTo(EMPTY);
   }
 }

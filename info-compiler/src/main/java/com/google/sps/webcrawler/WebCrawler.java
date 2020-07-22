@@ -57,12 +57,15 @@ import org.apache.http.util.EntityUtils;
 public class WebCrawler {
   private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
-
-  // @TODO [Extract publisher and published date.]
-  // @TODO [Decide between extracting title from Custom Search or NewsContentExtractor.]
+  private static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
+      Arrays.asList("article:published_time", "article:modified_time", "modified", "og:pubdate",
+                    "pubdate", "published", "dcterms.modified", "dcterms.created");
+  private static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
+      Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
+                    "dc.source");
   private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
-  private final static int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
-  private final static int URL_READ_TIMEOUT_MILLISECONDS = 1000;
+  private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
+  private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
@@ -92,7 +95,7 @@ public class WebCrawler {
   /**
    * Compiles news articles for the candidate with the specified {@code candidateName} and
    * {@code candidateId}:
-   * 1. Obtains news article URLs from Google Custom Search.
+   * 1. Obtains news article URLs and metadata from Google Custom Search.
    * 2. Checks for permission to web-scrape.
    * 3. Web-scrapes if permitted.
    * 4. Extracts content from HTML structure.
@@ -101,18 +104,14 @@ public class WebCrawler {
    * 7. Stores processed content in the database.
    */
   public void compileNewsArticle(String candidateName, String candidateId) {
-    List<URL> urls = getUrlsFromCustomSearch(candidateName);
-    for (URL url : urls) {
-      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractFromHtml(url);
-      if (!potentialNewsArticle.isPresent()) {
-        continue;
-      }
-      NewsArticle newsArticle = potentialNewsArticle.get();
+    List<NewsArticle> newsArticles = getUrlsFromCustomSearch(candidateName);
+    for (NewsArticle newsArticle : newsArticles) {
+      scrapeAndExtractFromHtml(newsArticle);
       if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
-      NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
-      storeInDatabase(candidateId, processedNewsArticle);
+      NewsContentProcessor.process(newsArticle);
+      storeInDatabase(candidateId, newsArticle);
     }
   }
 
@@ -133,18 +132,14 @@ public class WebCrawler {
   //   } catch (InterruptedException e) {}
   // }
 
-  // @TODO [Extract other metadata, modify NewsArticle's structure, and return List<NewsArticle>.]
   /**
    * Searches for {@code candidateName} on News.google using the Google Custom Search engine and
-   * finds URLs of news articles. Returns an empty list if no valid URLs are found.
-   * Note: This function contains a few hard-coded implementations because of the current lack of
-   * access to the engine. In order for the web crawler to be tested from beginning to end, this
-   * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
+   * finds URLs and metadata of news articles. Returns an empty list if no valid URLs are found.
    *
    * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
    *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  public List<URL> getUrlsFromCustomSearch(String candidateName) {
+  public List<NewsArticle> getUrlsFromCustomSearch(String candidateName) {
     String request =
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
@@ -154,20 +149,20 @@ public class WebCrawler {
     try {
       HttpGet httpGet = new HttpGet(request);
       JsonObject json = InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
-      return extractUrlsFromCustomSearchJson(json);
+      return extractUrlsAndMetadataFromCustomSearchJson(json);
     } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
       return Arrays.asList();
     }
   }
 
-  // @TODO [Extract other metadata and store into the updated NewsArticle structure.]
   /**
    * Parses {@code json}, which is in Google Custom Search's JSON response format, and extracts
-   * news articles' URLs (URLs from the source website, instead of from News.google).
+   * news articles' URLs (URLs from the source website, instead of from News.google) and metadata,
+   * including the publisher and published date. Packages extracted data into {@code NewsArticle}.
    */
-  List<URL> extractUrlsFromCustomSearchJson(JsonObject json) {
-    List<URL> urls = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
+  List<NewsArticle> extractUrlsAndMetadataFromCustomSearchJson(JsonObject json) {
+    List<NewsArticle> newsArticles = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
     JsonArray searchResults = json.getAsJsonArray("items");
     for (JsonElement result : searchResults) {
       JsonObject metadata =
@@ -176,58 +171,58 @@ public class WebCrawler {
                    .getAsJsonObject("pagemap")
                        .getAsJsonArray("metatags")
                            .get(0));
-      try {
-        urls.add(
-            new URL(
-                metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString()));
-      } catch (Exception e) {}
+      String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
+      newsArticles.add(new NewsArticle(url, null, null));
     }
-    return urls;
+    return newsArticles;
   }
 
   /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
-   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
+   * textual content to put into {@code newsArticle}. Sets "content" to empty in the event of an
+   * exception.
    */
-  public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
+  public void scrapeAndExtractFromHtml(NewsArticle newsArticle) {
     try {
+      URL url = new URL(newsArticle.getUrl());
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = setTimeoutAndOpenStream(robotsUrl);
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       robotsTxtStream.close();
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      return politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
+      politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
-      return Optional.empty();
+      newsArticle.setContent("");
     }
   }
 
   /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
-   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
+   * textual content to put into {@code newsArticle}. Sets "content" to empty in the event of an
+   * exception.
    */
-  Optional<NewsArticle> politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl, URL url) {
+  void politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl,
+      NewsArticle newsArticle) {
     try {
       // Check permission to access and respect the required crawl delay.
       if (grant == null || grant.hasAccess()) {
         if (grant != null
             && grant.getCrawlDelay() != null
             && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          return Optional.empty();
+          newsArticle.setContent("");
+          return;
         }
-        InputStream webpageStream = setTimeoutAndOpenStream(url);
-        Optional<NewsArticle> potentialNewsArticle =
-            newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+        InputStream webpageStream = setTimeoutAndOpenStream(new URL(newsArticle.getUrl()));
+        newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
-        return potentialNewsArticle;
       } else {
-        return Optional.empty();
+        newsArticle.setContent("");
       }
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
-      return Optional.empty();
+      newsArticle.setContent("");
     }
   }
 
@@ -274,7 +269,6 @@ public class WebCrawler {
     return true;
   }
 
-  // @TODO [Fill in other properties: published date, publisher.]
   /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema. Requires "gcloud config set project project-ID" to be set correctly. {@code
@@ -297,6 +291,9 @@ public class WebCrawler {
             .set("content", excludeStringFromIndexes(newsArticle.getContent()))
             .set(
                 "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .set("publisher", newsArticle.getPublisher())
+            .set("publishedDate", "EMPTY!")
+            .set("priority", newsArticle.getPriority())
             .build();
     datastore.put(newsArticleEntity);
   }

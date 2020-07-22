@@ -50,22 +50,21 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public final class WebCrawlerTest {
-  private final static String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
-  private final static String CANDIDATE_ID = "1";
-  private final static String VALID_URL =
-    "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
-  private final static String VALID_URL_ROBOTS_TXT =
-    "https://www.cnn.com/robots.txt";
-  private final static NewsArticle EXPECTED_NEWS_ARTICLE =
-    new NewsArticle(
-        "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - " +
-        "CNNPolitics",
-        VALID_URL,
-        "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
-        "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
-        "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
-  private final static String EMPTY_ABBREVIATED_CONTENT = "";
-  private final static int DELAY = 1;
+  private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
+  private static final String CANDIDATE_ID = "1";
+  private static final String VALID_URL =
+      "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
+  private static final String VALID_URL_ROBOTS_TXT =
+      "https://www.cnn.com/robots.txt";
+  private static final String TITLE =
+      "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - CNNPolitics";
+  private static final String CONTENT =
+      "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
+      "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
+      "primary election on Tuesday for New York's 14th Congressional District, CNN projects.";
+  private static final String EMPTY_CONTENT = "";
+  private static final String EMPTY_ABBREVIATED_CONTENT = "";
+  private static final int DELAY = 1;
 
   private static WebCrawler webCrawler;
   private static LocalDatastoreHelper datastoreHelper;
@@ -135,11 +134,12 @@ public final class WebCrawlerTest {
   }
 
   @Test
-  public void extractUrlsFromCustomSearchJson() throws IOException {
-    // Extract news article URL from {@code customSearchJson}, which is in format @see
+  public void extractUrlsAndMetadataFromCustomSearchJson_regularJson() throws IOException {
+    // Extract news article URL and metadata from {@code customSearchJson}, which is in format @see
     // {@code initialize()}.
-    List<URL> urls = webCrawler.extractUrlsFromCustomSearchJson(customSearchJson);
-    assertThat(urls).containsExactly(new URL(VALID_URL));
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(customSearchJson);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, null, null));
   }
 
   // @TODO [Write tests that test invalid URL protocols and invalid hosts, either by mocking
@@ -150,15 +150,14 @@ public final class WebCrawlerTest {
   public void scrapeAndExtractHtml_nonscrapableWebpage() throws IOException {
     // Scrape and extract news article content from a non-scrapable webpage, as suggested by a mock
     // {@code Grant}. The URLs for robots.txt and the webpage are irrelevant and set to those
-    // corresponding to {@code VALID_URL}. An empty {@code Optional} should be returned as the
-    // result.
+    // corresponding to {@code VALID_URL}. An empty content should be set.
     URL url = new URL(VALID_URL);
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(false);
-    Optional<NewsArticle> potentialNewsArticle =
-        webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    assertThat(potentialNewsArticle).isEmpty();
+    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null);
+    webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
+    assertThat(newsArticle.getContent()).isEqualTo(EMPTY_CONTENT);
   }
 
   @Test
@@ -166,18 +165,14 @@ public final class WebCrawlerTest {
     // Scrape and extract news article content with required crawler delay, achieved through a mock
     // {@code Grant}. The required delay should be documented in {@code nextAccessTimes}. It is 
     // keyed by {@code VALID_URL_ROBOTS_TXT}, which is the robots.txt file corresponding to
-    // {@code VALID_URL}. The extracted content and metadata in {@code newsArticle} should be
-    // consistent with those of {@code EXPECTED_NEWS_ARTICLE}.
+    // {@code VALID_URL}.
     URL url = new URL(VALID_URL);
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(true);
     when(grant.getCrawlDelay()).thenReturn(DELAY);
-    when(newsContentExtractor.extractContentFromHtml(anyObject(), anyString()))
-        .thenReturn(Optional.of(EXPECTED_NEWS_ARTICLE));
-    Optional<NewsArticle> potentialNewsArticle =
-        webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
-    assertThat(potentialNewsArticle).hasValue(EXPECTED_NEWS_ARTICLE);
+    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null);
+    webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     assertThat(webCrawler.getNextAccessTimes()).containsKey(VALID_URL_ROBOTS_TXT);
   }
 
@@ -185,11 +180,14 @@ public final class WebCrawlerTest {
   public void storeInDatabase_checkDatastoreEntityConstructionFromNewsArticle()
       throws IOException {
     // Check that the Datastore service extracts the correct information from {@code
-    // EXPECTED_NEWS_ARTICLE}, constructs the correct key and entity for storing that information,
+    // expectedNewsArticle}, constructs the correct key and entity for storing that information,
     // and successfully stores said entity into the database. Use a Datastore emulator to simulate
     // operations, as opposed to a Mockito mock of Datastore which does not provide mocking of all
     // required operations.
-    webCrawler.storeInDatabase(CANDIDATE_ID, EXPECTED_NEWS_ARTICLE);
+    NewsArticle expectedNewsArticle = new NewsArticle(VALID_URL, null, null);
+    expectedNewsArticle.setTitle(TITLE);
+    expectedNewsArticle.setContent(CONTENT);
+    webCrawler.storeInDatabase(CANDIDATE_ID, expectedNewsArticle);
     Query<Entity> query =
         Query.newEntityQueryBuilder()
             .setKind("NewsArticle")
@@ -202,7 +200,7 @@ public final class WebCrawlerTest {
         datastore
             .newKeyFactory()
             .setKind("NewsArticle")
-            .newKey((long) EXPECTED_NEWS_ARTICLE.getUrl().hashCode());
+            .newKey((long) expectedNewsArticle.getUrl().hashCode());
     Key candidateKey =
         datastore
             .newKeyFactory()
@@ -210,9 +208,9 @@ public final class WebCrawlerTest {
             .newKey(CANDIDATE_ID);
     assertThat(newsArticleEntity.getKey()).isEqualTo(newsArticleKey);
     assertThat(newsArticleEntity.getKey("candidateId")).isEqualTo(candidateKey);
-    assertThat(newsArticleEntity.getString("title")).isEqualTo(EXPECTED_NEWS_ARTICLE.getTitle());
-    assertThat(newsArticleEntity.getString("url")).isEqualTo(EXPECTED_NEWS_ARTICLE.getUrl());
-    assertThat(newsArticleEntity.getString("content")).isEqualTo(EXPECTED_NEWS_ARTICLE.getContent());
+    assertThat(newsArticleEntity.getString("title")).isEqualTo(expectedNewsArticle.getTitle());
+    assertThat(newsArticleEntity.getString("url")).isEqualTo(expectedNewsArticle.getUrl());
+    assertThat(newsArticleEntity.getString("content")).isEqualTo(expectedNewsArticle.getContent());
     assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
   }
 

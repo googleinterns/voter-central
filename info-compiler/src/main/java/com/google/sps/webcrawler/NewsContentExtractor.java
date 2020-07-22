@@ -47,22 +47,22 @@ public class NewsContentExtractor {
   }
 
   /**
-   * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
-   * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors such
-   * as failure in reading in the HTML source code from {@code htmlFileStream}.
+   * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Sets "content" to
+   * empty in the event of an exception, which may be caused by errors such as failure in reading
+   * in the HTML source code from {@code htmlFileStream}.
    */
-  public Optional<NewsArticle> extractContentFromHtml(
-      InputStream htmlFileStream, String url) {
+  public void extractContentFromHtml(InputStream htmlFileStream, NewsArticle newsArticle) {
     if (htmlFileStream == null) {
-      return Optional.empty();
+      newsArticle.setContent("");
+      return;
     }
     BoilerpipeContentHandler boilerpipeHandler =
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
-      return extractContentFromHtml(boilerpipeHandler, metadata, htmlFileStream, url);
+      extractContentFromHtml(boilerpipeHandler, metadata, htmlFileStream, newsArticle);
     } catch (IOException | SAXException | TikaException e) {
-      return Optional.empty();
+      newsArticle.setContent("");
     }
   }
 
@@ -70,11 +70,12 @@ public class NewsContentExtractor {
    * Extracts textual content from HTML with {@code boilerpipeHandler} and packages data into
    * {@code NewsArticle}. This method is made default for testing purposes.
    */
-  Optional<NewsArticle> extractContentFromHtml(BoilerpipeContentHandler boilerpipeHandler,
-      Metadata metadata, InputStream htmlFileStream, String url)
+  void extractContentFromHtml(BoilerpipeContentHandler boilerpipeHandler,
+      Metadata metadata, InputStream htmlFileStream, NewsArticle newsArticle)
       throws IOException, SAXException, TikaException {
     parser.parse(htmlFileStream, boilerpipeHandler, metadata);
     TextDocument textDocument = boilerpipeHandler.getTextDocument();
-    return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
+    newsArticle.setTitle(textDocument.getTitle() == null ? "" : textDocument.getTitle());
+    newsArticle.setContent(textDocument.getContent());
   }
 }

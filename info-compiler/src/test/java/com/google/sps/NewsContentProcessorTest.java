@@ -30,10 +30,10 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class NewsContentProcessorTest {
-  private final static String TITLE = "title";
-  private final static String URL = "https://www.cnn.com/index.html";
-  private final static String WORD = "word";
-  private final static String EMPTY_CONTENT = "";
+  private static final String TITLE = "title";
+  private static final String URL = "https://www.cnn.com/index.html";
+  private static final String WORD = "word";
+  private static final String EMPTY_CONTENT = "";
 
   private String LONG_CONTENT;
   private String MAX_CONTENT;
@@ -61,34 +61,37 @@ public final class NewsContentProcessorTest {
   public void process_longContent() {
     // Process {@code LONG_CONTENT} and extract abbreviated content as {@code MAX_CONTENT}, which
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
-    // content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    // content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    newsArticle.setContent(LONG_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.process(newsArticle);
     expectedArticle.setAbbreviatedContent(MAX_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void process_shortContent() {
     // Process {@code SHORT_CONTENT} and extract abbreviated content as {@code SHORT_CONTENT},
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
-    // title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    // title, URL and content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    newsArticle.setContent(SHORT_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.process(newsArticle);
     expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void process_emptyContent() {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
-    // After content processing, the title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+    // After content processing, the title, URL and content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    newsArticle.setContent(EMPTY_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.process(newsArticle);
     expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 }
