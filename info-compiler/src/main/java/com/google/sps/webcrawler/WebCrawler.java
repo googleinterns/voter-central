@@ -20,6 +20,8 @@ import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.TimestampValue;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -180,8 +182,8 @@ public class WebCrawler {
                            .get(0));
       String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
       String publisher = extractPublisherMetadata(metadata);
-      Date date = extractPublishedDateMetadata(metadata);
-      newsArticles.add(new NewsArticle(url, publisher, date));
+      Date publishedDate = extractPublishedDateMetadata(metadata);
+      newsArticles.add(new NewsArticle(url, publisher, publishedDate));
     }
     return newsArticles;
   }
@@ -331,7 +333,9 @@ public class WebCrawler {
             .set(
                 "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
             .set("publisher", newsArticle.getPublisher())
-            .set("publishedDate", "EMPTY!")
+            .set("publishedDate", TimestampValue.newBuilder(
+                                      Timestamp.of(
+                                          newsArticle.getPublishedDate())).build())
             .set("priority", newsArticle.getPriority())
             .build();
     datastore.put(newsArticleEntity);
