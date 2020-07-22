@@ -36,10 +36,14 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.DateTimeException;
+import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +61,15 @@ import org.apache.http.util.EntityUtils;
 public class WebCrawler {
   private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
-  private static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
-      Arrays.asList("article:published_time", "article:modified_time", "modified", "og:pubdate",
-                    "pubdate", "published", "dcterms.modified", "dcterms.created");
   private static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
       Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
                     "dc.source");
+  private static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
+      Arrays.asList("article:published_time", "article:published", "datepublished", "og:pubdate",
+                    "pubdate", "published", "article:modified_time", "article:modified",
+                    "modified");
+  private static final DateTimeFormatter dateTimeFormatter =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz");
   private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
   private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
   private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
@@ -172,9 +179,41 @@ public class WebCrawler {
                        .getAsJsonArray("metatags")
                            .get(0));
       String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
-      newsArticles.add(new NewsArticle(url, null, null));
+      String publisher = extractPublisherMetadata(metadata);
+      Date date = extractPublishedDateMetadata(metadata);
+      newsArticles.add(new NewsArticle(url, publisher, date));
     }
     return newsArticles;
+  }
+
+  /**
+   * Extracts the publisher from {@code metadata} by examining in order
+   * {@code CUSTOM_SEARCH_PUBLISHER_METATAGS}. Returns null if no matching metatags are found.
+   */
+  private String extractPublisherMetadata(JsonObject metadata) {
+    for (String potentialPublisherMetatag : CUSTOM_SEARCH_PUBLISHER_METATAGS) {
+      try {
+        return metadata.get(potentialPublisherMetatag).getAsString();
+      } catch (NullPointerException e) {}
+    }
+    return null;
+  }
+
+  /**
+   * Extracts the published date from {@code metadata} by examining in order
+   * {@code CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS} and parsing the date string. Returns null if no
+   * matching metatags are found or if no date strings could be parsed.
+   */
+  private Date extractPublishedDateMetadata(JsonObject metadata) {
+    for (String potentialDateMetatag : CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS) {
+      try {
+        String date = metadata.get(potentialDateMetatag).getAsString();
+        System.out.println(date);
+        System.out.println(Date.from(Instant.from(dateTimeFormatter.parse(date))));
+        return Date.from(Instant.from(dateTimeFormatter.parse(date)));
+      } catch (NullPointerException | IllegalArgumentException | DateTimeException e) {}
+    }
+    return null;
   }
 
   /**

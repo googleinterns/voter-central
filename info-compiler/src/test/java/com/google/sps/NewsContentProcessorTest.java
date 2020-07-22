@@ -30,7 +30,6 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class NewsContentProcessorTest {
-  private static final String TITLE = "title";
   private static final String URL = "https://www.cnn.com/index.html";
   private static final String WORD = "word";
   private static final String EMPTY_CONTENT = "";
