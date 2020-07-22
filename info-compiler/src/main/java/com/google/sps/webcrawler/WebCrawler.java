@@ -35,6 +35,7 @@ import com.panforge.robotstxt.RobotsTxt;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,6 +61,8 @@ public class WebCrawler {
   // @TODO [Extract publisher and published date.]
   // @TODO [Decide between extracting title from Custom Search or NewsContentExtractor.]
   private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
+  private final static int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
+  private final static int URL_READ_TIMEOUT_MILLISECONDS = 1000;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
@@ -189,7 +192,7 @@ public class WebCrawler {
   public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
     try {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
-      InputStream robotsTxtStream = robotsUrl.openStream();
+      InputStream robotsTxtStream = setTimeoutAndOpenStream(robotsUrl);
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       robotsTxtStream.close();
       String webpagePath = url.getPath();
@@ -214,7 +217,7 @@ public class WebCrawler {
             && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
           return Optional.empty();
         }
-        InputStream webpageStream = url.openStream();
+        InputStream webpageStream = setTimeoutAndOpenStream(url);
         Optional<NewsArticle> potentialNewsArticle =
             newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
         webpageStream.close();
@@ -226,6 +229,17 @@ public class WebCrawler {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
       return Optional.empty();
     }
+  }
+
+  /**
+   * Opens a readable {@code InputStream} from {@code url}, while setting a connect and read
+   * timeout so that opening stream wouldn't hang. Timeout will trigger exceptions.
+   */
+  private InputStream setTimeoutAndOpenStream(URL url) throws IOException {
+    URLConnection connection = url.openConnection();
+    connection.setConnectTimeout(URL_CONNECT_TIMEOUT_MILLISECONDS);
+    connection.setReadTimeout(URL_READ_TIMEOUT_MILLISECONDS);
+    return connection.getInputStream();
   }
 
   /**
