@@ -31,6 +31,7 @@ import com.panforge.robotstxt.Grant;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeoutException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +57,16 @@ public final class WebCrawlerTest {
       "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
   private static final String VALID_URL_ROBOTS_TXT =
       "https://www.cnn.com/robots.txt";
+  private static final String PUBLISHER = "CNN";
+  private static final String WRONG_PUBLISHER = "Wrong Publisher";
+  // Jul 22, 2020 10:30:00 UTC (1595413800000 milliseconds since Jan 1, 1970, 00:00:00 GMT).
+  private static final String PUBLISHED_DATE_FORMAT1 = "2020-07-22T10:30:00.000Z";
+  private static final String PUBLISHED_DATE_FORMAT2 = "2020-07-22T10:30:00+0000";
+  private static final String PUBLISHED_DATE_FORMAT3 = "2020-07-22T10:30:00+00:00";
+  private static final String PUBLISHED_DATE_FORMAT4 = "2020-07-22T10:30:00Z";
+  private static final String WRONG_PUBLISHED_DATE = "1970-01-01T00:00:00+000Z";
+  private static final String UNPARSEABLE_PUBLISHED_DATE = "2020/07/22T10:30:00Z";
+  private static final Date PUBLISHED_DATE = new Date(1595413800000L);
   private static final String TITLE =
       "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - CNNPolitics";
   private static final String CONTENT =
@@ -95,6 +106,10 @@ public final class WebCrawlerTest {
     //           {
     //             ...
     //             {@code WebCrawler.CUSTOM_SEARCH_URL_METATAG}: <URL>,
+    //             one or more {@code WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS}:
+    //                 <publisher>,
+    //             one or more {@code WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS}:
+    //                 <publishedDate>,
     //             ...
     //           }
     //         ]
@@ -105,10 +120,10 @@ public final class WebCrawlerTest {
     //   ]
     //   ...
     // }
-    JsonObject urlMetadata = new JsonObject();
-    urlMetadata.addProperty(WebCrawler.CUSTOM_SEARCH_URL_METATAG, VALID_URL);
+    JsonObject metadata = new JsonObject();
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_URL_METATAG, VALID_URL);
     JsonArray metatags = new JsonArray();
-    metatags.add(urlMetadata);
+    metatags.add(metadata);
     JsonObject pagemap = new JsonObject();
     pagemap.add("metatags", metatags);
     JsonObject item = new JsonObject();
@@ -134,12 +149,141 @@ public final class WebCrawlerTest {
   }
 
   @Test
-  public void extractUrlsAndMetadataFromCustomSearchJson_regularJson() throws IOException {
-    // Extract news article URL and metadata from {@code customSearchJson}, which is in format @see
-    // {@code initialize()}.
+  public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat1()
+      throws IOException {
+    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // {@code initialize()} and added with the news article URL, publisher and published date (in
+    // the first potential format as {@code PUBLISHED_DATE_FORMAT1}).
+    JsonObject regularJson = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(regularJson);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT1);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat2()
+      throws IOException {
+    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // {@code initialize()} and added with the news article URL, publisher and published date (in
+    // the first potential format as {@code PUBLISHED_DATE_FORMAT2}).
+    JsonObject regularJson = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(regularJson);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT2);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat3()
+      throws IOException {
+    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // {@code initialize()} and added with the news article URL, publisher and published date (in
+    // the first potential format as {@code PUBLISHED_DATE_FORMAT3}).
+    JsonObject regularJson = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(regularJson);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT3);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat4()
+      throws IOException {
+    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // {@code initialize()} and added with the news article URL, publisher and published date (in
+    // the first potential format as {@code PUBLISHED_DATE_FORMAT4}).
+    JsonObject regularJson = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(regularJson);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT4);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithTwoPublishersOfDifferentPriority()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithTwoPublishers}, which contains
+    // two publisher data marked under two different metatags. Because the order of the metatags in
+    // {@code WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS} represents their priority, the publisher
+    // marked under the earlier metatag should be extracted, namely {@code PUBLISHER}, instead of
+    // {@code WRONG_PUBLISHER}.
+    JsonObject jsonWithTwoPublishers = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(jsonWithTwoPublishers);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(1), WRONG_PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT1);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithTwoPublishers);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithTwoDatesOfDifferentPriority()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithTwoDates}, which contains two
+    // published dates data marked under two different metatags. Because the order of the metatags
+    // in {@code WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS} represents their priority, the
+    // published date marked under the earlier metatag should be extracted, namely
+    // {@code PUBLISHED_DATE}, instead of the date represented by {@code WRONG_PUBLISHED_DATE}.
+    JsonObject jsonWithTwoDates = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(jsonWithTwoDates);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         PUBLISHED_DATE_FORMAT1);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(1),
+                         WRONG_PUBLISHED_DATE);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithTwoDates);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithUnparseableDate()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithUnparseableDate}, which contains
+    // an unparseable date string {@code UNPARSEABLE_PUBLISHED_DATE}.
+    JsonObject jsonWithUnparseableDate = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(jsonWithUnparseableDate);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
+    metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS.get(0),
+                         UNPARSEABLE_PUBLISHED_DATE);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithUnparseableDate);
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, null));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithoutMetadata()
+      throws IOException {
+    // Extract news article URL and metadata from {@code customSearchJson}, which contains no
+    // publisher or published date metadata.
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(customSearchJson);
     assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, null, null));
+  }
+
+  /**
+   * Obtains the innermost-level metadata from the complete {@code customSearchJson}.
+   */
+  private JsonObject getMetadataJsonObject(JsonObject customSearchJson) {
+    return (JsonObject)
+        ((JsonObject) customSearchJson.getAsJsonArray("items").get(0))
+            .getAsJsonObject("pagemap")
+                .getAsJsonArray("metatags").get(0);
   }
 
   // @TODO [Write tests that test invalid URL protocols and invalid hosts, either by mocking
