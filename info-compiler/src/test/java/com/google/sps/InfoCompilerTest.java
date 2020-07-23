@@ -43,7 +43,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -78,8 +77,8 @@ public final class InfoCompilerTest {
       " ]" +
       "}";
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
-  private static JsonObject ELECTION_JSON;
-  private static JsonObject SINGLE_CONTEST_JSON;
+  private static JsonObject electionJson;
+  private static JsonObject singleContestJson;
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
   private static Datastore datastore;
@@ -91,24 +90,24 @@ public final class InfoCompilerTest {
     datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
 
-    ELECTION_JSON = new JsonObject();
-    ELECTION_JSON.addProperty("kind", "civicinfo#electionsqueryresponse");
-    JsonArray elections = new JsonArray(1);
     JsonObject election = new JsonObject();
     election.addProperty("id", "2000");
     election.addProperty("name", "VIP Test Election");
     election.addProperty("electionDay", "2013-06-06");
+    JsonArray elections = new JsonArray();
     elections.add(election);
-    ELECTION_JSON.add("elections", elections);
+    electionJson = new JsonObject();
+    electionJson.addProperty("kind", "civicinfo#electionsqueryresponse");
+    electionJson.add("elections", elections);
 
-    SINGLE_CONTEST_JSON = new JsonObject();
-    SINGLE_CONTEST_JSON.addProperty("office", "Governor");
-    JsonArray candidates = new JsonArray(1);
     JsonObject candidate = new JsonObject();
     candidate.addProperty("name", "Andrew Cuomo");
     candidate.addProperty("party", "Democratic");
+    JsonArray candidates = new JsonArray();
     candidates.add(candidate);
-    SINGLE_CONTEST_JSON.add("candidates", candidates);
+    singleContestJson = new JsonObject();
+    singleContestJson.addProperty("office", "Governor");
+    singleContestJson.add("candidates", candidates);
   }
 
   /**
@@ -131,27 +130,27 @@ public final class InfoCompilerTest {
     // {@code ResponseHandler<String>} that converts any {@code HttpResponse} response to {@code
     // ELECTION_RESPONSE}, and subsequently convert {@code ELECTION_RESPONSE} to {@code json}.
     // {@code httpGet} is irrelevant in this test, since {@code execute()} is mocked as above.
-    // Since String {@code ELECTION_RESPONSE} and JsonObject {@code ELECTION_JSON} match in
-    // content, {@code json} should be exactly the same as {@code ELECTION_JSON}. Here, we don't
-    // repeatedly test the same thing with {@code SINGLE_CONTEST_JSON}.
+    // Since String {@code ELECTION_RESPONSE} and JsonObject {@code electionJson} match in
+    // content, {@code json} should be exactly the same as {@code electionJson}. Here, we don't
+    // repeatedly test the same thing with {@code singleContestJson}.
     CloseableHttpClient httpClient = mock(CloseableHttpClient.class);
     HttpGet httpGet = new HttpGet(ELECTION_QUERY_URL);
     ArgumentCaptor<ResponseHandler<String>> argumentCaptor =
         ArgumentCaptor.forClass(ResponseHandler.class);
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
-        infoCompiler.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
-    assertThat(json).isEqualTo(ELECTION_JSON);
+        InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
+    assertThat(json).isEqualTo(electionJson);
   }
 
   @Test
   public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()
       throws IOException {
-    // Parse and re-structure base election information from {@code ELECTION_JSON}'s
+    // Parse and re-structure base election information from {@code electionJson}'s
     // "elections" section and store the corresponding entity in the database. Said
-    // entity should contain information that is consistent with that in {@code ELECTION_JSON}.
+    // entity should contain information that is consistent with that in {@code electionJson}.
     // A Datastore emulator is used to simulate Datastore operations, as opposed to Mockito mocks.
-    JsonObject election = (JsonObject) ELECTION_JSON.getAsJsonArray("elections").get(0);
+    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -181,21 +180,21 @@ public final class InfoCompilerTest {
   public void storeElectionContestInDatabase_checkDatastoreEntityConstructionFromJson()
       throws IOException {
     // Parse and re-structure election/position/candidate information from {@code
-    // SINGLE_CONTEST_JSON}. Create a correponding candidate entity and update the existing
+    // singleContestJson}. Create a correponding candidate entity and update the existing
     // election entity in the database. Said entities should contain information that is consistent
-    // with that in {@code SINGLE_CONTEST_JSON}. A Datastore emulator is used to simulate Datastore
+    // with that in {@code singleContestJson}. A Datastore emulator is used to simulate Datastore
     // operations, as opposed to Mockito mocks.
     // This method relies on the election entity created by {@code storeBaseElectionInDatabase()}
     // and thus assumes the correctness of said method. This method avoids repeating any tests
     // executed by {@code storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()}.
-    JsonObject election = (JsonObject) ELECTION_JSON.getAsJsonArray("elections").get(0);
-    JsonObject candidate = (JsonObject) SINGLE_CONTEST_JSON.getAsJsonArray("candidates").get(0);
+    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
+    JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
                                 + candidate.get("party").getAsString().hashCode());
 
     infoCompiler.storeBaseElectionInDatabase(election);
     infoCompiler.storeElectionContestInDatabase(election.get("id").getAsString(),
-                                                SINGLE_CONTEST_JSON);
+                                                singleContestJson);
     // Check data additions to the election entity.
     Query<Entity> electionQuery =
         Query.newEntityQueryBuilder()
@@ -207,7 +206,7 @@ public final class InfoCompilerTest {
     assertThat(candidatePositions).hasSize(1);
     assertThat(candidatePositions)
         .containsExactly(StringValue.newBuilder(
-                         SINGLE_CONTEST_JSON.get("office").getAsString()).build());
+                         singleContestJson.get("office").getAsString()).build());
     List<Value<String>> candidateIds =
         new ArrayList<>(electionEntity.getList("candidateIds"));
     assertThat(candidateIds).hasSize(1);

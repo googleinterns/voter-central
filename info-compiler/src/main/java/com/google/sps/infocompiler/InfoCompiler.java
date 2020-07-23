@@ -32,11 +32,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.sps.infocompiler.Config;
+import com.google.sps.webcrawler.NewsContentExtractor;
+import com.google.sps.webcrawler.RelevancyChecker;
+import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -52,16 +54,18 @@ import org.apache.http.util.EntityUtils;
  * article information, and storing them in the database.
  */
 public class InfoCompiler {
-  private final static String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
   private final static String ELECTION_QUERY_URL =
-      String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s", CIVIC_INFO_API_KEY);
+      String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
+                    Config.CIVIC_INFO_API_KEY);
   private final static String VOTER_INFO_QUERY_URL =
-      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
+      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
+                    Config.CIVIC_INFO_API_KEY);
   private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds = new LinkedList<>();
+  private List<String> electionQueryIds = new ArrayList<>();
   // For testing purposes (not to add too much information to the database).
   // Will include all 50 states.
   private List<String> states = Arrays.asList("NY");
+  private WebCrawler webCrawler;
 
   public InfoCompiler() throws IOException {
     this(DatastoreOptions.getDefaultInstance().getService());
@@ -70,6 +74,8 @@ public class InfoCompiler {
   /** For testing purposes. */
   public InfoCompiler(Datastore datastore) throws IOException {
     this.datastore = datastore;
+    this.webCrawler =
+        new WebCrawler(this.datastore, new NewsContentExtractor(), new RelevancyChecker());
   }
 
   /**
@@ -132,10 +138,10 @@ public class InfoCompiler {
       return;
     }
     if (targetInfo.equals("elections")) {
+      electionQueryIds = new ArrayList<>(infoArray.size());
       for (JsonElement info : infoArray) {
         storeBaseElectionInDatabase((JsonObject) info);
       }
-      electionQueryIds = new ArrayList<>(infoArray.size());
     } else if (targetInfo.equals("contests")) {
       for (JsonElement info : infoArray) {
         storeElectionContestInDatabase(electionQueryId, (JsonObject) info);
@@ -151,20 +157,19 @@ public class InfoCompiler {
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    return requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+    return requestHttpAndBuildJsonResponse(httpClient, httpGet);
   }
 
   /** 
-   * Makes HTTP GET request to the Civic Information API amd converts HTTP JSON response as {@code
-   * JsonObject}.
+   * Makes HTTP GET request and converts HTTP JSON response as {@code JsonObject}.
    *
-   * @throws ClientProtocolException if the GET request to the Civic Information API fails.
+   * @throws ClientProtocolException if the HTTP GET request fails.
    * @see <a href=
    *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
    *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  JsonObject requestHttpAndBuildJsonResponseFromCivicInformation(CloseableHttpClient httpClient,
-      HttpGet httpGet) throws IOException {
+  public static JsonObject requestHttpAndBuildJsonResponse(
+      CloseableHttpClient httpClient, HttpGet httpGet) throws IOException {
     ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
         public String handleResponse(final HttpResponse response) throws IOException {
@@ -260,7 +265,8 @@ public class InfoCompiler {
   // @TODO [Find incumbency.]
   /**
    * Stores information of a {@code candidate} in the database, and updates the candidate's running
-   * position's information for the election. Information includes: name, party affiliation.
+   * position's information for the election. Information includes: name, party affiliation,
+   * incumbency status, and news articles related to the candidate.
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
@@ -281,5 +287,16 @@ public class InfoCompiler {
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
+
+    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
+  }
+
+  /**
+   * Compiles news articles data of {@code candidateName} and stores said data in the database.
+   * News articles data are represented by {@code NewsArticle}.
+   */
+  private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
+      String candidateId) {
+    webCrawler.compileNewsArticle(candidateName, candidateId);
   }
 }
