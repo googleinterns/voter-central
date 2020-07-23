@@ -4,15 +4,29 @@ This directory contains the web crawler for "Voter Central".
 ---
 
 ## Configurations and Dependencies
+For `com.google.sps.infocompiler.InfoCompiler` to work, store the National Address Database
+(Release 3) [data file](https://www.transportation.gov/gis/national-address-database/national-address-database-0)
+on Google Cloud Storage. These addresses will serve as the starting point for `InfoCompiler` to gather all election
+contest information (positions, candidates, etc.) spanning the United States, using voterInfoQuery (which requires
+address and election ID as query parameters) from the Civic Information API. Specically, we extracted a total of
+1,216 arbitrary addresses from every 40,000 addresses in the National Address Database. We chose this amount based
+on how well our extracted addresses can cover all elections and based on the query limit for the Civic Information
+API. To extract those 1,216 addresses, execute this command (where NAD_r3.txt is the complete database):
+```bash
+sed -n '0~40000p' NAD_r3.txt > NAD_r3_every40000.txt
+```
 For `com.google.sps.webcrawler.NewsContentProcessor.summarize` to work, download the OpenNLP
 "Sentence Detector" and "Tokenizer" model files [here](http://opennlp.sourceforge.net/models-1.5/).
 
 To use the code, please prepare and put the following in com.google.google.sps.infocompiler.Config:
-- Civic Information API key (referenced in com.google.google.sps.infocompiler.InfoCompiler)
-- Custom Search JSON API key (referenced in com.google.google.sps.webcrawler.WebCrawler)
-- Custom Engine ID (referenced in com.google.google.sps.webcrawler.WebCrawler)
-- Path to OpenNLP "Sentence Detector" model file (referenced in com.google.google.sps.webcrawler.NewsContentProcessor)
-- Path to OpenNLP "Tokenizer" model file (referenced in com.google.google.sps.webcrawler.NewsContentProcessor)
+- Project ID (referenced in com.google.sps.infocompiler.InfoCompiler)
+- Name of Cloud Storage bucket that holds the addresses file (referenced in com.google.sps.infocompiler.InfoCompiler)
+- Name of the addresses file on Cloud Storage (referenced in com.google.sps.infocompiler.InfoCompiler)
+- Civic Information API key (referenced in com.google.sps.infocompiler.InfoCompiler)
+- Custom Search JSON API key (referenced in com.google.sps.webcrawler.WebCrawler)
+- Custom Engine ID (referenced in com.google.sps.webcrawler.WebCrawler)
+- Path to OpenNLP "Sentence Detector" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+- Path to OpenNLP "Tokenizer" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 
 ---
 
