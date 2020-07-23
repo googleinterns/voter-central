@@ -24,11 +24,14 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.sps.data.NewsArticle;
 import com.panforge.robotstxt.Grant;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeoutException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.AfterClass;
@@ -69,6 +72,7 @@ public final class WebCrawlerTest {
   private static Datastore datastore;
   private static NewsContentExtractor newsContentExtractor;
   private static RelevancyChecker relevancyChecker;
+  private static JsonObject customSearchJson;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
@@ -78,6 +82,42 @@ public final class WebCrawlerTest {
     newsContentExtractor = mock(NewsContentExtractor.class);
     relevancyChecker = mock(RelevancyChecker.class);
     webCrawler = new WebCrawler(datastore, newsContentExtractor, relevancyChecker);
+
+    // {@code customSearchJson} has the following JSON structure (ellipsis represents other
+    // properties not shown). Insert {@code VALID_URL}.
+    // {
+    //   ...
+    //   "items": [
+    //     {
+    //       ...
+    //       "pagemap": {
+    //         ...
+    //         "metatags": [
+    //           {
+    //             ...
+    //             {@code WebCrawler.CUSTOM_SEARCH_URL_METATAG}: <URL>,
+    //             ...
+    //           }
+    //         ]
+    //         ...
+    //       }
+    //       ...
+    //     }
+    //   ]
+    //   ...
+    // }
+    JsonObject urlMetadata = new JsonObject();
+    urlMetadata.addProperty(WebCrawler.CUSTOM_SEARCH_URL_METATAG, VALID_URL);
+    JsonArray metatags = new JsonArray();
+    metatags.add(urlMetadata);
+    JsonObject pagemap = new JsonObject();
+    pagemap.add("metatags", metatags);
+    JsonObject item = new JsonObject();
+    item.add("pagemap", pagemap);
+    JsonArray items = new JsonArray();
+    items.add(item);
+    customSearchJson = new JsonObject();
+    customSearchJson.add("items", items);
   }
 
   /**
@@ -94,9 +134,13 @@ public final class WebCrawlerTest {
     webCrawler = new WebCrawler(datastore, newsContentExtractor, relevancyChecker);
   }
 
-  // @TODO [Implement unit tests for getting URLs from the Custom Search engine.]
   @Test
-  public void getUrlsFromCustomSearch() {}
+  public void extractUrlsFromCustomSearchJson() throws IOException {
+    // Extract news article URL from {@code customSearchJson}, which is in format @see
+    // {@code initialize()}.
+    List<URL> urls = webCrawler.extractUrlsFromCustomSearchJson(customSearchJson);
+    assertThat(urls).containsExactly(new URL(VALID_URL));
+  }
 
   // @TODO [Write tests that test invalid URL protocols and invalid hosts, either by mocking
   // {@code URL}, which is a final class that requires additional Mockito configuration, or by

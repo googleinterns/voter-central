@@ -20,8 +20,13 @@ import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.StringValue;
-import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.sps.data.NewsArticle;
+import com.google.sps.infocompiler.Config;
+import com.google.sps.infocompiler.InfoCompiler;
 import com.google.sps.webcrawler.NewsContentExtractor;
 import com.google.sps.webcrawler.NewsContentProcessor;
 import com.google.sps.webcrawler.RelevancyChecker;
@@ -30,6 +35,8 @@ import com.panforge.robotstxt.RobotsTxt;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -48,10 +55,14 @@ import org.apache.http.util.EntityUtils;
 
 /** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private static final String CUSTOM_SEARCH_KEY = "";
-  private static final String CUSTOM_SEARCH_ENGINE_ID = "";
-  private static final String TEST_URL =
-      "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
+  private static final String CUSTOM_SEARCH_SAFE = "active";
+  static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
+
+  // @TODO [Extract publisher and published date.]
+  // @TODO [Decide between extracting title from Custom Search or NewsContentExtractor.]
+  private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
+  private final static int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
+  private final static int URL_READ_TIMEOUT_MILLISECONDS = 1000;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
@@ -71,7 +82,7 @@ public class WebCrawler {
   }
 
   /** For testing purposes. */
-  WebCrawler(Datastore datastore, NewsContentExtractor newsContentExtractor,
+  public WebCrawler(Datastore datastore, NewsContentExtractor newsContentExtractor,
       RelevancyChecker relevancyChecker) throws IOException {
     this.datastore = datastore;
     this.newsContentExtractor = newsContentExtractor;
@@ -123,10 +134,10 @@ public class WebCrawler {
   //   } catch (InterruptedException e) {}
   // }
 
-  // @TODO [Test with Google Custom Search. Extract other metadata.]
+  // @TODO [Extract other metadata, modify NewsArticle's structure, and return List<NewsArticle>.]
   /**
-   * Searches for {@code candidateName} in the Google Custom Search engine and finds URLs of news
-   * articles. Returns an empty list if no valid URLs are found.
+   * Searches for {@code candidateName} on News.google using the Google Custom Search engine and
+   * finds URLs of news articles. Returns an empty list if no valid URLs are found.
    * Note: This function contains a few hard-coded implementations because of the current lack of
    * access to the engine. In order for the web crawler to be tested from beginning to end, this
    * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
@@ -135,36 +146,42 @@ public class WebCrawler {
    *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   public List<URL> getUrlsFromCustomSearch(String candidateName) {
-    List<URL> urls = Arrays.asList();
     String request =
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
-            CUSTOM_SEARCH_KEY, CUSTOM_SEARCH_ENGINE_ID, candidateName.replace(" ", "%20"));
-    CloseableHttpClient httpclient = HttpClients.createDefault();
+            Config.CUSTOM_SEARCH_KEY, Config.CUSTOM_SEARCH_ENGINE_ID,
+            candidateName.replace(" ", "%20"));
+    CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
-      urls = Arrays.asList(new URL(TEST_URL));
       HttpGet httpGet = new HttpGet(request);
-      ResponseHandler<String> responseHandler =
-          new ResponseHandler<String>() {
-              @Override
-              public String handleResponse(final HttpResponse response) throws IOException {
-                int status = response.getStatusLine().getStatusCode();
-                if (status >= 200 && status < 300) {
-                    HttpEntity entity = response.getEntity();
-                    return entity != null ? EntityUtils.toString(entity) : null;
-                } else {
-                    httpclient.close();
-                    throw new ClientProtocolException("Unexpected response status: " + status);
-                }
-              }
-      };
-      String responseBody = httpclient.execute(httpGet, responseHandler);
-      httpclient.close();
-      Gson gson = new Gson();
-      Object jsonResponse = gson.fromJson(responseBody, Object.class);
-      // @TODO [Unpack {@code jsonResponse} and find URLs.]
+      JsonObject json = InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
+      return extractUrlsFromCustomSearchJson(json);
     } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
+      return Arrays.asList();
+    }
+  }
+
+  // @TODO [Extract other metadata and store into the updated NewsArticle structure.]
+  /**
+   * Parses {@code json}, which is in Google Custom Search's JSON response format, and extracts
+   * news articles' URLs (URLs from the source website, instead of from News.google).
+   */
+  List<URL> extractUrlsFromCustomSearchJson(JsonObject json) {
+    List<URL> urls = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
+    JsonArray searchResults = json.getAsJsonArray("items");
+    for (JsonElement result : searchResults) {
+      JsonObject metadata =
+          (JsonObject)
+              (((JsonObject) result)
+                   .getAsJsonObject("pagemap")
+                       .getAsJsonArray("metatags")
+                           .get(0));
+      try {
+        urls.add(
+            new URL(
+                metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString()));
+      } catch (Exception e) {}
     }
     return urls;
   }
@@ -176,7 +193,7 @@ public class WebCrawler {
   public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
     try {
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
-      InputStream robotsTxtStream = robotsUrl.openStream();
+      InputStream robotsTxtStream = setTimeoutAndOpenStream(robotsUrl);
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       robotsTxtStream.close();
       String webpagePath = url.getPath();
@@ -201,7 +218,7 @@ public class WebCrawler {
             && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
           return Optional.empty();
         }
-        InputStream webpageStream = url.openStream();
+        InputStream webpageStream = setTimeoutAndOpenStream(url);
         Optional<NewsArticle> potentialNewsArticle =
             newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
         webpageStream.close();
@@ -213,6 +230,17 @@ public class WebCrawler {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
       return Optional.empty();
     }
+  }
+
+  /**
+   * Opens a readable {@code InputStream} from {@code url}, while setting a connect and read
+   * timeout so that opening stream wouldn't hang. Timeout will trigger exceptions.
+   */
+  private InputStream setTimeoutAndOpenStream(URL url) throws IOException {
+    URLConnection connection = url.openConnection();
+    connection.setConnectTimeout(URL_CONNECT_TIMEOUT_MILLISECONDS);
+    connection.setReadTimeout(URL_READ_TIMEOUT_MILLISECONDS);
+    return connection.getInputStream();
   }
 
   /**
