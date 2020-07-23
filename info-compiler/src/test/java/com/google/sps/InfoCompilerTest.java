@@ -76,6 +76,9 @@ public final class InfoCompilerTest {
       "  }" +
       " ]" +
       "}";
+  private static final int ADDRESS_NUMBER = 1216;
+  private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
+  private static final String STATE = "NY";
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
 
   private static JsonObject electionJson;
@@ -126,6 +129,15 @@ public final class InfoCompilerTest {
   }
 
   @Test
+  public void parseAddressesFromDataset_regularParse() {
+    // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
+    // and contain {@code ADDRESS}.
+    List<String> addresses = infoCompiler.getAddresses();
+    assertThat(addresses).hasSize(ADDRESS_NUMBER);
+    assertThat(addresses).contains(ADDRESS);
+  }
+
+  @Test
   public void queryCivicInformation_succeedWithMockResponse() throws Exception {
     // Query the Civic Information API with a mock HTTP client + mock callback function of type
     // {@code ResponseHandler<String>} that converts any {@code HttpResponse} response to {@code
@@ -145,13 +157,17 @@ public final class InfoCompilerTest {
   }
 
   @Test
-  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()
+  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJsonWithState()
       throws IOException {
     // Parse and re-structure base election information from {@code electionJson}'s
     // "elections" section and store the corresponding entity in the database. Said
     // entity should contain information that is consistent with that in {@code electionJson}.
-    // A Datastore emulator is used to simulate Datastore operations, as opposed to Mockito mocks.
-    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
+    // Here state information is added to {@code election} in lower case. {@code infoCompiler}
+    // should extract and store the same state, in upper case. A Datastore emulator is used to
+    // simulate Datastore operations, as opposed to Mockito mocks.
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -175,6 +191,45 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidatePositions")).isEmpty();
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
+    assertThat(electionEntity.getString("state")).isEqualTo(STATE);
+  }
+
+  @Test
+  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJsonWithoutState()
+      throws IOException {
+    // Parse and re-structure base election information from {@code electionJson}'s
+    // "elections" section and store the corresponding entity in the database. Said
+    // entity should contain information that is consistent with that in {@code electionJson}.
+    // Here no state information is added to {@code election}. So {@code infoCompiler} should
+    // store an empty state name. A Datastore emulator is used to simulate Datastore operations, as
+    // opposed to Mockito mocks.
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us");
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+
+    infoCompiler.storeBaseElectionInDatabase(election);
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(query);
+    assertThat(queryResult.hasNext()).isTrue();
+    Entity electionEntity = queryResult.next();
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
+    assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
+    assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
+    assertThat(electionEntity.getList("candidatePositions")).isEmpty();
+    assertThat(electionEntity.getList("candidateIds")).isEmpty();
+    assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
+    assertThat(electionEntity.getString("state")).isEqualTo("");
   }
 
   @Test
@@ -188,7 +243,9 @@ public final class InfoCompilerTest {
     // This method relies on the election entity created by {@code storeBaseElectionInDatabase()}
     // and thus assumes the correctness of said method. This method avoids repeating any tests
     // executed by {@code storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()}.
-    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
                                 + candidate.get("party").getAsString().hashCode());
