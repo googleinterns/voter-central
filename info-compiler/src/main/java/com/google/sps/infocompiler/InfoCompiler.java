@@ -79,6 +79,14 @@ public class InfoCompiler {
   }
 
   /**
+   * Compiles location-specific information for elections, positions and candidates.
+   */
+  public void compileInfo() {
+    queryAndStoreBaseElectionInfo();
+    queryAndStoreElectionContestInfo();
+  }
+
+  /**
    * Queries the ElectionQuery of the Civic Information API for a basic subset of election
    * information, which will serve as the starting point for finding additional information, and
    * stores said found information in the database. Information includes: name, date, and query ID
