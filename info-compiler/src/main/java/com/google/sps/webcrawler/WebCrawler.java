@@ -89,7 +89,7 @@ public class WebCrawler {
    * 6. Processes content.
    * 7. Stores processed content in the database.
    */
-  public void compileNewsArticle(String candidateName, String candidateId) {
+  public void compileNewsArticle(String candidateName, String candidateId) throws Exception {
     List<URL> urls = getUrlsFromCustomSearch(candidateName);
     for (URL url : urls) {
       Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractFromHtml(url);
@@ -100,7 +100,8 @@ public class WebCrawler {
       if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
-      NewsArticle processedNewsArticle = NewsContentProcessor.process(newsArticle);
+      NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
+      processedNewsArticle = NewsContentProcessor.summarize(processedNewsArticle);
       storeInDatabase(candidateId, processedNewsArticle);
     }
   }

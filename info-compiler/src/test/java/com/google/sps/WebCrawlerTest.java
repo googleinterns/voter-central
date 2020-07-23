@@ -47,13 +47,13 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public final class WebCrawlerTest {
-  private final static String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
-  private final static String CANDIDATE_ID = "1";
-  private final static String VALID_URL =
+  private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
+  private static final String CANDIDATE_ID = "1";
+  private static final String VALID_URL =
     "https://www.cnn.com/2020/06/23/politics/aoc-ny-primary-14th-district/index.html";
-  private final static String VALID_URL_ROBOTS_TXT =
+  private static final String VALID_URL_ROBOTS_TXT =
     "https://www.cnn.com/robots.txt";
-  private final static NewsArticle EXPECTED_NEWS_ARTICLE =
+  private static final NewsArticle EXPECTED_NEWS_ARTICLE =
     new NewsArticle(
         "AOC wins NY Democratic primary against Michelle Caruso-Cabrera, CNN projects - " +
         "CNNPolitics",
@@ -61,8 +61,8 @@ public final class WebCrawlerTest {
         "Washington (CNN)Freshman Democratic Rep. Alexandria Ocasio-Cortez will defeat former " +
         "longtime CNBC correspondent and anchor Michelle Caruso-Cabrera in a Democratic " +
         "primary election on Tuesday for New York's 14th Congressional District, CNN projects.");
-  private final static String EMPTY_ABBREVIATED_CONTENT = "";
-  private final static int DELAY = 1;
+  private static final String EMPTY_ABBREVIATED_CONTENT = "";
+  private static final int DELAY = 1;
 
   private static WebCrawler webCrawler;
   private static LocalDatastoreHelper datastoreHelper;
