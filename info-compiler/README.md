@@ -19,3 +19,8 @@ To run a specific test class, execute this command:
 ```bash
 mvn test -Dtest=<testClass>
 ```
+
+For `com.google.sps.webcrawler.NewsContentProcessor.summarize` to work, download the OpenNLP
+"Sentence Detector" and "Tokenizer" model files [here](http://opennlp.sourceforge.net/models-1.5/).
+Set their paths in `com.google.sps.infocompiler.Config` appropriately, and assign their values to
+the corresponding constants in `com.google.sps.webcrawler.NewsContentProcessor`.

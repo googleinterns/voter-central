@@ -23,6 +23,7 @@ public class NewsArticle {
   private String url;
   private String content;
   private String abbreviatedContent;
+  private String summarizedContent;
   private String publisher;
   private Date publishedDate;
   private int priority = LOWEST_PRIORITY;
@@ -42,6 +43,7 @@ public class NewsArticle {
     this.url = newsArticle.url;
     this.content = newsArticle.content;
     this.abbreviatedContent = newsArticle.abbreviatedContent;
+    this.summarizedContent = newsArticle.summarizedContent;
     this.publisher = newsArticle.publisher;
     this.publishedDate = (Date) newsArticle.publishedDate.clone(); // Date is mutable.
     this.priority = newsArticle.priority;
@@ -62,6 +64,10 @@ public class NewsArticle {
   public String getAbbreviatedContent() {
     return this.abbreviatedContent;
   }
+  
+  public String getSummarizedContent() {
+    return this.summarizedContent;
+  }
 
   public String getPublisher() {
     return this.publisher;
@@ -77,7 +83,6 @@ public class NewsArticle {
 
   public void setTitle(String title) {
     this.title = title;
-  }
 
   public void setContent(String content) {
     this.content = content;
@@ -85,6 +90,10 @@ public class NewsArticle {
 
   public void setAbbreviatedContent(String abbreviatedContent) {
     this.abbreviatedContent = abbreviatedContent;
+  }
+
+  public void setSummarizedContent(String summarizedContent) {
+    this.summarizedContent = summarizedContent;
   }
 
   /**
@@ -111,6 +120,9 @@ public class NewsArticle {
         && ((this.abbreviatedContent == null && other.abbreviatedContent == null)
             || (this.abbreviatedContent != null
                 && this.abbreviatedContent.equals(other.abbreviatedContent)))
+        && ((this.summarizedContent == null && other.summarizedContent == null)
+            || (this.summarizedContent != null
+                && this.summarizedContent.equals(other.summarizedContent)))
         && this.publisher.equals(other.publisher)
         && this.publishedDate.equals(other.publishedDate)
         && this.priority == other.priority;

@@ -122,6 +122,7 @@ public class WebCrawler {
         continue;
       }
       NewsContentProcessor.process(newsArticle);
+      NewsContentProcessor.summarize(processedNewsArticle);
       storeInDatabase(candidateId, newsArticle);
     }
   }
