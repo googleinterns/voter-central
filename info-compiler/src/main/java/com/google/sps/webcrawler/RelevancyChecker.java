@@ -30,7 +30,6 @@ import java.io.IOException;
  * candidate.
  */
 public class RelevancyChecker {
-  // @TODO [Calculate a meaningful salience threshold.]
   static final double SALIENCE_THRESHOLD = 0.5;
   private LanguageServiceClient languageServiceClient;
 

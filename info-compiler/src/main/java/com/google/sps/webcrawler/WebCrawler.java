@@ -121,8 +121,8 @@ public class WebCrawler {
       if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
-      NewsContentProcessor.process(newsArticle);
-      NewsContentProcessor.summarize(processedNewsArticle);
+      NewsContentProcessor.abbreviate(newsArticle);
+      NewsContentProcessor.summarize(newsArticle);
       storeInDatabase(candidateId, newsArticle);
     }
   }
