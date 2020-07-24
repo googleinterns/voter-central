@@ -75,6 +75,8 @@ public final class WebCrawlerTest {
       "primary election on Tuesday for New York's 14th Congressional District, CNN projects.";
   private static final String EMPTY_CONTENT = "";
   private static final String EMPTY_ABBREVIATED_CONTENT = "";
+  private static final String EMPTY_SUMMARIZED_CONTENT = "";
+  private static final int PRIORITY = 1;
   private static final int DELAY = 1;
 
   private static WebCrawler webCrawler;
@@ -120,6 +122,16 @@ public final class WebCrawlerTest {
     //   ]
     //   ...
     // }
+    JsonArray items = new JsonArray();
+    items.add(constructABasicNewsArticle());
+    customSearchJson = new JsonObject();
+    customSearchJson.add("items", items);
+  }
+
+  /**
+   * Constructs the JSON structure of a news article in Custom Search's response.
+   */
+  private static JsonObject constructABasicNewsArticle() {
     JsonObject metadata = new JsonObject();
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_URL_METATAG, VALID_URL);
     JsonArray metatags = new JsonArray();
@@ -128,10 +140,7 @@ public final class WebCrawlerTest {
     pagemap.add("metatags", metatags);
     JsonObject item = new JsonObject();
     item.add("pagemap", pagemap);
-    JsonArray items = new JsonArray();
-    items.add(item);
-    customSearchJson = new JsonObject();
-    customSearchJson.add("items", items);
+    return item;
   }
 
   /**
@@ -161,7 +170,8 @@ public final class WebCrawlerTest {
                          PUBLISHED_DATE_FORMAT1);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -177,7 +187,8 @@ public final class WebCrawlerTest {
                          PUBLISHED_DATE_FORMAT2);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -193,7 +204,8 @@ public final class WebCrawlerTest {
                          PUBLISHED_DATE_FORMAT3);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -209,7 +221,8 @@ public final class WebCrawlerTest {
                          PUBLISHED_DATE_FORMAT4);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(regularJson);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -228,7 +241,8 @@ public final class WebCrawlerTest {
                          PUBLISHED_DATE_FORMAT1);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithTwoPublishers);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -248,7 +262,8 @@ public final class WebCrawlerTest {
                          WRONG_PUBLISHED_DATE);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithTwoDates);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, PUBLISHED_DATE, PRIORITY));
   }
 
   @Test
@@ -263,7 +278,8 @@ public final class WebCrawlerTest {
                          UNPARSEABLE_PUBLISHED_DATE);
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithUnparseableDate);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, PUBLISHER, null));
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, PUBLISHER, null, PRIORITY));
   }
 
   @Test
@@ -273,7 +289,22 @@ public final class WebCrawlerTest {
     // publisher or published date metadata.
     List<NewsArticle> newsArticles =
         webCrawler.extractUrlsAndMetadataFromCustomSearchJson(customSearchJson);
-    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, null, null));
+    assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, null, null, PRIORITY));
+  }
+
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithoutTwoArticles()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithTwoArticles}, which contains two
+    // news articles. These news articles should be assigned {@code PRIORITY} and {@code
+    // PRIORITY + 1} respectively.
+    JsonObject jsonWithTwoArticles = customSearchJson.deepCopy();
+    jsonWithTwoArticles.getAsJsonArray("items").add(constructABasicNewsArticle());
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithTwoArticles);
+    assertThat(newsArticles).containsExactly(
+        new NewsArticle(VALID_URL, null, null, PRIORITY),
+        new NewsArticle(VALID_URL, null, null, PRIORITY + 1));
   }
 
   /**
@@ -299,7 +330,7 @@ public final class WebCrawlerTest {
     URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(false);
-    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null);
+    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null, PRIORITY);
     webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     assertThat(newsArticle.getContent()).isEqualTo(EMPTY_CONTENT);
   }
@@ -315,7 +346,7 @@ public final class WebCrawlerTest {
     Grant grant = mock(Grant.class);
     when(grant.hasAccess()).thenReturn(true);
     when(grant.getCrawlDelay()).thenReturn(DELAY);
-    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null);
+    NewsArticle newsArticle = new NewsArticle(url.toString(), null, null, PRIORITY);
     webCrawler.politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     assertThat(webCrawler.getNextAccessTimes()).containsKey(VALID_URL_ROBOTS_TXT);
   }
@@ -328,7 +359,7 @@ public final class WebCrawlerTest {
     // and successfully stores said entity into the database. Use a Datastore emulator to simulate
     // operations, as opposed to a Mockito mock of Datastore which does not provide mocking of all
     // required operations.
-    NewsArticle expectedNewsArticle = new NewsArticle(VALID_URL, null, null);
+    NewsArticle expectedNewsArticle = new NewsArticle(VALID_URL, null, null, PRIORITY);
     expectedNewsArticle.setTitle(TITLE);
     expectedNewsArticle.setContent(CONTENT);
     webCrawler.storeInDatabase(CANDIDATE_ID, expectedNewsArticle);
@@ -356,6 +387,8 @@ public final class WebCrawlerTest {
     assertThat(newsArticleEntity.getString("url")).isEqualTo(expectedNewsArticle.getUrl());
     assertThat(newsArticleEntity.getString("content")).isEqualTo(expectedNewsArticle.getContent());
     assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
+    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_SUMMARIZED_CONTENT);
+    assertThat(newsArticleEntity.getValue("priority").get()).isEqualTo(expectedNewsArticle.getPriority());
   }
 
   @AfterClass

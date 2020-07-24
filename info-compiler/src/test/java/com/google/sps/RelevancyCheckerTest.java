@@ -37,6 +37,7 @@ public final class RelevancyCheckerTest {
   private static final String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
   private static final String IRRELEVANT_CONTENT = "Irrelevant content.";
   private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
+  private static final int PRIORITY = 1;
 
   private LanguageServiceClient languageServiceClient;
   private RelevancyChecker mockRelevancyChecker;
@@ -53,9 +54,9 @@ public final class RelevancyCheckerTest {
   public void computeSalienceOfName_findsEverythingRelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score higher than {@code SALIENCE_THRESHOLD}.
-    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null);
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);
-    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD + 1.0);
@@ -69,9 +70,9 @@ public final class RelevancyCheckerTest {
   public void computeSalienceOfName_findsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score lower than {@code SALIENCE_THRESHOLD}.
-    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null);
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);
-    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(RelevancyChecker.SALIENCE_THRESHOLD - 1.0);

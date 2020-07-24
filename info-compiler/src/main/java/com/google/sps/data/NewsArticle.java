@@ -14,11 +14,12 @@
 
 package com.google.sps.data;
 
+import com.google.sps.webcrawler.WebCrawler;
 import java.util.Date;
 
 /** A news article, including its metadata and content. */
 public class NewsArticle {
-  private static final int LOWEST_PRIORITY = 10;
+  private static final int LOWEST_PRIORITY = WebCrawler.CUSTOM_SEARCH_RESULT_COUNT;
   private String title;
   private String url;
   private String content;
@@ -26,16 +27,19 @@ public class NewsArticle {
   private String summarizedContent;
   private String publisher;
   private Date publishedDate;
-  private int priority = LOWEST_PRIORITY;
+  // A value in range [1, {@code LOWEREST_PRIORITY].
+  private int priority;
 
   /**
    * Consturcts a {@code NewsArticle}. If {@code publishedDate) is null, initialize with the
    * standard base time: January 1, 1970, 00:00:00 GMT.
    */
-  public NewsArticle(String url, String publisher, Date publishedDate) {
+  public NewsArticle(String url, String publisher, Date publishedDate, int priority) {
     this.url = (url == null) ? "" : url;
     this.publisher = (publisher == null) ? "" : publisher;
     this.publishedDate = (publishedDate == null) ? new Date(0) : publishedDate;
+    this.priority = (priority > LOWEST_PRIORITY) ? LOWEST_PRIORITY : priority;
+    this.priority = (this.priority < 1) ? 0 : this.priority;
   }
 
   public NewsArticle(NewsArticle newsArticle) {
