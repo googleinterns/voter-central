@@ -33,11 +33,11 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class RelevancyCheckerTest {
-  private final static String TITLE = "title";
-  private final static String URL = "https://www.cnn.com/index.html";
-  private final static String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
-  private final static String IRRELEVANT_CONTENT = "Irrelevant content.";
-  private final static String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
+  private static final String TITLE = "title";
+  private static final String URL = "https://www.cnn.com/index.html";
+  private static final String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
+  private static final String IRRELEVANT_CONTENT = "Irrelevant content.";
+  private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
 
   private LanguageServiceClient languageServiceClient;
   private RelevancyChecker mockRelevancyChecker;
