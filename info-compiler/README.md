@@ -16,7 +16,8 @@ API. To extract those 1,216 addresses, execute this command (where NAD_r3.txt is
 sed -n '0~40000p' NAD_r3.txt > NAD_r3_every40000.txt
 ```
 For `com.google.sps.webcrawler.NewsContentProcessor.summarize` to work, download the OpenNLP
-"Sentence Detector" and "Tokenizer" model files [here](http://opennlp.sourceforge.net/models-1.5/).
+"Sentence Detector" and "Tokenizer" model files [here](http://opennlp.sourceforge.net/models-1.5/) and upload them
+to Google Cloud Storage.
 
 To use the code, please prepare and put the following in com.google.google.sps.infocompiler.Config:
 - Project ID (referenced in com.google.sps.infocompiler.InfoCompiler)
@@ -25,8 +26,9 @@ To use the code, please prepare and put the following in com.google.google.sps.i
 - Civic Information API key (referenced in com.google.sps.infocompiler.InfoCompiler)
 - Custom Search JSON API key (referenced in com.google.sps.webcrawler.WebCrawler)
 - Custom Engine ID (referenced in com.google.sps.webcrawler.WebCrawler)
-- Path to OpenNLP "Sentence Detector" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
-- Path to OpenNLP "Tokenizer" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+- Name of Cloud Storage bucket that holds the OpenNLP model files (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+- Name of the OpenNLP "Sentence Detector" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+- Name of the OpenNLP "Tokenizer" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 
 ---
 

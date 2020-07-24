@@ -14,11 +14,16 @@
 
 package com.google.sps.webcrawler;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import com.google.cloud.ReadChannel;
 import com.google.sps.data.NewsArticle;
 import com.google.sps.infocompiler.Config;
 import java.io.FileInputStream; 
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +58,8 @@ public class NewsContentProcessor {
   private static final double PAGERANK_CONVERGENCE_THRESHOLD = 0.0001;
   private static final double SIMILARITY_THRESHOLD = 0.2;
   private static final boolean PAGERANK_INCLUDE_ZERO_DEGREES_VERTICES = true;
+  private static final Storage storage =
+      StorageOptions.newBuilder().setProjectId(Config.PROJECT_ID).build().getService();
 
   private static final Comparator<PageRank.Result> PAGERANK_SCORE_DESCENDING =
       new Comparator<PageRank.Result>() {
@@ -132,7 +139,7 @@ public class NewsContentProcessor {
 
   /** Breaks down {@code rawContent} into sentences. */
   private static String[] breakIntoSentences(String rawContent) throws IOException {
-    InputStream modelFile = new FileInputStream(Config.OPEN_NLP_SENTENCE_DETECTOR_FILE);
+    InputStream modelFile = buildModelFileStream(Config.OPEN_NLP_SENTENCE_DETECTOR_FILE);
     SentenceModel model = new SentenceModel(modelFile);
     SentenceDetectorME sentenceDetector = new SentenceDetectorME(model);
     return sentenceDetector.sentDetect(rawContent);
@@ -205,10 +212,18 @@ public class NewsContentProcessor {
 
   /** Tokenizes {@code sentence} into individual words; */
   private static String[] tokenizeSentence(String sentence) throws IOException {
-    InputStream modelFile = new FileInputStream(Config.OPEN_NLP_TOKENIZER_FILE);
+    InputStream modelFile = buildModelFileStream(Config.OPEN_NLP_TOKENIZER_FILE);
     TokenizerModel model = new TokenizerModel(modelFile);
     TokenizerME tokenizer = new TokenizerME(model);
     return tokenizer.tokenize(sentence.toLowerCase());
+  }
+
+  /** Fetches a model file from Cloud Storage and builds a stream for the file. */
+  private static InputStream buildModelFileStream(String filename) throws IOException {
+    Blob modelFileBlob = storage.get(Config.OPEN_NLP_MODEL_FILES_BUCKET_NAME, filename,
+                                     Storage.BlobGetOption.userProject(Config.PROJECT_ID));
+    ReadChannel modelFileReader = modelFileBlob.reader();
+    return Channels.newInputStream(modelFileReader);
   }
 
   /** Computes the cosine similarity between {@code sentenceA} and {@code sentenceB}. */

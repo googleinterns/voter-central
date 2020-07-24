@@ -276,6 +276,19 @@ public final class WebCrawlerTest {
     assertThat(newsArticles).containsExactly(new NewsArticle(VALID_URL, null, null));
   }
 
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithoutUrl()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithoutUrl}, which contains no
+    // URL. No news article should be returned.
+    JsonObject jsonWithoutUrl = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(jsonWithoutUrl);
+    metadata.remove(WebCrawler.CUSTOM_SEARCH_URL_METATAG);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithoutUrl);
+    assertThat(newsArticles).isEmpty();
+  }
+
   /**
    * Obtains the innermost-level metadata from the complete {@code customSearchJson}.
    */

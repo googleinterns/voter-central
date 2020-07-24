@@ -65,6 +65,7 @@ public class InfoCompiler {
   private static final String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                     Config.CIVIC_INFO_API_KEY);
+  private static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
   private static final Pattern STATE_PATTERN = Pattern.compile(".*state:(..).*");
   private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
   private List<String> electionQueryIds = new ArrayList<>();
@@ -88,22 +89,23 @@ public class InfoCompiler {
    * Reads the National Address Database (Release 3) shown here @link <a href=
    * "https://www.transportation.gov/gis/national-address-database/national-address-database-0">
    * reference</a>, from Google Cloud Storage. The file is located at bucket {@code
-   * Config.BUCKET_NAME} and named {@code Config.ADDRESS_FILE_NAME}.
+   * Config.ADDRESS_BUCKET_NAME} and named {@code Config.ADDRESS_FILE_NAME}.
    */
   private void parseAddressesFromDataset() {
     Storage storage =
         StorageOptions.newBuilder().setProjectId(Config.PROJECT_ID).build().getService();
     String[] addressFile =
-        new String (storage.get(Config.BUCKET_NAME, Config.ADDRESS_FILE_NAME,
+        new String (storage.get(Config.ADDRESS_BUCKET_NAME, Config.ADDRESS_FILE_NAME,
                                 Storage.BlobGetOption.userProject(Config.PROJECT_ID))
                         .getContent()).split("\\r?\\n");
     addresses = new ArrayList<>(addressFile.length);
     for (String fullAddress : addressFile) {
-      // Extract the full address and discard other data, such as coordinates.
-      addresses.add(fullAddress.split(",,,,,,,,,,")[0]);
+      // Extract the full address and discard other data, such as coordinates or ill-formated data.
+      String[] fullAddressSplit = fullAddress.split(",,,,,,,,,,");
+      if (fullAddressSplit.length == 2) {
+        addresses.add(fullAddressSplit[0]);
+      }
     }
-    ////////////////////////////////////////
-    addresses = addresses.subList(0, 100);
   }
 
   /**
@@ -135,6 +137,9 @@ public class InfoCompiler {
   public void queryAndStoreElectionContestInfo() {
     for (String address : addresses) {
       for (String electionQueryId : electionQueryIds) {
+        if (electionQueryId.equals(TEST_VIP_ELECTION_QUERY_ID)) {
+          continue;
+        }
         queryAndStoreElectionContestInfo(address, electionQueryId);
       }
     }
@@ -148,7 +153,8 @@ public class InfoCompiler {
   private void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
     String queryUrl =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
-                      address.replace(",", "%2C").replace(" ", "%20"), electionQueryId);
+                      address.replace(",", "%2C").replace(" ", "%20").replace("\"", "%22"),
+                      electionQueryId);
     queryAndStore(queryUrl, "contests", electionQueryId);
   }
 
@@ -160,6 +166,9 @@ public class InfoCompiler {
     JsonArray infoArray;
     try {
       infoArray = queryCivicInformation(queryUrl).getAsJsonArray(targetInfo);
+      if (infoArray == null) {
+        return;
+      }
     } catch (IOException e) {
       System.out.println(
           String.format(

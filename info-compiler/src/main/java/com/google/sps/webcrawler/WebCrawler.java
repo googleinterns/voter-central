@@ -156,7 +156,7 @@ public class WebCrawler {
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             Config.CUSTOM_SEARCH_KEY, Config.CUSTOM_SEARCH_ENGINE_ID,
-            candidateName.replace(" ", "%20"));
+            candidateName.replace(" ", "%20").replace("\"", "%22"));
     CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
       HttpGet httpGet = new HttpGet(request);
@@ -176,19 +176,39 @@ public class WebCrawler {
   List<NewsArticle> extractUrlsAndMetadataFromCustomSearchJson(JsonObject json) {
     List<NewsArticle> newsArticles = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
     JsonArray searchResults = json.getAsJsonArray("items");
+    if (searchResults == null) {
+      return Arrays.asList();
+    }
     for (JsonElement result : searchResults) {
-      JsonObject metadata =
-          (JsonObject)
-              (((JsonObject) result)
-                   .getAsJsonObject("pagemap")
-                       .getAsJsonArray("metatags")
-                           .get(0));
-      String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
+      JsonObject metadata;
+      String url;
+      try {
+        metadata =
+            (JsonObject)
+                (((JsonObject) result)
+                    .getAsJsonObject("pagemap")
+                        .getAsJsonArray("metatags")
+                            .get(0));
+        url = extractUrlMetadata(metadata);
+      } catch (NullPointerException e) {
+        continue;
+      }
       String publisher = extractPublisherMetadata(metadata);
       Date publishedDate = extractPublishedDateMetadata(metadata);
       newsArticles.add(new NewsArticle(url, publisher, publishedDate));
     }
     return newsArticles;
+  }
+
+  /**
+   * Extracts the URL from {@code metadata}. Throws an exception if the URL wasn't found,
+   * because the news article content relies on the URL.
+   *
+   * @throws NullPointerException if the metatag {@code CUSTOM_SEARCH_URL_METATAG} doesn't
+   *     exist.
+   */
+  private String extractUrlMetadata(JsonObject metadata) {
+    return metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
   }
 
   /**
@@ -332,12 +352,15 @@ public class WebCrawler {
             .newKey((long) newsArticle.getUrl().hashCode());
     Entity newsArticleEntity =
         Entity.newBuilder(newsArticleKey)
-            .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
+            .set("candidateId", datastore.newKeyFactory()
+                                    .setKind("Candidate")
+                                    .newKey(Long.parseLong(candidateId)))
             .set("title", newsArticle.getTitle())
             .set("url", newsArticle.getUrl())
             .set("content", excludeStringFromIndexes(newsArticle.getContent()))
             .set(
                 "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .set("summarizedContent", excludeStringFromIndexes(newsArticle.getSummarizedContent()))
             .set("publisher", newsArticle.getPublisher())
             .set("publishedDate", TimestampValue.newBuilder(
                                       Timestamp.of(

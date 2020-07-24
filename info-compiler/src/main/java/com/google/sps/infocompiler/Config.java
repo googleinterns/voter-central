@@ -19,11 +19,12 @@ package com.google.sps.infocompiler;
  */
 public class Config {
   public static final String PROJECT_ID = "";
-  public static final String BUCKET_NAME = "";
+  public static final String ADDRESS_BUCKET_NAME = "";
   public static final String ADDRESS_FILE_NAME = "";
   public static final String CIVIC_INFO_API_KEY = "";
   public static final String CUSTOM_SEARCH_KEY = "";
   public static final String CUSTOM_SEARCH_ENGINE_ID = "";
+  public static final String OPEN_NLP_MODEL_FILES_BUCKET_NAME = "";
   public static final String OPEN_NLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
   public static final String OPEN_NLP_TOKENIZER_FILE = "en-token.bin";
 }
