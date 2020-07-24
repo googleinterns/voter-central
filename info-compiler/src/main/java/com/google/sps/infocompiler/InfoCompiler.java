@@ -255,9 +255,14 @@ public class InfoCompiler {
    * position's information for the election. Information includes: name, party affiliation.
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
-      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
+      List<Value<String>> candidateIds, List<Value<Boolean>>  .) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
+    String email = candidate.get("email").getAsString();
+    String phoneNumber = candidate.get("phone").getAsString();
+    String photo =candidate.get("photoUrl").getAsString();
+    String website = candidate.get("candidateUrl").getAsString();
+    String twitter = candidate.channelsget()
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -269,6 +274,10 @@ public class InfoCompiler {
         Entity.newBuilder(candidateKey)
             .set("name", name)
             .set("partyAffiliation", party + " Party")
+            .set("email", email);
+            .set("phone number",phoneNumber);
+            .set("photoURL", photo);
+            .set("website", website);
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
