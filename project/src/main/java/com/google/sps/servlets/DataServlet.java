@@ -62,6 +62,10 @@ import org.apache.http.util.EntityUtils;
 public class DataServlet extends HttpServlet {
   private final static String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", Config.CIVIC_INFO_API_KEY);
+  private final static String RELEVANT_NONSPECIFIC_ADDRESS_ALERT =
+      "Your input address was not specific enough. We are providing all possible" +
+      " elections that may be relevant.";
+  boolean isAddressRelevantButNonspecific;
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -70,13 +74,24 @@ public class DataServlet extends HttpServlet {
 
     // Find election/candidate information. Package and convert the data to JSON.
     List<Election> elections = extractElectionInformation(address, listAllElections);
-    DirectoryPageDataPackage dataPackage = new DirectoryPageDataPackage(elections);
+    DirectoryPageDataPackage dataPackage =
+        new DirectoryPageDataPackage(elections,
+                                     isAddressRelevantButNonspecific
+                                     ? RELEVANT_NONSPECIFIC_ADDRESS_ALERT
+                                     : null);
     Gson gson = new Gson();
     String dataPackageJson = gson.toJson(dataPackage);
 
     // Send data in JSON format as the servlet response for the directory page.
     response.setContentType("application/json;");
     response.getWriter().println(dataPackageJson);
+  }
+
+  /**
+   * Resets the flag for whether the user input address is relevant but nonspecific.
+   */
+  private void resetRelevantNonspecificFlag() {
+    this.isAddressRelevantButNonspecific = false;
   }
 
   @Override
@@ -122,6 +137,7 @@ public class DataServlet extends HttpServlet {
    * parameter is true, then the election is always deemed relevant.
    */
   private boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
+    resetRelevantNonspecificFlag();
     if (listAllElections) {
       return true;
     } else {
@@ -129,7 +145,8 @@ public class DataServlet extends HttpServlet {
       // {@code address}.
       String queryUrl =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
-                      address.replace(" ", "%20"), (String) election.getProperty("queryId"));
+                      address.replace(" ", "%20").replace("\"", "%22").replace(",", "%2C"),
+                      (String) election.getProperty("queryId"));
       String addressElectionResponse;
       try {
         addressElectionResponse = queryCivicInformation(queryUrl);
@@ -194,6 +211,9 @@ public class DataServlet extends HttpServlet {
    */
   boolean parseResponseForRelevancy(String addressElectionResponse) {
     JsonObject responseJson = new JsonParser().parse(addressElectionResponse).getAsJsonObject();
+    if (!responseJson.has("contests")) {
+      isAddressRelevantButNonspecific = true;
+    }
     JsonArray sources =
         ((JsonObject) responseJson.getAsJsonArray("state").get(0))
             .getAsJsonArray("sources");
@@ -208,7 +228,6 @@ public class DataServlet extends HttpServlet {
    */
   private List<Position> extractPositionInformation(List<String> candidatePositions,
       List<String> candidateIds, List<Boolean> candidateIncumbency) {
-    System.out.println(candidatePositions);
     Set<String> distinctPositions = new HashSet<>(candidatePositions);
     List<Position> positions = new ArrayList<>(distinctPositions.size());
     for (String positionName : distinctPositions) {
@@ -245,9 +264,11 @@ public class DataServlet extends HttpServlet {
   // Class to package together different types of data as a HTTP response.
   class DirectoryPageDataPackage {
     private List<Election> electionsData;
+    private String alert;
 
-    DirectoryPageDataPackage(List<Election> electionsData) {
+    DirectoryPageDataPackage(List<Election> electionsData, String alert) {
       this.electionsData = electionsData;
+      this.alert = alert;
     }
   }
 }

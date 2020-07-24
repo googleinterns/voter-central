@@ -46,6 +46,19 @@ public class DataServletTest {
   // response structure</a>.
   private static final String RELEVANT_ADDRESS_ELECTION_RESPONSE =
       "{" +
+      "  contests: []," +
+      "  state: [" +
+      "    {" +
+      "      sources: [" +
+      "        {" +
+      "          name: \"Voting Information Project\"" +
+      "        }" +
+      "      ]" +
+      "    }" +
+      "  ]" +
+      "}";
+  private static final String RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE =
+      "{" +
       "  state: [" +
       "    {" +
       "      sources: [" +
@@ -95,6 +108,18 @@ public class DataServletTest {
     // API response structure.
     assertThat(dataServlet.parseResponseForRelevancy(RELEVANT_ADDRESS_ELECTION_RESPONSE))
         .isTrue();
+  }
+
+  @Test
+  public void parseResponseForRelevancy_relevantNonspecificElection() {
+    // Parse JSON-formatted String {@code RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE} and see
+    // that it,indicates the election is probably relevant to the address according to the Civic
+    // Information API response structure, but the address is nonspecific.
+    dataServlet.isAddressRelevantButNonspecific = false;
+    assertThat(
+        dataServlet.parseResponseForRelevancy(RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE))
+        .isTrue();
+    assertThat(dataServlet.isAddressRelevantButNonspecific).isTrue();
   }
 
   @Test

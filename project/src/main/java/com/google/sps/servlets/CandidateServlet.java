@@ -127,7 +127,10 @@ public class CandidateServlet extends HttpServlet {
               (String) newsArticle.getProperty("url"),
               (String) newsArticle.getProperty("publisher"),
               (Date) newsArticle.getProperty("publishedDate"),
-              (String) newsArticle.getProperty("content"));
+              (String) newsArticle.getProperty("content"),
+              (String) newsArticle.getProperty("abbreviatedContent"),
+              (String) newsArticle.getProperty("summarizedContent"),
+              ((Long) newsArticle.getProperty("priority")).intValue());
       newsArticlesData.add(newsArticleData);
     }
     return newsArticlesData;

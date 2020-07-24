@@ -25,15 +25,21 @@ public class NewsArticle {
   private String publisher;
   private Date publishedDate;
   private String content;
+  private String abbreviatedContent;
+  private String summarizedContent;
+  private int priority;
   private NewsArticleCategory category;
 
   public NewsArticle(String title, String url, String publisher, Date publishedDate,
-      String content) {
+      String content, String abbreviatedContent, String summarizedContent, int priority) {
     this.title = title;
     this.url = url;
     this.publisher = publisher;
     this.publishedDate = publishedDate;
     this.content = content;
+    this.abbreviatedContent = abbreviatedContent;
+    this.summarizedContent = summarizedContent;
+    this.priority = priority;
     this.category = null;
   }
 }

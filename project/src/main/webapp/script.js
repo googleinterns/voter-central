@@ -55,6 +55,7 @@ async function addBriefElectionCandidateInformation() {
   const response = await fetch(`/data?address=${address}&listAllElections=${listAllElections}`);
   const dataPackage = await response.json();
   const elections = dataPackage.electionsData;
+  const alert = dataPackage.alert;
 
   // Add (brief version) official election/candidate information to HTML.
   const electionsContainer = document.getElementById('elections-container');
@@ -64,6 +65,10 @@ async function addBriefElectionCandidateInformation() {
     const electionElement = constructElection(elections[electionIndex],
         electionIndex);
     electionsContainer.appendChild(electionElement);
+  }
+  // Set alert to the user if necessary.
+  if (alert) {
+    document.getElementById('alert').innerText = alert;
   }
 }
 
