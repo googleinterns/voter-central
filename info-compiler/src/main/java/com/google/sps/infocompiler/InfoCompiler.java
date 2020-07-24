@@ -269,7 +269,7 @@ public class InfoCompiler {
    * incumbency status, and news articles related to the candidate.
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
-      List<Value<String>> candidateIds, List<Value<Boolean>>  .) {
+      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
     String email = candidate.get("email").getAsString();
