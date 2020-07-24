@@ -140,7 +140,7 @@
         <artifactId>function-maven-plugin</artifactId>
         <version>0.9.3</version>
         <configuration>
-          <functionTarget>com.google.sps.infocompiler.InfoCompilerFunction</functionTarget>
+          <functionTarget>com.google.sps.infocompiler.InfoCompilerUtils</functionTarget>
         </configuration>
       </plugin>
     </plugins>

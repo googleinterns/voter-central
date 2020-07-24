@@ -41,18 +41,18 @@ gcloud config set project <projectId>
 cd voter-central/info-compiler/
 ```
 
-To deploy InfoCompilerFunction on Google Cloud Functions, execute this command:
+To deploy InfoCompilerUtils on Google Cloud Functions, execute this command:
 ```bash
 gcloud functions deploy <functionName>
     --project <projectId>
-    --entry-point com.google.sps.infocompiler.InfoCompilerFunction
+    --entry-point com.google.sps.infocompiler.InfoCompilerUtils
     --runtime java11
     --trigger-http
     --service-account <serviceAccountEmail>
 ```
 ([More details about the command](https://cloud.google.com/sdk/gcloud/reference/functions/deploy).)
 
-To create a Google Cloud Scheduler to trigger InfoCompilerFunction via HTTP, execute this command:
+To create a Google Cloud Scheduler to trigger InfoCompilerUtils via HTTP, execute this command:
 ```bash
 gcloud scheduler jobs create http <jobName>
     --schedule "<cronSchedule>"
@@ -67,11 +67,11 @@ gcloud scheduler jobs create http <jobName>
 ---
 
 ## Local Run
-To run InfoCompilerFunction locally, execute this command:
+To run InfoCompilerUtils locally, execute this command:
 ```bash
 mvn function:run
 ```
-(See pom.xml build --> plugins --> plugin for how InfoCompilerFunction is defined to run.)
+(See pom.xml build --> plugins --> plugin for how InfoCompilerUtils is defined to run.)
 
 ---
 

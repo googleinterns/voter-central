@@ -238,12 +238,7 @@ public class InfoCompiler {
     // Extract state name for the election. Set state to empty if not found.
     String division = election.get("ocdDivisionId").getAsString();
     Matcher stateFinder = STATE_PATTERN.matcher(division);
-    String state;
-    if (stateFinder.find()) {
-      state = stateFinder.group(1).toUpperCase();
-    } else {
-      state = "";
-    }
+    String state = stateFinder.find() ? stateFinder.group(1).toUpperCase() : "";
     Entity electionEntity =
         Entity.newBuilder(electionKey)
             .set("queryId", electionQueryId)

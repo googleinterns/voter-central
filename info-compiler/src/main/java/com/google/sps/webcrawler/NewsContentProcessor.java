@@ -132,7 +132,7 @@ public class NewsContentProcessor {
 
   /** Breaks down {@code rawContent} into sentences. */
   private static String[] breakIntoSentences(String rawContent) throws IOException {
-    InputStream modelFile = new FileInputStream(Config.OpenNLP_SENTENCE_DETECTOR_FILE);
+    InputStream modelFile = new FileInputStream(Config.OPEN_NLP_SENTENCE_DETECTOR_FILE);
     SentenceModel model = new SentenceModel(modelFile);
     SentenceDetectorME sentenceDetector = new SentenceDetectorME(model);
     return sentenceDetector.sentDetect(rawContent);
@@ -205,7 +205,7 @@ public class NewsContentProcessor {
 
   /** Tokenizes {@code sentence} into individual words; */
   private static String[] tokenizeSentence(String sentence) throws IOException {
-    InputStream modelFile = new FileInputStream(Config.OpenNLP_TOKENIZER_FILE);
+    InputStream modelFile = new FileInputStream(Config.OPEN_NLP_TOKENIZER_FILE);
     TokenizerModel model = new TokenizerModel(modelFile);
     TokenizerME tokenizer = new TokenizerME(model);
     return tokenizer.tokenize(sentence.toLowerCase());

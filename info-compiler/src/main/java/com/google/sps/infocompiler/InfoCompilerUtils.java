@@ -24,7 +24,7 @@ import java.io.IOException;
   * The entry point of Google Cloud Functions: Compiles location-specific information for
   * elections, positions and candidates.
   */
-public class InfoCompilerFunction implements HttpFunction {
+public class InfoCompilerUtils implements HttpFunction {
   @Override
   public void service(HttpRequest request, HttpResponse response) throws IOException {
     InfoCompiler infoCompiler = new InfoCompiler();
