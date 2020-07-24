@@ -102,6 +102,8 @@ public class InfoCompiler {
       // Extract the full address and discard other data, such as coordinates.
       addresses.add(fullAddress.split(",,,,,,,,,,")[0]);
     }
+    ////////////////////////////////////////
+    addresses = addresses.subList(0, 100);
   }
 
   /**
@@ -145,8 +147,8 @@ public class InfoCompiler {
    */
   private void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
     String queryUrl =
-        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL, address,
-                      electionQueryId);
+        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
+                      address.replace(",", "%2C").replace(" ", "%20"), electionQueryId);
     queryAndStore(queryUrl, "contests", electionQueryId);
   }
 
