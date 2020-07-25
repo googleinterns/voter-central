@@ -65,13 +65,13 @@ public class InfoCompiler {
   private static final String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                     Config.CIVIC_INFO_API_KEY);
-  private static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
+  static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
   private static final Pattern STATE_PATTERN = Pattern.compile(".*state:(..).*");
-  private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds = new ArrayList<>();
+  Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  WebCrawler webCrawler;
+  List<String> electionQueryIds;
   // List of U.S. street addresses that theoretically cover the entire U.S.
-  private List<String> addresses;
-  private WebCrawler webCrawler;
+  List<String> addresses;
 
   public InfoCompiler() throws IOException {
     this(DatastoreOptions.getDefaultInstance().getService());
@@ -122,7 +122,7 @@ public class InfoCompiler {
    * stores said found information in the database. Information includes: name, date, and query ID
    * of the election for the Civic Information API.
    */
-  public void queryAndStoreBaseElectionInfo() {
+  void queryAndStoreBaseElectionInfo() {
     queryAndStore(ELECTION_QUERY_URL, "elections", null);
   }
 
@@ -134,12 +134,9 @@ public class InfoCompiler {
    * all combinations of addresses in {@code addresses} and election IDs. Information includes:
    * candidate names and candidate party affiliations.
    */
-  public void queryAndStoreElectionContestInfo() {
+  void queryAndStoreElectionContestInfo() {
     for (String address : addresses) {
       for (String electionQueryId : electionQueryIds) {
-        if (electionQueryId.equals(TEST_VIP_ELECTION_QUERY_ID)) {
-          continue;
-        }
         queryAndStoreElectionContestInfo(address, electionQueryId);
       }
     }
@@ -150,7 +147,7 @@ public class InfoCompiler {
    * candidates information of a particular address and election, and stores said found information
    * in the database.
    */
-  private void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
+  void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
     String queryUrl =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
                       address.replace(",", "%2C").replace(" ", "%20").replace("\"", "%22"),
@@ -162,7 +159,7 @@ public class InfoCompiler {
    * Queries the Civic Information API (once) for {@code targetInfo}, by making requests to {@code
    * queryUrl}, and saves found information in the database.
    */
-  private void queryAndStore(String queryUrl, String targetInfo, String electionQueryId) {
+  void queryAndStore(String queryUrl, String targetInfo, String electionQueryId) {
     JsonArray infoArray;
     try {
       infoArray = queryCivicInformation(queryUrl).getAsJsonArray(targetInfo);
@@ -192,7 +189,7 @@ public class InfoCompiler {
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
    */
-  private JsonObject queryCivicInformation(String queryUrl) throws IOException {
+  JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
     return requestHttpAndBuildJsonResponse(httpClient, httpGet);
@@ -234,10 +231,13 @@ public class InfoCompiler {
    * state name from the political division information.
    */
   void storeBaseElectionInDatabase(JsonObject election) {
+    String electionQueryId = election.get("id").getAsString();
+    if (electionQueryId.equals(TEST_VIP_ELECTION_QUERY_ID)) {
+      return;
+    }
     Key electionKey = datastore.newKeyFactory()
         .setKind("Election")
         .newKey(election.get("name").getAsString());
-    String electionQueryId = election.get("id").getAsString();
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date =
         new Date(
@@ -312,7 +312,7 @@ public class InfoCompiler {
    * position's information for the election. Information includes: name, party affiliation,
    * incumbency status, and news articles related to the candidate.
    */
-  private void storeElectionContestCandidateInDatabase(JsonObject candidate,
+  void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
@@ -342,10 +342,5 @@ public class InfoCompiler {
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
       String candidateId) {
     webCrawler.compileNewsArticle(candidateName, candidateId);
-  }
-
-  /* For testing purposes. */
-  List<String> getAddresses() {
-    return this.addresses;
   }
 }
