@@ -151,9 +151,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat1()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
-    // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT1}).
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
+    // {@code initialize()} and added with the news article URL, publisher and published date
+    // (formatted as {@code PUBLISHED_DATE_FORMAT1}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -167,9 +168,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat2()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT2}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT2}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -183,9 +185,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat3()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT3}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT3}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -199,9 +202,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat4()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT4}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT4}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);

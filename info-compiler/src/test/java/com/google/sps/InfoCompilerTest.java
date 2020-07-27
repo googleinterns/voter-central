@@ -77,8 +77,9 @@ public final class InfoCompilerTest {
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
                       ADDRESS.replace(",", "%2C").replace(" ", "%20").replace("\"", "%22"),
                       NONTEST_ELECTION_QUERY_ID);
-  // @see Sample JSON structure:
-  //     https://developers.google.com/civic-information/docs/using_api#electionquery-example.
+  // @see <a href=
+  //     "https://developers.google.com/civic-information/docs/using_api#electionquery-example">
+  //     Sample JSON structure for the Civic Information API</a>
   private static final String ELECTION_RESPONSE =
       "{" +
       " \"kind\": \"civicinfo#electionsqueryresponse\"," +

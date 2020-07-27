@@ -86,10 +86,13 @@ public class InfoCompiler {
   }
 
   /**
-   * Reads the National Address Database (Release 3) shown here @link <a href=
-   * "https://www.transportation.gov/gis/national-address-database/national-address-database-0">
-   * reference</a>, from Google Cloud Storage. The file is located at bucket {@code
-   * Config.ADDRESS_BUCKET_NAME} and named {@code Config.ADDRESS_FILE_NAME}.
+   * Reads the National Address Database (Release 3), referenced below, from Google Cloud Storage.
+   * The file is located at bucket {@code Config.ADDRESS_BUCKET_NAME} and named {@code
+   * Config.ADDRESS_FILE_NAME}.
+   *
+   * @see <a href=
+   *    "https://www.transportation.gov/gis/national-address-database/national-address-database-0">
+   *    National Address Database (Release 3)</a>
    */
   private void parseAddressesFromDataset() {
     Storage storage =
@@ -131,8 +134,8 @@ public class InfoCompiler {
    * information, which will serve as the starting point for finding additional information, and
    * stores said found information in the database. VoterInfoQuery requires two query parameters:
    * (1) address and (2) election ID. To cover the entire United States and all elections, queries
-   * all combinations of addresses in {@code addresses} and election IDs. Information includes:
-   * candidate names and candidate party affiliations.
+   * all combinations of {@code addresses} and election IDs. Information includes: candidate names
+   * and candidate party affiliations.
    */
   void queryAndStoreElectionContestInfo() {
     for (String address : addresses) {
@@ -144,8 +147,8 @@ public class InfoCompiler {
 
   /**
    * Queries the ElectionQuery of the Civic Information API (once) for the election positions and
-   * candidates information of a particular address and election, and stores said found information
-   * in the database.
+   * candidates information of a particular {@code address} and election corresponding to {@code
+   * electionQueryId}, and stores said found information in the database.
    */
   void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
     String queryUrl =
