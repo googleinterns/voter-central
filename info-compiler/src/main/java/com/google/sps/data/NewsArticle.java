@@ -38,8 +38,7 @@ public class NewsArticle {
     this.url = (url == null) ? "" : url;
     this.publisher = (publisher == null) ? "" : publisher;
     this.publishedDate = (publishedDate == null) ? new Date(0) : publishedDate;
-    this.priority = (priority > LOWEST_PRIORITY) ? LOWEST_PRIORITY : priority;
-    this.priority = (this.priority < 1) ? 0 : this.priority;
+    this.priority = Math.min(Math.max(priority, 1), LOWEST_PRIORITY);
   }
 
   public NewsArticle(NewsArticle newsArticle) {
