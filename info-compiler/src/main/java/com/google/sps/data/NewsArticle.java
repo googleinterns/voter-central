@@ -31,7 +31,7 @@ public class NewsArticle {
   private int priority;
 
   /**
-   * Consturcts a {@code NewsArticle}. If {@code publishedDate) is null, initialize with the
+   * Consturcts a {@code NewsArticle}. If {@code publishedDate} is null, initialize with the
    * standard base time: January 1, 1970, 00:00:00 GMT.
    */
   public NewsArticle(String url, String publisher, Date publishedDate, int priority) {

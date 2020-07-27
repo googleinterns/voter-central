@@ -21,6 +21,6 @@ public class Config {
   public static final String CIVIC_INFO_API_KEY = "";
   public static final String CUSTOM_SEARCH_KEY = "";
   public static final String CUSTOM_SEARCH_ENGINE_ID = "";
-  public static final String OpenNLP_SENTENCE_DETECTOR_FILE = "/home/feiyangyu/en-sent.bin";
-  public static final String OpenNLP_TOKENIZER_FILE = "/home/feiyangyu/en-token.bin";
+  public static final String OpenNLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
+  public static final String OpenNLP_TOKENIZER_FILE = "en-token.bin";
 }

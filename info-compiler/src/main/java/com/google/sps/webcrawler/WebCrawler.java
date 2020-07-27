@@ -199,9 +199,9 @@ public class WebCrawler {
    */
   private String extractPublisherMetadata(JsonObject metadata) {
     for (String potentialPublisherMetatag : CUSTOM_SEARCH_PUBLISHER_METATAGS) {
-      try {
+      if (metadata.has(potentialPublisherMetatag)) {
         return metadata.get(potentialPublisherMetatag).getAsString();
-      } catch (NullPointerException e) {}
+      }
     }
     return null;
   }
@@ -256,18 +256,16 @@ public class WebCrawler {
       NewsArticle newsArticle) {
     try {
       // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null
-            && grant.getCrawlDelay() != null
-            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          newsArticle.setContent("");
-          return;
-        }
+      if (grant == null
+          || (grant.hasAccess()
+              && (grant.getCrawlDelay() == null
+                  || waitForAndSetCrawlDelay(grant, robotsUrl.toString())))) {
         InputStream webpageStream = setTimeoutAndOpenStream(new URL(newsArticle.getUrl()));
         newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
       } else {
         newsArticle.setContent("");
+        return;
       }
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
