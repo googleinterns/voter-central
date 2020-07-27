@@ -63,8 +63,8 @@ public class DataServlet extends HttpServlet {
   private final static String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", Config.CIVIC_INFO_API_KEY);
   private final static String RELEVANT_NONSPECIFIC_ADDRESS_ALERT =
-      "Your input address was not specific enough. We are providing all possible" +
-      " elections that may be relevant.";
+      "Your input address was not specific enough or was not a residential address.\n" + 
+      "We are providing all possible elections that may be relevant.";
   boolean isAddressRelevantButNonspecific;
 
   @Override
@@ -157,7 +157,7 @@ public class DataServlet extends HttpServlet {
     }
   }
 
-  /** 
+  /**
    * Queries the Civic Information API and retrieves JSON response as a String.
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
@@ -168,10 +168,12 @@ public class DataServlet extends HttpServlet {
   private String queryCivicInformation(String queryUrl) throws IOException, SocketException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    return requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+    String responseBody = requestHttpAndBuildCivicInfoResponse(httpClient, httpGet);
+    httpClient.close();
+    return responseBody;
   }
 
-  /** 
+  /**
    * Makes HTTP GET request to the Civic Information API amd returns HTTP JSON response as a
    * String. This method is given default visibility for testing purposes.
    *
@@ -183,7 +185,7 @@ public class DataServlet extends HttpServlet {
    *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
    *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  String requestHttpAndBuildJsonResponseFromCivicInformation(CloseableHttpClient httpClient,
+  String requestHttpAndBuildCivicInfoResponse(CloseableHttpClient httpClient,
       HttpGet httpGet) throws IOException, SocketException {
     ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
@@ -198,9 +200,7 @@ public class DataServlet extends HttpServlet {
           }
         }
     };
-    String responseBody = httpClient.execute(httpGet, responseHandler);
-    httpClient.close();
-    return responseBody;
+    return httpClient.execute(httpGet, responseHandler);
   }
 
   /**
@@ -217,7 +217,7 @@ public class DataServlet extends HttpServlet {
     JsonArray sources =
         ((JsonObject) responseJson.getAsJsonArray("state").get(0))
             .getAsJsonArray("sources");
-    return !(((JsonObject)sources.get(0)).get("name").getAsString().equals(""));
+    return !(((JsonObject)sources.get(0)).get("name").getAsString().isEmpty());
   }
 
   /**

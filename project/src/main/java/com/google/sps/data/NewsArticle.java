@@ -25,7 +25,9 @@ public class NewsArticle {
   private String publisher;
   private Date publishedDate;
   private String content;
+  // The first 100 words of {@code content}.
   private String abbreviatedContent;
+  // The 5 most important sentences extracted from {@code content}.
   private String summarizedContent;
   private int priority;
   private NewsArticleCategory category;

@@ -84,7 +84,7 @@ public class DataServletTest {
   private static final DataServlet dataServlet = new DataServlet();
 
   @Test
-  public void requestHttpAndBuildJsonResponseFromCivicInformation_returnResponseStringAsIs()
+  public void requestHttpAndBuildCivicInfoResponse_returnResponseStringAsIs()
       throws IOException, SocketException {
     // Query the Civic Information API with a mock HTTP client + mock callback function of type
     // {@code ResponseHandler<String>} that converts any {@code HttpResponse} response to {@code
@@ -97,7 +97,8 @@ public class DataServletTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture()))
         .thenReturn(RELEVANT_ADDRESS_ELECTION_RESPONSE);
     String responseBody =
-        dataServlet.requestHttpAndBuildJsonResponseFromCivicInformation(httpClient, httpGet);
+        dataServlet.requestHttpAndBuildCivicInfoResponse(httpClient, httpGet);
+    httpClient.close();
     assertThat(responseBody).isEqualTo(RELEVANT_ADDRESS_ELECTION_RESPONSE);
   }
 
