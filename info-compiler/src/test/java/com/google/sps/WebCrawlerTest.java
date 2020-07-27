@@ -397,7 +397,7 @@ public final class WebCrawlerTest {
         datastore
             .newKeyFactory()
             .setKind("Candidate")
-            .newKey(CANDIDATE_ID);
+            .newKey(Long.parseLong(CANDIDATE_ID));
     assertThat(newsArticleEntity.getKey()).isEqualTo(newsArticleKey);
     assertThat(newsArticleEntity.getKey("candidateId")).isEqualTo(candidateKey);
     assertThat(newsArticleEntity.getString("title")).isEqualTo(expectedNewsArticle.getTitle());
