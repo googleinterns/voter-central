@@ -53,6 +53,7 @@ public final class NewsContentExtractorTest {
       new TextDocument(TITLE, Arrays.asList(TEXT_BLOCK));
   private static final TextDocument TEXT_DOC_WITHOUT_TITLE =
       new TextDocument(Arrays.asList(TEXT_BLOCK));
+  private static final int PRIORITY = 1;
 
   private InputStream webpageStream;
   private HtmlParser parser;
@@ -75,7 +76,7 @@ public final class NewsContentExtractorTest {
     // TEXT_DOC_REGULAR}. Content processing hasn't occurred so the abbreivated content is null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_REGULAR);
     Metadata metadata = new Metadata();
-    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
     newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
                                                 newsArticle);
@@ -92,7 +93,7 @@ public final class NewsContentExtractorTest {
     // null.
     when(boilerpipeHandler.getTextDocument()).thenReturn(TEXT_DOC_WITHOUT_TITLE);
     Metadata metadata = new Metadata();
-    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
     newsContentExtractor.extractContentFromHtml(boilerpipeHandler, metadata, webpageStream,
                                                 newsArticle);
@@ -114,7 +115,7 @@ public final class NewsContentExtractorTest {
                boilerpipeHandler.endDocument();
                return null;
             }).when(parser).parse(anyObject(), anyObject(), anyObject());
-    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     NewsArticle expectedNewsArticle = new NewsArticle(newsArticle);
     newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
     expectedNewsArticle.setTitle(EMPTY);
@@ -127,7 +128,7 @@ public final class NewsContentExtractorTest {
     // The webpage stream throws {@code IOException} when being read. This exception should be
     // caught and an empty content should be set.
     when(webpageStream.read(anyObject(), anyInt(), anyInt())).thenThrow(new IOException());
-    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     realNewsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
     assertThat(newsArticle.getContent()).isEqualTo(EMPTY);
   }
@@ -136,7 +137,7 @@ public final class NewsContentExtractorTest {
   public void extractContentFromHtml_NullWebpageStream() {
     // The webpage stream is null, and it will cause a {@code NullPointerException}. An empty
     // content should be set.
-    NewsArticle newsArticle = new NewsArticle(URL, null, null);
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     realNewsContentExtractor.extractContentFromHtml(null, newsArticle);
     assertThat(newsArticle.getContent()).isEqualTo(EMPTY);
   }

@@ -115,18 +115,13 @@ public class NewsContentProcessor {
   public static void summarize(NewsArticle newsArticle) {
     String rawContent = newsArticle.getContent();
     String[] sentences;
-    try {
-      sentences = breakIntoSentences(rawContent);
-    } catch (IOException e) {
-      newsArticle.setSummarizedContent("");
-      return;
-    }
-    if (sentences.length <= SUMMARIZATION_MAX_SENTENCE_NUMBER) {
-      newsArticle.setSummarizedContent(rawContent);
-      return;
-    }
     List<PageRank.Result<IntValue>> ranking;
     try {
+      sentences = breakIntoSentences(rawContent);
+      if (sentences.length <= SUMMARIZATION_MAX_SENTENCE_NUMBER) {
+        newsArticle.setSummarizedContent(rawContent);
+        return;
+      }
       Graph<IntValue, StringValue, DoubleValue> similarityGraph = buildSimilarityGraph(sentences);
       ranking = getRanking(similarityGraph);
     } catch (Exception e) {

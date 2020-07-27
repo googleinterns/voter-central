@@ -61,7 +61,6 @@ import org.apache.http.util.EntityUtils;
 
 /** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
   static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
       Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
@@ -74,7 +73,7 @@ public class WebCrawler {
       Arrays.asList(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"),
                     DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-  private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
+  public static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
   private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
   private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
   private Datastore datastore;
@@ -172,6 +171,7 @@ public class WebCrawler {
    * Parses {@code json}, which is in Google Custom Search's JSON response format, and extracts
    * news articles' URLs (URLs from the source website, instead of from News.google) and metadata,
    * including the publisher and published date. Packages extracted data into {@code NewsArticle}.
+   * Set news articles' priority based on the order in which they are returned by Custom Search.
    */
   List<NewsArticle> extractUrlsAndMetadataFromCustomSearchJson(JsonObject json) {
     List<NewsArticle> newsArticles = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
@@ -179,6 +179,7 @@ public class WebCrawler {
     if (searchResults == null) {
       return Arrays.asList();
     }
+    int priority = 1;
     for (JsonElement result : searchResults) {
       JsonObject metadata;
       String url;
@@ -195,7 +196,8 @@ public class WebCrawler {
       }
       String publisher = extractPublisherMetadata(metadata);
       Date publishedDate = extractPublishedDateMetadata(metadata);
-      newsArticles.add(new NewsArticle(url, publisher, publishedDate));
+      newsArticles.add(new NewsArticle(url, publisher, publishedDate, priority));
+      priority++;
     }
     return newsArticles;
   }
@@ -217,9 +219,9 @@ public class WebCrawler {
    */
   private String extractPublisherMetadata(JsonObject metadata) {
     for (String potentialPublisherMetatag : CUSTOM_SEARCH_PUBLISHER_METATAGS) {
-      try {
+      if (metadata.has(potentialPublisherMetatag)) {
         return metadata.get(potentialPublisherMetatag).getAsString();
-      } catch (NullPointerException e) {}
+      }
     }
     return null;
   }
@@ -274,18 +276,16 @@ public class WebCrawler {
       NewsArticle newsArticle) {
     try {
       // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null
-            && grant.getCrawlDelay() != null
-            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          newsArticle.setContent("");
-          return;
-        }
+      if (grant == null
+          || (grant.hasAccess()
+              && (grant.getCrawlDelay() == null
+                  || waitForAndSetCrawlDelay(grant, robotsUrl.toString())))) {
         InputStream webpageStream = setTimeoutAndOpenStream(new URL(newsArticle.getUrl()));
         newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
       } else {
         newsArticle.setContent("");
+        return;
       }
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
