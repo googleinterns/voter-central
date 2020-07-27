@@ -105,10 +105,10 @@ public class DataServletTest {
   @Test
   public void parseResponseForRelevancy_relevantElection() {
     // Parse JSON-formatted String {@code RELEVANT_ADDRESS_ELECTION_RESPONSE} and see that it
-    // indicates the election is relevant to the address according to the Civic Information
-    // API response structure.
-    assertThat(dataServlet.parseResponseForRelevancy(RELEVANT_ADDRESS_ELECTION_RESPONSE))
-        .isTrue();
+    // indicates the election is relevant to the address and the address is both specific and
+    // counts as a residential address, according to the Civic Information API response structure.
+    dataServlet.parseResponseForRelevancy(RELEVANT_ADDRESS_ELECTION_RESPONSE);
+    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isFalse();
   }
 
   @Test
@@ -116,11 +116,9 @@ public class DataServletTest {
     // Parse JSON-formatted String {@code RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE} and see
     // that it,indicates the election is probably relevant to the address according to the Civic
     // Information API response structure, but the address is nonspecific.
-    dataServlet.isAddressRelevantButNonspecific = false;
-    assertThat(
-        dataServlet.parseResponseForRelevancy(RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE))
-        .isTrue();
-    assertThat(dataServlet.isAddressRelevantButNonspecific).isTrue();
+    dataServlet.isAddressRelevantButNonspecificOrNonresidential = false;
+    dataServlet.parseResponseForRelevancy(RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE);
+    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isTrue();
   }
 
   @Test
@@ -128,7 +126,8 @@ public class DataServletTest {
     // Parse JSON-formatted String {@code IRRELEVANT_ADDRESS_ELECTION_RESPONSE} and see that it
     // indicates the election is irrelevant to the address according to the Civic Information
     // API response structure.
-    assertThat(dataServlet.parseResponseForRelevancy(IRRELEVANT_ADDRESS_ELECTION_RESPONSE))
-        .isFalse();
+    dataServlet.isAddressRelevantButNonspecificOrNonresidential = false;
+    dataServlet.parseResponseForRelevancy(IRRELEVANT_ADDRESS_ELECTION_RESPONSE);
+    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isTrue();
   }
 }

@@ -65,7 +65,7 @@ public class DataServlet extends HttpServlet {
   private final static String RELEVANT_NONSPECIFIC_ADDRESS_ALERT =
       "Your input address was not specific enough or was not a residential address.\n" + 
       "We are providing all possible elections that may be relevant.";
-  boolean isAddressRelevantButNonspecific;
+  boolean isAddressRelevantButNonspecificOrNonresidential;
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -76,7 +76,7 @@ public class DataServlet extends HttpServlet {
     List<Election> elections = extractElectionInformation(address, listAllElections);
     DirectoryPageDataPackage dataPackage =
         new DirectoryPageDataPackage(elections,
-                                     isAddressRelevantButNonspecific
+                                     isAddressRelevantButNonspecificOrNonresidential
                                      ? RELEVANT_NONSPECIFIC_ADDRESS_ALERT
                                      : null);
     Gson gson = new Gson();
@@ -91,7 +91,7 @@ public class DataServlet extends HttpServlet {
    * Resets the flag for whether the user input address is relevant but nonspecific.
    */
   private void resetRelevantNonspecificFlag() {
-    this.isAddressRelevantButNonspecific = false;
+    this.isAddressRelevantButNonspecificOrNonresidential = false;
   }
 
   @Override
@@ -144,7 +144,7 @@ public class DataServlet extends HttpServlet {
       // Query the Civic Information API for whether {@code election} is relevant to
       // {@code address}.
       String queryUrl =
-        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
+        String.format("%s&address=%s&electionId=%s&officialOnly=true", VOTER_INFO_QUERY_URL,
                       address.replace(" ", "%20").replace("\"", "%22").replace(",", "%2C"),
                       (String) election.getProperty("queryId"));
       String addressElectionResponse;
@@ -153,7 +153,8 @@ public class DataServlet extends HttpServlet {
       } catch (Exception e) {
         return false;
       }
-      return parseResponseForRelevancy(addressElectionResponse);
+      parseResponseForRelevancy(addressElectionResponse);
+      return true;
     }
   }
 
@@ -192,11 +193,10 @@ public class DataServlet extends HttpServlet {
         public String handleResponse(final HttpResponse response) throws IOException {
           int status = response.getStatusLine().getStatusCode();
           if (status >= 200 && status < 300) {
-              HttpEntity entity = response.getEntity();
-              return entity != null ? EntityUtils.toString(entity) : null;
+            HttpEntity entity = response.getEntity();
+            return entity != null ? EntityUtils.toString(entity) : null;
           } else {
-              httpClient.close();
-              throw new ClientProtocolException("Unexpected response status: " + status);
+            throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
     };
@@ -204,20 +204,16 @@ public class DataServlet extends HttpServlet {
   }
 
   /**
-   * Parses JSON {@code addressElectionResponse} and checks if the election is relevant to the
-   * address according to the response structure of the Civic Information API: @see <a href=
+   * Parses JSON {@code addressElectionResponse} and checks if the input address is specific enough
+   * and counts as a residential address so that contests information is available: @see <a href=
    * "https://developers.google.com/civic-information/docs/using_api#voterinfoquery-response:">
    * response structure</a>. This method is given default visibility for testing purposes.
    */
-  boolean parseResponseForRelevancy(String addressElectionResponse) {
+  void parseResponseForRelevancy(String addressElectionResponse) {
     JsonObject responseJson = new JsonParser().parse(addressElectionResponse).getAsJsonObject();
     if (!responseJson.has("contests")) {
-      isAddressRelevantButNonspecific = true;
+      isAddressRelevantButNonspecificOrNonresidential = true;
     }
-    JsonArray sources =
-        ((JsonObject) responseJson.getAsJsonArray("state").get(0))
-            .getAsJsonArray("sources");
-    return !(((JsonObject)sources.get(0)).get("name").getAsString().isEmpty());
   }
 
   /**
