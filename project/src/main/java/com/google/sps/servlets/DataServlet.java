@@ -33,6 +33,8 @@ import com.google.sps.data.DirectoryCandidate;
 import com.google.sps.data.Election;
 import com.google.sps.data.Position;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.lang.Boolean;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -145,7 +147,7 @@ public class DataServlet extends HttpServlet {
       // {@code address}.
       String queryUrl =
         String.format("%s&address=%s&electionId=%s&officialOnly=true", VOTER_INFO_QUERY_URL,
-                      address.replace(" ", "%20").replace("\"", "%22").replace(",", "%2C"),
+                      URLEncoder.encode(address),
                       (String) election.getProperty("queryId"));
       String addressElectionResponse;
       try {
