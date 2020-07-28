@@ -139,6 +139,6 @@ public final class NewsContentExtractorTest {
     // content should be set.
     NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
     realNewsContentExtractor.extractContentFromHtml(null, newsArticle);
-    assertThat(newsArticle.getContent()).isEqualTo(EMPTY);
+    assertThat(newsArticle.getContent()).isEmpty();
   }
 }

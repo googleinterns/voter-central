@@ -67,7 +67,7 @@ public class NewsArticle {
   public String getAbbreviatedContent() {
     return this.abbreviatedContent;
   }
-  
+
   public String getSummarizedContent() {
     return this.summarizedContent;
   }
