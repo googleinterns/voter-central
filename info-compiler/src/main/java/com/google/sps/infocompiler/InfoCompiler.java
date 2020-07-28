@@ -272,10 +272,10 @@ public class InfoCompiler {
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
-    String email = candidate.get("email").getAsString();
-    String phoneNumber = candidate.get("phone").getAsString();
-    String photo = candidate.get("photoUrl").getAsString();
-    String website = candidate.get("candidateUrl").getAsString();
+    String email = getField(candidate, "email");
+    String phoneNumber = getField(candidate, "phone");
+    String photo = getField(candidate, "PhotoUrl");
+    String website = getField(candidate, "candidateUrl");
     //@TODO [Add twitter handles.]
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
@@ -290,7 +290,7 @@ public class InfoCompiler {
             .set("partyAffiliation", party + " Party")
             .set("email", email)
             .set("phone number",phoneNumber)
-            .set("photoUrl", photo)
+            .set("photoURL", photo)
             .set("website", website)
             .build();
     datastore.put(candidateEntity);
@@ -298,6 +298,13 @@ public class InfoCompiler {
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
 
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
+  }
+  private String getField(JsonObject candidate, String field) {
+    if (candidate.has(field)) {
+      return candidate.get(field).getAsString();
+    } else {
+      return "not available";
+    }
   }
 
   /**

@@ -104,9 +104,9 @@ public final class InfoCompilerTest {
     candidate.addProperty("name", "Andrew Cuomo");
     candidate.addProperty("party", "Democratic");
     candidate.addProperty("email", "ac@gmail.com");
-    candidate.addProperty("photoURL", "photoOfCuomo.com");
-    candidate.addProperty("website", "www.Andrewcuomo.com");
-    candidate.addProperty("phone number", "122-333-4444");
+    candidate.addProperty("PhotoUrl", "photoOfCuomo.com");
+    candidate.addProperty("candidateUrl", "www.Andrewcuomo.com");
+    candidate.addProperty("phone", "122-333-4444");
     //candidate.addProperty("Twitter Handle", "@AC");
     JsonArray candidates = new JsonArray();
     candidates.add(candidate);
@@ -236,9 +236,9 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
     assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
-    assertThat(candidateEntity.getString("phone number")).isEqualTo(candidate.get("phone number").getAsString());
-    assertThat(candidateEntity.getString("website")).isEqualTo(candidate.get("website").getAsString());
-    assertThat(candidateEntity.getString("photoURL")).isEqualTo(candidate.get("photoURL").getAsString());
+    assertThat(candidateEntity.getString("phone number")).isEqualTo(candidate.get("phone").getAsString());
+    assertThat(candidateEntity.getString("website")).isEqualTo(candidate.get("candidateUrl").getAsString());
+    assertThat(candidateEntity.getString("photoURL")).isEqualTo(candidate.get("PhotoUrl").getAsString());
   }
 
   // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
