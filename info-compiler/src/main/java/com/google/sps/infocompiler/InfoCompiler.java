@@ -39,10 +39,12 @@ import com.google.sps.webcrawler.NewsContentExtractor;
 import com.google.sps.webcrawler.RelevancyChecker;
 import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
@@ -67,6 +69,10 @@ public class InfoCompiler {
                     Config.CIVIC_INFO_API_KEY);
   static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
   private static final Pattern STATE_PATTERN = Pattern.compile(".*state:(..).*");
+  private static final long QUOTA_TIME_UNIT_MILLISECONDS = 100 * 1000;
+  private static final int QUOTA_QUERY_LIMIT = 250;
+  private static final long QUERY_PAUSE_MILISECONDS =
+      (long) (QUOTA_TIME_UNIT_MILLISECONDS / QUOTA_QUERY_LIMIT * Config.PAUSE_FACTOR);
   Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
   WebCrawler webCrawler;
   List<String> electionQueryIds;
@@ -135,14 +141,31 @@ public class InfoCompiler {
    * stores said found information in the database. VoterInfoQuery requires two query parameters:
    * (1) address and (2) election ID. To cover the entire United States and all elections, queries
    * all combinations of {@code addresses} and election IDs. Information includes: candidate names
-   * and candidate party affiliations.
+   * and candidate party affiliations. Pauses for {@code QUERY_PAUSE_MILISECONDS} per query to
+   * respect the query rate limit of the Civic Information API.
    */
   void queryAndStoreElectionContestInfo() {
-    for (String address : addresses) {
+    int addressStartIndex = Math.max(0, Config.ADDRESS_START_INDEX);
+    int addressEndIndex = Math.min(addresses.size(), Config.ADDRESS_END_INDEX);
+    for (String address : addresses.subList(addressStartIndex, addressEndIndex)) {
       for (String electionQueryId : electionQueryIds) {
         queryAndStoreElectionContestInfo(address, electionQueryId);
+        pause(QUERY_PAUSE_MILISECONDS);
       }
     }
+  }
+
+  /**
+   * Waits for {@code timeToPause} milliseconds if necessary and returns true if the pause
+   * succeeded.
+   */
+  private boolean pause(long timeToPause) {
+    try {
+      TimeUnit.MILLISECONDS.sleep(timeToPause);
+    } catch (InterruptedException e) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -218,6 +241,7 @@ public class InfoCompiler {
             HttpEntity entity = response.getEntity();
             return entity != null ? EntityUtils.toString(entity) : null;
           } else {
+            System.out.println(httpGet);
             throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }

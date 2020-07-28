@@ -19,7 +19,7 @@ For `com.google.sps.webcrawler.NewsContentProcessor.summarize` to work, download
 "Sentence Detector" and "Tokenizer" model files [here](http://opennlp.sourceforge.net/models-1.5/) and upload them
 to Google Cloud Storage.
 
-To use the code, please prepare and put the following in com.google.google.sps.infocompiler.Config:
+To use the code, please prepare and put the following configurations in com.google.google.sps.infocompiler.Config:
 - Project ID (referenced in com.google.sps.infocompiler.InfoCompiler)
 - Name of Cloud Storage bucket that holds the addresses file (referenced in com.google.sps.infocompiler.InfoCompiler)
 - Name of the addresses file on Cloud Storage (referenced in com.google.sps.infocompiler.InfoCompiler)
@@ -29,6 +29,14 @@ To use the code, please prepare and put the following in com.google.google.sps.i
 - Name of Cloud Storage bucket that holds the OpenNLP model files (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 - Name of the OpenNLP "Sentence Detector" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 - Name of the OpenNLP "Tokenizer" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+
+Additionally, for respecting the query rate limit (250 queries/100 seconds) of the Civic Information API, InfoCompiler
+needs to pause between queries. Set how much to shorten/extend the pause between queries, relative to the minimum pause
+(0.4 seconds) required in com.google.google.sps.infocompiler.Config. The recommended value is 1.5.
+Due to Cloud Functions' 540 seconds execution limit: we deploy multiple Cloud Functions and each will process only a
+subset of addresses. Set the starting and ending indices of the subset of adresses in com.google.google.sps.infocompiler.Config.
+The recommended values: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions. Note that the starting
+index will be safely lower-bounded by 0 while the ending index will be safely upper-bounded by the total number of addresses.
 
 ---
 
