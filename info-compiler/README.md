@@ -32,7 +32,7 @@ To use the code, please prepare and put the following configurations in com.goog
 
 Additionally, for respecting the query rate limit (250 queries/100 seconds) of the Civic Information API, InfoCompiler
 needs to pause between queries. Set how much to shorten/extend the pause between queries, relative to the minimum pause
-(0.4 seconds) required in com.google.google.sps.infocompiler.Config. The recommended value is 1.5.
+(0.4 seconds) required in com.google.google.sps.infocompiler.Config. The recommended value is 3.75.
 Due to Cloud Functions' 540 seconds execution limit: we deploy multiple Cloud Functions and each will process only a
 subset of addresses. Set the starting and ending indices of the subset of adresses in com.google.google.sps.infocompiler.Config.
 The recommended values: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions. Note that the starting

@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.time.DateTimeException;
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
@@ -155,7 +156,7 @@ public class WebCrawler {
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             Config.CUSTOM_SEARCH_KEY, Config.CUSTOM_SEARCH_ENGINE_ID,
-            candidateName.replace(" ", "%20").replace("\"", "%22"));
+            URLEncoder.encode(candidateName));
     CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
       HttpGet httpGet = new HttpGet(request);

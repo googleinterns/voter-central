@@ -39,6 +39,7 @@ import com.google.sps.webcrawler.NewsContentExtractor;
 import com.google.sps.webcrawler.RelevancyChecker;
 import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,8 +150,10 @@ public class InfoCompiler {
     int addressEndIndex = Math.min(addresses.size(), Config.ADDRESS_END_INDEX);
     for (String address : addresses.subList(addressStartIndex, addressEndIndex)) {
       for (String electionQueryId : electionQueryIds) {
-        queryAndStoreElectionContestInfo(address, electionQueryId);
-        pause(QUERY_PAUSE_MILISECONDS);
+        try {
+          queryAndStoreElectionContestInfo(address, electionQueryId);
+          pause(QUERY_PAUSE_MILISECONDS);
+        } catch (UnsupportedEncodingException e) {}
       }
     }
   }
@@ -172,11 +175,14 @@ public class InfoCompiler {
    * Queries the ElectionQuery of the Civic Information API (once) for the election positions and
    * candidates information of a particular {@code address} and election corresponding to {@code
    * electionQueryId}, and stores said found information in the database.
+   *
+   * @throws UnsupportedEncodingException if {@code address} cannot be encoded into a valid URL.
    */
-  void queryAndStoreElectionContestInfo(String address, String electionQueryId) {
+  void queryAndStoreElectionContestInfo(String address, String electionQueryId)
+      throws UnsupportedEncodingException {
     String queryUrl =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
-                      address.replace(",", "%2C").replace(" ", "%20").replace("\"", "%22"),
+                      URLEncoder.encode(address, "UTF-8"),
                       electionQueryId);
     queryAndStore(queryUrl, "contests", electionQueryId);
   }
