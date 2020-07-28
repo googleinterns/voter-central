@@ -106,8 +106,8 @@ public final class InfoCompilerTest {
     candidate.addProperty("email", "ac@gmail.com");
     candidate.addProperty("photoURL", "photoOfCuomo.com");
     candidate.addProperty("website", "www.Andrewcuomo.com");
-    candidate.addProperty("phone", "122-333-4444");
-    candidate.addProperty("Twitter Handle", "@AC");
+    candidate.addProperty("phone number", "122-333-4444");
+    //candidate.addProperty("Twitter Handle", "@AC");
     JsonArray candidates = new JsonArray();
     candidates.add(candidate);
     singleContestJson = new JsonObject();
@@ -235,6 +235,10 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
+    assertThat(candidateEntity.getString("phone number")).isEqualTo(candidate.get("phone number").getAsString());
+    assertThat(candidateEntity.getString("website")).isEqualTo(candidate.get("website").getAsString());
+    assertThat(candidateEntity.getString("photoURL")).isEqualTo(candidate.get("photoURL").getAsString());
   }
 
   // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
