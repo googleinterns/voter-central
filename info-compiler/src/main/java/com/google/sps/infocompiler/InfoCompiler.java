@@ -247,7 +247,6 @@ public class InfoCompiler {
             HttpEntity entity = response.getEntity();
             return entity != null ? EntityUtils.toString(entity) : null;
           } else {
-            System.out.println(httpGet);
             throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
