@@ -103,6 +103,11 @@ public final class InfoCompilerTest {
     JsonObject candidate = new JsonObject();
     candidate.addProperty("name", "Andrew Cuomo");
     candidate.addProperty("party", "Democratic");
+    candidate.addProperty("email", "ac@gmail.com");
+    candidate.addProperty("photoURL", "photoOfCuomo.com");
+    candidate.addProperty("website", "www.Andrewcuomo.com");
+    candidate.addProperty("phone", "122-333-4444");
+    candidate.addProperty("Twitter Handle", "@AC");
     JsonArray candidates = new JsonArray();
     candidates.add(candidate);
     singleContestJson = new JsonObject();

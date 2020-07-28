@@ -276,7 +276,7 @@ public class InfoCompiler {
     String phoneNumber = candidate.get("phone").getAsString();
     String photo =candidate.get("photoUrl").getAsString();
     String website = candidate.get("candidateUrl").getAsString();
-    String twitter = candidate.channelsget()
+    //@TODO [Add twitter handles.]
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -288,10 +288,10 @@ public class InfoCompiler {
         Entity.newBuilder(candidateKey)
             .set("name", name)
             .set("partyAffiliation", party + " Party")
-            .set("email", email);
-            .set("phone number",phoneNumber);
-            .set("photoURL", photo);
-            .set("website", website);
+            .set("email", email)
+            .set("phone number",phoneNumber)
+            .set("photoURL", photo)
+            .set("website", website)
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
