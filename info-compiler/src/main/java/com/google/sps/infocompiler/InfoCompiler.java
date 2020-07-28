@@ -274,7 +274,7 @@ public class InfoCompiler {
     String party = candidate.get("party").getAsString();
     String email = candidate.get("email").getAsString();
     String phoneNumber = candidate.get("phone").getAsString();
-    String photo =candidate.get("photoUrl").getAsString();
+    String photo = candidate.get("photoUrl").getAsString();
     String website = candidate.get("candidateUrl").getAsString();
     //@TODO [Add twitter handles.]
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
@@ -290,7 +290,7 @@ public class InfoCompiler {
             .set("partyAffiliation", party + " Party")
             .set("email", email)
             .set("phone number",phoneNumber)
-            .set("photoURL", photo)
+            .set("photoUrl", photo)
             .set("website", website)
             .build();
     datastore.put(candidateEntity);
@@ -306,6 +306,8 @@ public class InfoCompiler {
    */
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
       String candidateId) {
-    webCrawler.compileNewsArticle(candidateName, candidateId);
+    try{
+      webCrawler.compileNewsArticle(candidateName, candidateId);
+    } catch (Exception e){}
   }
 }
