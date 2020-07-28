@@ -18,6 +18,11 @@ import static com.google.common.truth.Truth.*;
 import static com.google.common.truth.Truth8.*;
 import static org.mockito.Mockito.*;
 
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
+import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
 import java.io.IOException;
 import java.net.SocketException;
 import org.apache.http.HttpEntity;
@@ -28,9 +33,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -69,19 +73,17 @@ public class DataServletTest {
       "    }" +
       "  ]" +
       "}";
-  private static final String IRRELEVANT_ADDRESS_ELECTION_RESPONSE =
-      "{" +
-      "  state: [" +
-      "    {" +
-      "      sources: [" +
-      "        {" +
-      "          name: \"\"" +
-      "        }" +
-      "      ]" +
-      "    }" +
-      "  ]" +
-      "}";
+  private static final String QUERY_ID = "1000";
+  private static final String ADDRESS = "Sample address";
   private static final DataServlet dataServlet = new DataServlet();
+
+  private static final LocalServiceTestHelper datastoreHelper =
+      new LocalServiceTestHelper(new LocalDatastoreServiceTestConfig());
+
+  @Before
+  public void initialize() {
+    datastoreHelper.setUp();
+  }
 
   @Test
   public void requestHttpAndBuildCivicInfoResponse_returnResponseStringAsIs()
@@ -122,12 +124,42 @@ public class DataServletTest {
   }
 
   @Test
-  public void parseResponseForRelevancy_irrelevantElection() {
-    // Parse JSON-formatted String {@code IRRELEVANT_ADDRESS_ELECTION_RESPONSE} and see that it
-    // indicates the election is irrelevant to the address according to the Civic Information
-    // API response structure.
-    dataServlet.isAddressRelevantButNonspecificOrNonresidential = false;
-    dataServlet.parseResponseForRelevancy(IRRELEVANT_ADDRESS_ELECTION_RESPONSE);
-    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isTrue();
+  public void isRelevantElection_irrelevantElection() throws IOException {
+    // See that {@code isRelevantElection()} returns false for irrelevant elections, which will
+    // cause {@code queryCivicInformation()} to throw an exception. Use App Engine development
+    // tools for testing Datastore locally in memory.
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    DataServlet dataServletMock = mock(DataServlet.class);
+    boolean listAllElections = false;
+    Entity election = new Entity("Election");
+    election.setProperty("queryId", (Object) QUERY_ID);
+    when(dataServletMock.queryCivicInformation(anyString()))
+        .thenThrow(ClientProtocolException.class);
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections))
+        .thenCallRealMethod();
+    assertThat(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections)).isFalse();
+  }
+
+  @Test
+  public void isRelevantElection_listAllElections() throws IOException {
+    // See that {@code isRelevantElection()} returns true when {@code listAllElections} is set to
+    // true, even for irrelevant elections, which will cause {@code queryCivicInformation()} to
+    // throw an exception. Use App Engine development tools for testing Datastore locally in
+    // memory.
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    DataServlet dataServletMock = mock(DataServlet.class);
+    boolean listAllElections = true;
+    Entity election = new Entity("Election");
+    election.setProperty("queryId", (Object) QUERY_ID);
+    when(dataServletMock.queryCivicInformation(anyString()))
+        .thenThrow(ClientProtocolException.class);
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections))
+        .thenCallRealMethod();
+    assertThat(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections)).isTrue();
+  }
+
+  @After
+  public void cleanup() {
+    datastoreHelper.tearDown();
   }
 }

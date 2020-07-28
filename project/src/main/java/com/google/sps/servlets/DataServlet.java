@@ -138,7 +138,7 @@ public class DataServlet extends HttpServlet {
    * this election is deemed relevant to the given {@code address}. If the {@code listAll}
    * parameter is true, then the election is always deemed relevant.
    */
-  private boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
+  boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
     resetRelevantNonspecificFlag();
     if (listAllElections) {
       return true;
@@ -168,7 +168,7 @@ public class DataServlet extends HttpServlet {
    *     as the election query ID, causing {@code httpclient.execute(httpGet, responseHandler);}
    *     to fail.
    */
-  private String queryCivicInformation(String queryUrl) throws IOException, SocketException {
+  String queryCivicInformation(String queryUrl) throws IOException, SocketException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
     String responseBody = requestHttpAndBuildCivicInfoResponse(httpClient, httpGet);
