@@ -114,11 +114,11 @@ public class WebCrawler {
    * 6. Processes content.
    * 7. Stores processed content in the database.
    */
-  public void compileNewsArticle(String candidateName, String candidateId) {
+  public void compileNewsArticle(String candidateName, String candidateId, String stateName) {
     List<NewsArticle> newsArticles = getUrlsFromCustomSearch(candidateName);
     for (NewsArticle newsArticle : newsArticles) {
       scrapeAndExtractFromHtml(newsArticle);
-      if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
+      if (!relevancyChecker.isRelevant(newsArticle, candidateName, stateName)) {
         continue;
       }
       NewsContentProcessor.abbreviate(newsArticle);
