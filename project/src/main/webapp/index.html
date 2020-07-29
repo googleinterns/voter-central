@@ -28,9 +28,9 @@
   <body>
     <div class="container">
       <div class="row justify-content-end">
-      <div class="col-9">
-          <header></header>
-      </div>
+        <div class="col-9">
+            <header></header>
+        </div>
       </div>
       <div class="row">
         <div class="col">
@@ -41,15 +41,16 @@
             <form id="location-input" action="/directory.html">
               <label for="address">Enter your street address:</label>
               <br>
-              <input type="text" id="address" name="address" placeholder="...your street address..."
-                      required/>
+              <input type="text" id="address" name="address"
+                  placeholder="...your street address..." required/>
               <input type="hidden" name="listAllElections" value="false"/>
               <input type="submit" id="submit-address"/>
             </form>
             <form id="list-all-input" action="/directory.html">
               <input type="hidden" name="address" value="default"/>
               <input type="hidden" name="listAllElections" value="true"/>
-              <input type="submit" id="submit-list-all" value="List All Elections"/>
+              <input type="submit" id="submit-list-all"
+                  value="List All Elections"/>
             </form>
           </main>
         </div>
