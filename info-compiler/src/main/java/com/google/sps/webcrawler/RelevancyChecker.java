@@ -30,7 +30,7 @@ import java.io.IOException;
  * candidate.
  */
 public class RelevancyChecker {
-  static final double SALIENCE_THRESHOLD = 0.5;
+  static final double SALIENCE_THRESHOLD = 0.18;
   private LanguageServiceClient languageServiceClient;
 
   /**
