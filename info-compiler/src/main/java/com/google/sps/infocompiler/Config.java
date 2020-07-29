@@ -31,10 +31,10 @@ public class Config {
   // For respecting the query rate limit (250 queries/100 seconds) of the Civic Information API:
   // With Cloud Functions deployment: How much to shorten/extend the pause between queries, relative
   // to the minimum pause (0.4 seconds) required.
-  // Recommended value: 3.75.
-  public static final double PAUSE_FACTOR = 3.75;
+  // Recommended value: 2.
+  public static final double PAUSE_FACTOR = 2;
   // Due to Cloud Functions' 540s execution limit: process only a subset of addresses.
-  // Recommended values: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions.
+  // For instance: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions.
   public static final int ADDRESS_START_INDEX = 0; // Lower-bounded by 0.
   public static final int ADDRESS_END_INDEX = 300; // Upper-bounded by the total number of addresses.
 }

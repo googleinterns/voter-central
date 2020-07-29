@@ -32,11 +32,29 @@ To use the code, please prepare and put the following configurations in com.goog
 
 Additionally, for respecting the query rate limit (250 queries/100 seconds) of the Civic Information API, InfoCompiler
 needs to pause between queries. Set how much to shorten/extend the pause between queries, relative to the minimum pause
-(0.4 seconds) required in com.google.google.sps.infocompiler.Config. The recommended value is 3.75.
+(0.4 seconds) required in com.google.google.sps.infocompiler.Config. The recommended value is 2.
 Due to Cloud Functions' 540 seconds execution limit: we deploy multiple Cloud Functions and each will process only a
 subset of addresses. Set the starting and ending indices of the subset of adresses in com.google.google.sps.infocompiler.Config.
-The recommended values: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions. Note that the starting
+For instance: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions. Note that the starting
 index will be safely lower-bounded by 0 while the ending index will be safely upper-bounded by the total number of addresses.
+If deploying on Compute Engine, there doesn't need to be bounds. We can set the indices to [0, 1000).
+
+---
+
+## Workflow for Direct Execution
+
+The use of the Google Cloud Datastore client library requires the project ID to
+be configured:
+```bash
+gcloud config set project <projectId>
+```
+```bash
+cd voter-central/info-compiler/
+```
+Execute the information compilation process.
+```bash
+mvn clean compile exec:java
+```
 
 ---
 
@@ -53,21 +71,22 @@ cd voter-central/info-compiler/
 
 To deploy InfoCompilerUtils on Google Cloud Functions, execute this command:
 ```bash
-gcloud functions deploy <functionName>
-    --project <projectId>
-    --entry-point com.google.sps.infocompiler.InfoCompilerUtils
-    --runtime java11
-    --trigger-http
-    --service-account <serviceAccountEmail>
+gcloud functions deploy <functionName> \
+    --project <projectId> \
+    --entry-point com.google.sps.infocompiler.InfoCompilerUtils \
+    --runtime java11 \
+    --trigger-http \
+    --service-account <serviceAccountEmail> \
+    --timeout 540 \
 ```
 ([More details about the command](https://cloud.google.com/sdk/gcloud/reference/functions/deploy).)
 
 To create a Google Cloud Scheduler to trigger InfoCompilerUtils via HTTP, execute this command:
 ```bash
-gcloud scheduler jobs create http <jobName>
-    --schedule "<cronSchedule>"
-    --uri <HTTPTriggerUrlOfCloudFunctions>
-    --time-zone <timeZone>
+gcloud scheduler jobs create http <jobName> \
+    --schedule "<cronSchedule>" \
+    --uri <HTTPTriggerUrlOfCloudFunctions> \
+    --time-zone <timeZone> \
     --oidc-service-account-email=<serviceAccountEmailSameInCloudFunctions>
 ```
 ([More details about the command](https://cloud.google.com/sdk/gcloud/reference/scheduler/jobs/create/http).)
