@@ -65,7 +65,6 @@ public final class InfoCompilerTest {
   private static final int ADDRESS_NUMBER = 957; // After screening.
   private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
   private static final String STATE = "NY";
-  private static final String STATE_NAME = "New York";
   private static final String NONTEST_ELECTION_QUERY_ID =
       InfoCompiler.TEST_VIP_ELECTION_QUERY_ID + "0";
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
@@ -327,7 +326,7 @@ public final class InfoCompilerTest {
         .when(infoCompilerMock).storeElectionContestInDatabase(anyString(), anyObject());
     doCallRealMethod()
         .when(infoCompilerMock)
-            .storeElectionContestCandidateInDatabase(anyObject(), anyObject(), anyObject(), anyString());
+            .storeElectionContestCandidateInDatabase(anyObject(), anyObject(), anyObject());
     when(infoCompilerMock.queryCivicInformation(eq(ELECTION_QUERY_URL))).thenReturn(electionJsonCopy);
     JsonArray contests = new JsonArray();
     contests.add(singleContestJson);
@@ -418,7 +417,7 @@ public final class InfoCompilerTest {
         .when(infoCompilerMock).storeElectionContestInDatabase(anyString(), anyObject());
     doCallRealMethod()
         .when(infoCompilerMock)
-            .storeElectionContestCandidateInDatabase(anyObject(), anyObject(), anyObject(), anyString());
+            .storeElectionContestCandidateInDatabase(anyObject(), anyObject(), anyObject());
     when(infoCompilerMock.queryCivicInformation(eq(ELECTION_QUERY_URL))).thenReturn(electionJsonCopy);
     JsonArray contests = new JsonArray();
     contests.add(singleContestJson);

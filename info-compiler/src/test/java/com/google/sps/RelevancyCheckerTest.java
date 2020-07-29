@@ -37,7 +37,7 @@ public final class RelevancyCheckerTest {
   private static final String RELEVANT_CONTENT = "Alexandria Ocasio-Cortez is A.O.C.";
   private static final String IRRELEVANT_CONTENT = "Irrelevant content.";
   private static final String CANDIDATE_NAME = "Alexandria Ocasio-Cortez";
-  private static final String STATE_NAME = "New York";
+  private static final String PARTY_NAME = "Democratic";
   private static final int PRIORITY = 1;
 
   private LanguageServiceClient languageServiceClient;
@@ -53,7 +53,7 @@ public final class RelevancyCheckerTest {
   public void isRelevant_findsEverythingRelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score higher than both {@code CANDIDATE_SALIENCE_THRESHOLD} and {@code
-    // STATE_SALIENCE_THRESHOLD}.
+    // PARTY_SALIENCE_THRESHOLD}.
     NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);
     NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
@@ -61,20 +61,20 @@ public final class RelevancyCheckerTest {
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(
             Math.max(RelevancyChecker.CANDIDATE_SALIENCE_THRESHOLD,
-                     RelevancyChecker.STATE_SALIENCE_THRESHOLD) + 1.0);
+                     RelevancyChecker.PARTY_SALIENCE_THRESHOLD) + 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString(), anyString()))
         .thenCallRealMethod();
     assertThat(
-        mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME, STATE_NAME)).isTrue();
+        mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME, PARTY_NAME)).isTrue();
     assertThat(
-        mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME, STATE_NAME))
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME, PARTY_NAME))
             .isTrue();
   }
 
   @Test
-  public void isRelevant_findEverythingRelevantWithNullStateName() {
+  public void isRelevant_findEverythingRelevantWithNullPartyName() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
-    // score higher than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in a null state name.
+    // score higher than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in a null party name.
     // The relevancy should be determined solely by the candidate name salience.
     NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);
@@ -94,7 +94,7 @@ public final class RelevancyCheckerTest {
   public void isRelevant_findsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score lower than at least one of {@code CANDIDATE_SALIENCE_THRESHOLD} or {@code
-    // STATE_SALIENCE_THRESHOLD}.
+    // PARTY_SALIENCE_THRESHOLD}.
     NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);
     NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
@@ -102,21 +102,21 @@ public final class RelevancyCheckerTest {
     when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
         .thenReturn(
             Math.max(RelevancyChecker.CANDIDATE_SALIENCE_THRESHOLD,
-                     RelevancyChecker.STATE_SALIENCE_THRESHOLD) - 1.0);
+                     RelevancyChecker.PARTY_SALIENCE_THRESHOLD) - 1.0);
     when(mockRelevancyChecker.isRelevant(anyObject(), anyString(), anyString()))
         .thenCallRealMethod();
     assertThat(
-        mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME, STATE_NAME))
+        mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME, PARTY_NAME))
             .isFalse();
     assertThat(
-        mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME, STATE_NAME))
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME, PARTY_NAME))
             .isFalse();
   }
 
   @Test
-  public void isRelevant_findEverythingIrrelevantWithNullStateName() {
+  public void isRelevant_findEverythingIrrelevantWithNullPartyName() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
-    // score lower than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in a null state name.
+    // score lower than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in a null party name.
     // The relevancy should be determined solely by the candidate name salience.
     NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
     relevantNewsArticle.setContent(RELEVANT_CONTENT);

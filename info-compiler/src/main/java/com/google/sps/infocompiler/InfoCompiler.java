@@ -321,14 +321,11 @@ public class InfoCompiler {
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
     // Obtain candidate information and create candidate entities in the database.
-    String state = electionEntity.getString("state");
-    String stateName = state.isEmpty() ? null : State.abbreviationToName.get(state);
     for (JsonElement candidate : candidates) {
       storeElectionContestCandidateInDatabase(
           (JsonObject) candidate,
           candidateIds,
-          candidateIncumbency,
-          stateName);
+          candidateIncumbency);
       candidatePositions.add(StringValue.newBuilder(contest.get("office").getAsString()).build());
     }
     // Fill in position and candidate information for the election entities in the database.
@@ -348,10 +345,10 @@ public class InfoCompiler {
    * incumbency status, and news articles related to the candidate.
    */
   void storeElectionContestCandidateInDatabase(JsonObject candidate,
-      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency,
-      String stateName) {
+      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
-    String party = candidate.get("party").getAsString();
+    String rawParty = candidate.get("party").getAsString();
+    String party = rawParty.substring(0, 1).toUpperCase() + rawParty.substring(1);
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -368,7 +365,7 @@ public class InfoCompiler {
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
 
-    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), stateName);
+    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), party);
   }
 
   /**
@@ -376,7 +373,7 @@ public class InfoCompiler {
    * News articles data are represented by {@code NewsArticle}.
    */
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
-      String candidateId, String stateName) {
-    webCrawler.compileNewsArticle(candidateName, candidateId, stateName);
+      String candidateId, String partyName) {
+    webCrawler.compileNewsArticle(candidateName, candidateId, partyName);
   }
 }

@@ -30,8 +30,7 @@ import java.io.IOException;
  */
 public class RelevancyChecker {
   static final double CANDIDATE_SALIENCE_THRESHOLD = 0.18;
-  // @TODO [Compute a meaningful threshold]
-  static final double STATE_SALIENCE_THRESHOLD = 0.1;
+  static final double PARTY_SALIENCE_THRESHOLD = 0.1;
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -51,18 +50,18 @@ public class RelevancyChecker {
 
   /**
    * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of interest.
-   * Defines relevancy as the salience of {@code candidateName} and {@code stateName} in the
-   * content both being bigger than their respective threshold. If {@code stateName} is null,
-   * skips the salience checking for {@code stateName} and determines relevancy solely by looking
+   * Defines relevancy as the salience of {@code candidateName} and {@code partyName} in the
+   * content both being bigger than their respective threshold. If {@code partyName} is null,
+   * skips the salience checking for {@code partyName} and determines relevancy solely by looking
    * at the salience of {@code candidateName}.
    */
-  public boolean isRelevant(NewsArticle newsArticle, String candidateName, String stateName) {
+  public boolean isRelevant(NewsArticle newsArticle, String candidateName, String partyName) {
     double candidateNameSalience = computeSalienceOfName(newsArticle.getContent(), candidateName);
-    double stateNameSalience =
-        (stateName == null)
-        ? STATE_SALIENCE_THRESHOLD : computeSalienceOfName(newsArticle.getContent(), stateName);
+    double partyNameSalience =
+        (partyName == null)
+        ? PARTY_SALIENCE_THRESHOLD : computeSalienceOfName(newsArticle.getContent(), partyName);
     return (candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD
-        && stateNameSalience >= STATE_SALIENCE_THRESHOLD);
+        && partyNameSalience >= PARTY_SALIENCE_THRESHOLD);
   }
 
   /**
