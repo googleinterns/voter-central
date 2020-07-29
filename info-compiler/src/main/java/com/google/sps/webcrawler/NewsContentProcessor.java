@@ -47,8 +47,6 @@ import org.apache.flink.types.StringValue;
 /** Static utilities for processing textual content, such as abbreviations. */
 public class NewsContentProcessor {
   static final int MAX_WORD_COUNT = 100;
-  private static final String SENTENCE_DETECTOR_FILE = Config.OpenNLP_SENTENCE_DETECTOR_FILE;
-  private static final String TOKENIZER_FILE = Config.OpenNLP_TOKENIZER_FILE;
   private static final int SUMMARIZATION_MAX_SENTENCE_NUMBER = 3;
   private static final int PAGERANK_MAX_ITER = 100;
   private static final double PAGERANK_DAMPEN_FACTOR = 0.1;
@@ -87,46 +85,49 @@ public class NewsContentProcessor {
   };
 
   /** Extracts the first {@code MAX_WORD_COUNT} words from the news article content. */
-  public static NewsArticle abbreviate(NewsArticle originalNewsArticle) {
-    NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
+  public static void abbreviate(NewsArticle newsArticle) {
     String[] splitContent = newsArticle.getContent().split(" ");
     int wordCount = splitContent.length;
     int allowedLength = Math.min(wordCount, MAX_WORD_COUNT);
     String abbreviatedContent =
         String.join(" ", Arrays.asList(splitContent).subList(0, allowedLength));
     newsArticle.setAbbreviatedContent(abbreviatedContent);
-    return newsArticle;
   }
 
   /**
    * Extractively summarizes the news article content by computing inter-sentence similarity and
    * applying PageRank to find the most meaningful sentences. The chosen sentences are arranged
-   * in the original order they appeared in.
+   * in the original order they appeared in. Sets empty summarized content in the event of an
+   * exception, such as if {@code SentenceModel} or {@code TokenizerModel} model instantiation
+   * fails, of if {@code PageRank} algorithm fails. {@code SENTENCE_DETECTOR_FILE} and {@code
+   * TOKENIZER_FILE} must be prepared.
    *
-   * @throws Exception if {@code SentenceModel} or {@code TokenizerModel} model instantiation
-   *     fails, of if {@code PageRank} algorithm fails. For example, {@code SENTENCE_DETECTOR_FILE}
-   *     and {@code TOKENIZER_FILE} must be prepared.
    * @see <a href="https://towardsdatascience.com/understand-text-summarization-and-create-your-
    *     own-summarizer-in-python-b26a9f09fc70></a>
    */
-  public static NewsArticle summarize(NewsArticle originalNewsArticle) throws Exception {
-    NewsArticle newsArticle = new NewsArticle(originalNewsArticle);
+  public static void summarize(NewsArticle newsArticle) {
     String rawContent = newsArticle.getContent();
-    String[] sentences = breakIntoSentences(rawContent);
-    if (sentences.length <= SUMMARIZATION_MAX_SENTENCE_NUMBER) {
-      newsArticle.setSummarizedContent(rawContent);
-      return newsArticle;
+    String[] sentences;
+    List<PageRank.Result<IntValue>> ranking;
+    try {
+      sentences = breakIntoSentences(rawContent);
+      if (sentences.length <= SUMMARIZATION_MAX_SENTENCE_NUMBER) {
+        newsArticle.setSummarizedContent(rawContent);
+        return;
+      }
+      Graph<IntValue, StringValue, DoubleValue> similarityGraph = buildSimilarityGraph(sentences);
+      ranking = getRanking(similarityGraph);
+    } catch (Exception e) {
+      newsArticle.setSummarizedContent("");
+      return;
     }
-    Graph<IntValue, StringValue, DoubleValue> similarityGraph = buildSimilarityGraph(sentences);
-    List<PageRank.Result<IntValue>> ranking = getRanking(similarityGraph);
     String summarizedContent = extractSentencesBasedOnRanking(ranking, sentences);
     newsArticle.setSummarizedContent(summarizedContent);
-    return newsArticle;
   }
 
   /** Breaks down {@code rawContent} into sentences. */
   private static String[] breakIntoSentences(String rawContent) throws IOException {
-    InputStream modelFile = new FileInputStream(SENTENCE_DETECTOR_FILE);
+    InputStream modelFile = new FileInputStream(Config.OpenNLP_SENTENCE_DETECTOR_FILE);
     SentenceModel model = new SentenceModel(modelFile);
     SentenceDetectorME sentenceDetector = new SentenceDetectorME(model);
     return sentenceDetector.sentDetect(rawContent);
@@ -199,7 +200,7 @@ public class NewsContentProcessor {
 
   /** Tokenizes {@code sentence} into individual words; */
   private static String[] tokenizeSentence(String sentence) throws IOException {
-    InputStream modelFile = new FileInputStream(TOKENIZER_FILE);
+    InputStream modelFile = new FileInputStream(Config.OpenNLP_TOKENIZER_FILE);
     TokenizerModel model = new TokenizerModel(modelFile);
     TokenizerME tokenizer = new TokenizerME(model);
     return tokenizer.tokenize(sentence.toLowerCase());
