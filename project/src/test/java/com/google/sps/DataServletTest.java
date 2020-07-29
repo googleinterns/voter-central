@@ -110,7 +110,7 @@ public class DataServletTest {
     // indicates the election is relevant to the address and the address is both specific and
     // counts as a residential address, according to the Civic Information API response structure.
     dataServlet.parseResponseForRelevancy(RELEVANT_ADDRESS_ELECTION_RESPONSE);
-    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isFalse();
+    assertThat(dataServlet.isAddressRelevantButNotSpecificOrResidential).isFalse();
   }
 
   @Test
@@ -118,9 +118,9 @@ public class DataServletTest {
     // Parse JSON-formatted String {@code RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE} and see
     // that it,indicates the election is probably relevant to the address according to the Civic
     // Information API response structure, but the address is nonspecific.
-    dataServlet.isAddressRelevantButNonspecificOrNonresidential = false;
+    dataServlet.isAddressRelevantButNotSpecificOrResidential = false;
     dataServlet.parseResponseForRelevancy(RELEVANT_NONSPECIFIC_ADDRESS_ELECTION_RESPONSE);
-    assertThat(dataServlet.isAddressRelevantButNonspecificOrNonresidential).isTrue();
+    assertThat(dataServlet.isAddressRelevantButNotSpecificOrResidential).isTrue();
   }
 
   @Test

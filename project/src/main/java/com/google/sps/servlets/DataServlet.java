@@ -67,7 +67,7 @@ public class DataServlet extends HttpServlet {
   private final static String RELEVANT_NONSPECIFIC_ADDRESS_ALERT =
       "Your input address was not specific enough or was not a residential address.\n" + 
       "We are providing all possible elections that may be relevant.";
-  boolean isAddressRelevantButNonspecificOrNonresidential;
+  boolean isAddressRelevantButNotSpecificOrResidential;
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -78,7 +78,7 @@ public class DataServlet extends HttpServlet {
     List<Election> elections = extractElectionInformation(address, listAllElections);
     DirectoryPageDataPackage dataPackage =
         new DirectoryPageDataPackage(elections,
-                                     isAddressRelevantButNonspecificOrNonresidential
+                                     isAddressRelevantButNotSpecificOrResidential
                                      ? RELEVANT_NONSPECIFIC_ADDRESS_ALERT
                                      : null);
     Gson gson = new Gson();
@@ -93,7 +93,7 @@ public class DataServlet extends HttpServlet {
    * Resets the flag for whether the user input address is relevant but nonspecific.
    */
   private void resetRelevantNonspecificFlag() {
-    this.isAddressRelevantButNonspecificOrNonresidential = false;
+    this.isAddressRelevantButNotSpecificOrResidential = false;
   }
 
   @Override
@@ -214,7 +214,7 @@ public class DataServlet extends HttpServlet {
   void parseResponseForRelevancy(String addressElectionResponse) {
     JsonObject responseJson = new JsonParser().parse(addressElectionResponse).getAsJsonObject();
     if (!responseJson.has("contests")) {
-      isAddressRelevantButNonspecificOrNonresidential = true;
+      isAddressRelevantButNotSpecificOrResidential = true;
     }
   }
 
