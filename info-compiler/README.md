@@ -29,6 +29,8 @@ To use the code, please prepare and put the following configurations in com.goog
 - Name of Cloud Storage bucket that holds the OpenNLP model files (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 - Name of the OpenNLP "Sentence Detector" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
 - Name of the OpenNLP "Tokenizer" model file (referenced in com.google.sps.webcrawler.NewsContentProcessor)
+- Maximum duration for compiled data to be considered outdated. This should be smaller than the time it takes for InfoCompiler
+    to run again/enter the next cycle (referenced in com.google.sps.infocompiler.InfoCompiler)
 
 Additionally, for respecting the query rate limit (250 queries/100 seconds) of the Civic Information API, InfoCompiler
 needs to pause between queries. Set how much to shorten/extend the pause between queries, relative to the minimum pause
