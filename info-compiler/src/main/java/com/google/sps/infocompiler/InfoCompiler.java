@@ -32,6 +32,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.sps.infocompiler.Config;
+import com.google.sps.webcrawler.NewsContentExtractor;
+import com.google.sps.webcrawler.RelevancyChecker;
+import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,16 +54,37 @@ import org.apache.http.util.EntityUtils;
  * article information, and storing them in the database.
  */
 public class InfoCompiler {
-  private final static String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
   private final static String ELECTION_QUERY_URL =
-      String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s", CIVIC_INFO_API_KEY);
+      String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
+                    Config.CIVIC_INFO_API_KEY);
   private final static String VOTER_INFO_QUERY_URL =
-      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s", CIVIC_INFO_API_KEY);
-  private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds;
+      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
+                    Config.CIVIC_INFO_API_KEY);
+  private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  private List<String> electionQueryIds = new ArrayList<>();
   // For testing purposes (not to add too much information to the database).
   // Will include all 50 states.
   private List<String> states = Arrays.asList("NY");
+  private WebCrawler webCrawler;
+
+  public InfoCompiler() throws IOException {
+    this(DatastoreOptions.getDefaultInstance().getService());
+  }
+
+  /** For testing purposes. */
+  public InfoCompiler(Datastore datastore) throws IOException {
+    this.datastore = datastore;
+    this.webCrawler =
+        new WebCrawler(this.datastore, new NewsContentExtractor(), new RelevancyChecker());
+  }
+
+  /**
+   * Compiles location-specific information for elections, positions and candidates.
+   */
+  public void compileInfo() {
+    queryAndStoreBaseElectionInfo();
+    queryAndStoreElectionContestInfo();
+  }
 
   /**
    * Queries the ElectionQuery of the Civic Information API for a basic subset of election
@@ -114,10 +138,10 @@ public class InfoCompiler {
       return;
     }
     if (targetInfo.equals("elections")) {
+      electionQueryIds = new ArrayList<>(infoArray.size());
       for (JsonElement info : infoArray) {
         storeBaseElectionInDatabase((JsonObject) info);
       }
-      electionQueryIds = new ArrayList<>(infoArray.size());
     } else if (targetInfo.equals("contests")) {
       for (JsonElement info : infoArray) {
         storeElectionContestInDatabase(electionQueryId, (JsonObject) info);
@@ -129,30 +153,39 @@ public class InfoCompiler {
    * Queries the Civic Information API and retrieves JSON response as {@code JsonObject}.
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
-   * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
-   *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
-    CloseableHttpClient httpclient = HttpClients.createDefault();
+    CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    ResponseHandler<String> responseHandler =
-        new ResponseHandler<String>() {
+    JsonObject json = requestHttpAndBuildJsonResponse(httpClient, httpGet);
+    httpClient.close();
+    return json;
+  }
+
+  /** 
+   * Makes HTTP GET request and converts HTTP JSON response as {@code JsonObject}.
+   *
+   * @throws ClientProtocolException if the HTTP GET request fails.
+   * @see <a href=
+   *    "https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/" +
+   *    "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
+   */
+  public static JsonObject requestHttpAndBuildJsonResponse(
+      CloseableHttpClient httpClient, HttpGet httpGet) throws IOException {
+    ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
         public String handleResponse(final HttpResponse response) throws IOException {
           int status = response.getStatusLine().getStatusCode();
           if (status >= 200 && status < 300) {
-              HttpEntity entity = response.getEntity();
-              return entity != null ? EntityUtils.toString(entity) : null;
+            HttpEntity entity = response.getEntity();
+            return entity != null ? EntityUtils.toString(entity) : null;
           } else {
-              httpclient.close();
-              throw new ClientProtocolException("Unexpected response status: " + status);
+            throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
     };
-    String responseBody = httpclient.execute(httpGet, responseHandler);
-    httpclient.close();
-    JsonObject json = new JsonParser().parse(responseBody).getAsJsonObject();
-    return json;
+    String responseBody = httpClient.execute(httpGet, responseHandler);
+    return new JsonParser().parse(responseBody).getAsJsonObject();
   }
 
   /**
@@ -160,11 +193,10 @@ public class InfoCompiler {
    * of the election day is "YYYY-MM-DD", and the specific hour/minute/second is irrelevant. By
    * default, stores the election day at the beginning of the day in EDT timezone.
    */
-  private void storeBaseElectionInDatabase(JsonObject election) {
-    Key electionKey =
-        datastore.newKeyFactory()
-            .setKind("Election")
-            .newKey(election.get("name").getAsString());
+  void storeBaseElectionInDatabase(JsonObject election) {
+    Key electionKey = datastore.newKeyFactory()
+        .setKind("Election")
+        .newKey(election.get("name").getAsString());
     String electionQueryId = election.get("id").getAsString();
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date =
@@ -191,7 +223,7 @@ public class InfoCompiler {
    * candidate names and party affiliations. Updates {@code Election} entities and creates {@code
    * Candidate} entities.
    */
-  private void storeElectionContestInDatabase(String electionQueryId, JsonObject contest) {
+  void storeElectionContestInDatabase(String electionQueryId, JsonObject contest) {
     JsonArray candidates = contest.getAsJsonArray("candidates");
     if (candidates == null) {
       return;
@@ -232,7 +264,8 @@ public class InfoCompiler {
   // @TODO [Find incumbency.]
   /**
    * Stores information of a {@code candidate} in the database, and updates the candidate's running
-   * position's information for the election. Information includes: name, party affiliation.
+   * position's information for the election. Information includes: name, party affiliation,
+   * incumbency status, and news articles related to the candidate.
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
@@ -253,14 +286,16 @@ public class InfoCompiler {
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
+
+    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
   }
 
-  // For testing purposes.
-  public static void main(String[] args) {
-    InfoCompiler myInfoCompiler = new InfoCompiler();
-    myInfoCompiler.queryAndStoreBaseElectionInfo();
-    myInfoCompiler.queryAndStoreElectionContestInfo();
-    // Prevent {@code java.lang.IllegalThreadStateException}.
-    System.exit(0);
+  /**
+   * Compiles news articles data of {@code candidateName} and stores said data in the database.
+   * News articles data are represented by {@code NewsArticle}.
+   */
+  private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
+      String candidateId) {
+    webCrawler.compileNewsArticle(candidateName, candidateId);
   }
 }

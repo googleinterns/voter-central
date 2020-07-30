@@ -30,26 +30,52 @@ import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
-/** Static utilities for extracting textual content from HTML pages. */
+/** A utility class for extracting textual content from HTML pages. */
 public class NewsContentExtractor {
-  private static HtmlParser parser = new HtmlParser();
+  private HtmlParser parser;
 
   /**
-   * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Returns an empty
-   * {@code Optional<NewsArticle>} in the event of an exception, which may be caused by errors such
-   * as failure in reading in the HTML source code from {@code htmlFileStream}.
+   * Constructs a {@code NewsContentExtractor} instance to use Boilerpipe extraction.
    */
-  public static Optional<NewsArticle> extractContentFromHtml(
-      InputStream htmlFileStream, String url) {
+  public NewsContentExtractor() {
+    this(new HtmlParser());
+  }
+
+  /** For testing purposes. */
+  NewsContentExtractor(HtmlParser parser) {
+    this.parser = parser;
+  }
+
+  /**
+   * Extracts textual content from HTML. Packages data into {@code NewsArticle}. Sets "content" to
+   * empty in the event of an exception, which may be caused by errors such as failure in reading
+   * in the HTML source code from {@code htmlFileStream}.
+   */
+  public void extractContentFromHtml(InputStream htmlFileStream, NewsArticle newsArticle) {
+    if (htmlFileStream == null) {
+      newsArticle.setContent("");
+      return;
+    }
     BoilerpipeContentHandler boilerpipeHandler =
         new BoilerpipeContentHandler(new BodyContentHandler(), new ArticleExtractor());
     Metadata metadata = new Metadata();
     try {
-      parser.parse(htmlFileStream, boilerpipeHandler, metadata);
-      TextDocument textDocument = boilerpipeHandler.getTextDocument();
-      return Optional.of(new NewsArticle(textDocument.getTitle(), url, textDocument.getContent()));
+      extractContentFromHtml(boilerpipeHandler, metadata, htmlFileStream, newsArticle);
     } catch (IOException | SAXException | TikaException e) {
-      return Optional.empty();
+      newsArticle.setContent("");
     }
+  }
+
+  /**
+   * Extracts textual content from HTML with {@code boilerpipeHandler} and packages data into
+   * {@code NewsArticle}. This method is made default for testing purposes.
+   */
+  void extractContentFromHtml(BoilerpipeContentHandler boilerpipeHandler,
+      Metadata metadata, InputStream htmlFileStream, NewsArticle newsArticle)
+      throws IOException, SAXException, TikaException {
+    parser.parse(htmlFileStream, boilerpipeHandler, metadata);
+    TextDocument textDocument = boilerpipeHandler.getTextDocument();
+    newsArticle.setTitle(textDocument.getTitle() == null ? "" : textDocument.getTitle());
+    newsArticle.setContent(textDocument.getContent());
   }
 }
