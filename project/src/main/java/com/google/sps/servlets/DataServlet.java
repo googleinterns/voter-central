@@ -73,9 +73,10 @@ public class DataServlet extends HttpServlet {
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String address = request.getParameter("address");
     boolean listAllElections = Boolean.parseBoolean(request.getParameter("listAllElections"));
+    String stateFilter = request.getParameter("stateFilter");
 
     // Find election/candidate information. Package and convert the data to JSON.
-    List<Election> elections = extractElectionInformation(address, listAllElections);
+    List<Election> elections = extractElectionInformation(address, listAllElections, stateFilter);
     DirectoryPageDataPackage dataPackage =
         new DirectoryPageDataPackage(elections,
                                      isAddressRelevantButNotSpecificOrResidential
@@ -104,14 +105,15 @@ public class DataServlet extends HttpServlet {
    * formats the data as {@code Election} objects. Correlates one {@code Election} with one or more
    * {@code Position}.
    */
-  private List<Election> extractElectionInformation(String address, boolean listAllElections) {
+  private List<Election> extractElectionInformation(String address, boolean listAllElections,
+      String stateFilter) {
     List<Election> elections = new ArrayList<>();
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     Query electionQuery = new Query("Election");
     PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
     List<Entity> electionsData = electionQueryResult.asList(FetchOptions.Builder.withDefaults());
     for (Entity election : electionsData) {
-      if (!isRelevantElection(election, address, listAllElections)) {
+      if (!isRelevantElection(election, address, listAllElections, stateFilter)) {
         continue;
       }
       List<String> candidatePositionsData = 
@@ -134,14 +136,18 @@ public class DataServlet extends HttpServlet {
   }
 
   /**
-   * Takes an {@code Entity} object which represents an election, and returns true if
-   * this election is deemed relevant to the given {@code address}. If the {@code listAll}
-   * parameter is true, then the election is always deemed relevant.
+   * Takes an {@code Entity} object which represents an election, and returns true if this election
+   * is deemed relevant to the given {@code address}. If the {@code listAllElections} parameter is
+   * true, filter elections based on {@code stateFilter}. If {@code stateFilter} is null, meaning
+   * that the filter was not set, or if the {@code election} does not correlate with a particular
+   * state, returns true. Otherwise returns true if the state name mathces {@code stateFilter}.
    */
-  boolean isRelevantElection(Entity election, String address, boolean listAllElections) {
+  boolean isRelevantElection(Entity election, String address, boolean listAllElections,
+      String stateFilter) {
     resetRelevantNonspecificFlag();
     if (listAllElections) {
-      return true;
+      String state = (String) election.getProperty("state");
+      return (stateFilter == null || state.isEmpty()) ? true : state.equals(stateFilter);
     } else {
       // Query the Civic Information API for whether {@code election} is relevant to
       // {@code address}.
