@@ -81,6 +81,8 @@ public class InfoCompiler {
           Config.PROJECT_ID);
   private static final String DATASTORE_BULK_DELETE_JOB_NAME =
       Config.PROJECT_ID + "_datastore_bulk_delete";
+  // This intermediary variable is set up for testing purposes.
+  static long DATA_EXPIRATION_SECONDS = Config.DATA_EXPIRATION_SECONDS;
   Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
   WebCrawler webCrawler;
   List<String> electionQueryIds;
@@ -395,7 +397,7 @@ public class InfoCompiler {
   private void clearOutdatedInfo() {
     Timestamp expirationTime =
         Timestamp.ofTimeSecondsAndNanos(
-            Timestamp.now().getSeconds() - Config.DATA_EXPIRATION_SECONDS, 0);
+            Timestamp.now().getSeconds() - DATA_EXPIRATION_SECONDS, 0);
     clearOutdatedEntities("Election", expirationTime);
     clearOutdatedEntities("Candidate", expirationTime);
     clearOutdatedEntities("NewsArticle", expirationTime);

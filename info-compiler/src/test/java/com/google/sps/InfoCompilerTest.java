@@ -28,6 +28,7 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
 import com.google.cloud.datastore.Value;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.sps.webcrawler.WebCrawler;
@@ -176,6 +177,7 @@ public final class InfoCompilerTest {
     // Here state information is added to {@code election} in lower case. {@code infoCompiler}
     // should extract and store the same state, in upper case. A Datastore emulator is used to
     // simulate Datastore operations, as opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
     election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
@@ -203,6 +205,9 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
     assertThat(electionEntity.getString("state")).isEqualTo(STATE);
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @Test
@@ -214,6 +219,7 @@ public final class InfoCompilerTest {
     // Here no state information is added to {@code election}. So {@code infoCompiler} should
     // store an empty state name. A Datastore emulator is used to simulate Datastore operations, as
     // opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
     election.addProperty("ocdDivisionId", "ocd-division/country:us");
@@ -241,6 +247,9 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
     assertThat(electionEntity.getString("state")).isEqualTo("");
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @Test
@@ -254,6 +263,7 @@ public final class InfoCompilerTest {
     // This method relies on the election entity created by {@code storeBaseElectionInDatabase()}
     // and thus assumes the correctness of said method. This method avoids repeating any tests
     // executed by {@code storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()}.
+    Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
     election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
@@ -299,6 +309,9 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(((Timestamp) candidateEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @Test
@@ -307,11 +320,14 @@ public final class InfoCompilerTest {
     // Execute the entire information compilation process. We don't test WebCrawler (for compiling
     // news articles) as that is tested in WebCrawlerTest. A Datastore emulator is used to simulate
     // Datastore operations, as opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
     JsonObject electionJsonCopy = electionJson.deepCopy();
     JsonObject election =
         ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
     election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     InfoCompiler infoCompilerMock = mock(InfoCompiler.class);
+    // Set expiration time to a safely large value that will not cause new data to be cleared.
+    infoCompilerMock.DATA_EXPIRATION_SECONDS = 60 * 60 * 12;
     infoCompilerMock.datastore = this.datastore;
     infoCompilerMock.addresses = Arrays.asList(ADDRESS);
     infoCompilerMock.webCrawler = mock(WebCrawler.class);
@@ -359,6 +375,9 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
     assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
     assertThat(electionEntity.getString("state")).isEqualTo(STATE);
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
     assertThat(candidatePositions).hasSize(1);
@@ -388,6 +407,9 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(((Timestamp) candidateEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @Test
@@ -403,6 +425,69 @@ public final class InfoCompilerTest {
     election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     election.addProperty("id", InfoCompiler.TEST_VIP_ELECTION_QUERY_ID);
     InfoCompiler infoCompilerMock = mock(InfoCompiler.class);
+    infoCompilerMock.datastore = this.datastore;
+    infoCompilerMock.addresses = Arrays.asList(ADDRESS);
+    infoCompilerMock.webCrawler = mock(WebCrawler.class);
+    doCallRealMethod().when(infoCompilerMock).compileInfo();
+    doCallRealMethod().when(infoCompilerMock).queryAndStoreBaseElectionInfo();
+    doCallRealMethod().when(infoCompilerMock).queryAndStoreElectionContestInfo();
+    doCallRealMethod()
+        .when(infoCompilerMock).queryAndStoreElectionContestInfo(anyString(), anyString());
+    doCallRealMethod().when(infoCompilerMock).queryAndStore(anyString(), anyString(), anyObject());
+    doCallRealMethod().when(infoCompilerMock).storeBaseElectionInDatabase(anyObject());
+    doCallRealMethod()
+        .when(infoCompilerMock).storeElectionContestInDatabase(anyString(), anyObject());
+    doCallRealMethod()
+        .when(infoCompilerMock)
+            .storeElectionContestCandidateInDatabase(anyObject(), anyObject(), anyObject());
+    when(infoCompilerMock.queryCivicInformation(eq(ELECTION_QUERY_URL))).thenReturn(electionJsonCopy);
+    JsonArray contests = new JsonArray();
+    contests.add(singleContestJson);
+    JsonObject contestsResponse = new JsonObject();
+    contestsResponse.add("contests", contests);
+    when(infoCompilerMock.queryCivicInformation(eq(CONTEST_QUERY_URL))).thenReturn(contestsResponse);
+    JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
+    Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
+                                + candidate.get("party").getAsString().hashCode());
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+
+    infoCompilerMock.compileInfo();
+
+    // Check election data.
+    Query<Entity> electionQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(electionQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+    // Check candidate data.
+    Query<Entity> candidateQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Candidate")
+            .build();
+    queryResult = datastore.run(candidateQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+  }
+
+  @Test
+  public void compileInfo_infoExpires()
+      throws IOException {
+    // Execute the entire information compilation process and set {@code DATA_EXPIRATION_SECONDS}
+    // such that all newly added would be considered outdated immediately and thus cleared.
+    Timestamp past = Timestamp.now();
+    JsonObject electionJsonCopy = electionJson.deepCopy();
+    JsonObject election =
+        ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    InfoCompiler infoCompilerMock = mock(InfoCompiler.class);
+    // Any new data will be seen as outdated and thus cleared.
+    infoCompilerMock.DATA_EXPIRATION_SECONDS = -1;
     infoCompilerMock.datastore = this.datastore;
     infoCompilerMock.addresses = Arrays.asList(ADDRESS);
     infoCompilerMock.webCrawler = mock(WebCrawler.class);
