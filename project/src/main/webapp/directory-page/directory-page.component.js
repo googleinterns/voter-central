@@ -17,9 +17,26 @@
 
 angular.module('directoryPage').component('directoryPage', {
   templateUrl: '/directory-page/directory-page.template.html', 
-  controller: function directoryPageController() {
-    // TODO: modify this code so it works within the component, and interacts
-    // with the template rather than as a seperate JS function.
-      addBriefElectionCandidateInformation()
+  controller: function directoryPageController($scope) {
+      getElectionCandidateInformation($scope);
   }
 });
+
+/**
+ * Adds a brief version of the official election/candidate information to the
+ * page's scope so it can be displayed by the corresponding page template.
+ * Queries the backend database with the user input of address.
+ */
+async function getElectionCandidateInformation(scope){
+  const address = location.search.substring(location.search.indexOf('=') + 1,
+      location.search.indexOf('&'));
+  const listAllElections =
+      location.search.substring(location.search.lastIndexOf('=') + 1);
+
+  // Send GET request to /data with address and whether to list all elections.
+  const response = await fetch(`/data?address=${address}&listAllElections=${listAllElections}`);
+  const dataPackage = await response.json();
+
+  scope.elections = dataPackage.electionsData;
+  scope.$apply();
+}

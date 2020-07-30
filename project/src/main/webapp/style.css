@@ -1,18 +1,17 @@
 /* General Styling */
-body {
-  color: #474747;
-  font-family: 'Open Sans', sans-serif;
-  text-align: center;
-}
-
 a {
-  color: #474747;
   text-decoration: none;
 }
 
 a:hover {
   color: #f0eded;
   text-decoration: none;
+}
+
+body {
+  color: #474747;
+  font-family: 'Open Sans', sans-serif;
+  text-align: center;
 }
 
 #navigation-bar {
@@ -24,6 +23,7 @@ a:hover {
 }
 
 #navigation-bar a {
+  color: #474747;
   font-family: 'Roboto Slab', serif;
 }
 
