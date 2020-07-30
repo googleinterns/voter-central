@@ -20,6 +20,8 @@ import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.StringValue;
+import com.google.cloud.datastore.TimestampValue;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,10 +38,14 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.DateTimeException;
+import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,14 +61,21 @@ import org.apache.http.util.EntityUtils;
 
 /** A web crawler for compiling candidate-specific news articles information. */
 public class WebCrawler {
-  private static final String CUSTOM_SEARCH_SAFE = "active";
   static final String CUSTOM_SEARCH_URL_METATAG = "og:url";
-
-  // @TODO [Extract publisher and published date.]
-  // @TODO [Decide between extracting title from Custom Search or NewsContentExtractor.]
-  private static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
-  private final static int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
-  private final static int URL_READ_TIMEOUT_MILLISECONDS = 1000;
+  static final List<String> CUSTOM_SEARCH_PUBLISHER_METATAGS =
+      Arrays.asList("article:publisher", "og:site_name", "twitter:app:name:googleplay",
+                    "dc.source");
+  static final List<String> CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS =
+      Arrays.asList("article:published_time", "article:published", "datepublished", "og:pubdate",
+                    "pubdate", "published", "article:modified_time", "article:modified",
+                    "modified");
+  private static final List<DateTimeFormatter> DATE_TIME_FORMATTERS =
+      Arrays.asList(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"),
+                    DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+  public static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
+  private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
+  private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
@@ -92,7 +105,7 @@ public class WebCrawler {
   /**
    * Compiles news articles for the candidate with the specified {@code candidateName} and
    * {@code candidateId}:
-   * 1. Obtains news article URLs from Google Custom Search.
+   * 1. Obtains news article URLs and metadata from Google Custom Search.
    * 2. Checks for permission to web-scrape.
    * 3. Web-scrapes if permitted.
    * 4. Extracts content from HTML structure.
@@ -100,20 +113,16 @@ public class WebCrawler {
    * 6. Processes content.
    * 7. Stores processed content in the database.
    */
-  public void compileNewsArticle(String candidateName, String candidateId) throws Exception {
-    List<URL> urls = getUrlsFromCustomSearch(candidateName);
-    for (URL url : urls) {
-      Optional<NewsArticle> potentialNewsArticle = scrapeAndExtractFromHtml(url);
-      if (!potentialNewsArticle.isPresent()) {
-        continue;
-      }
-      NewsArticle newsArticle = potentialNewsArticle.get();
+  public void compileNewsArticle(String candidateName, String candidateId) {
+    List<NewsArticle> newsArticles = getUrlsFromCustomSearch(candidateName);
+    for (NewsArticle newsArticle : newsArticles) {
+      scrapeAndExtractFromHtml(newsArticle);
       if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
         continue;
       }
-      NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
-      processedNewsArticle = NewsContentProcessor.summarize(processedNewsArticle);
-      storeInDatabase(candidateId, processedNewsArticle);
+      NewsContentProcessor.abbreviate(newsArticle);
+      NewsContentProcessor.summarize(newsArticle);
+      storeInDatabase(candidateId, newsArticle);
     }
   }
 
@@ -134,18 +143,14 @@ public class WebCrawler {
   //   } catch (InterruptedException e) {}
   // }
 
-  // @TODO [Extract other metadata, modify NewsArticle's structure, and return List<NewsArticle>.]
   /**
    * Searches for {@code candidateName} on News.google using the Google Custom Search engine and
-   * finds URLs of news articles. Returns an empty list if no valid URLs are found.
-   * Note: This function contains a few hard-coded implementations because of the current lack of
-   * access to the engine. In order for the web crawler to be tested from beginning to end, this
-   * function creates hard-coded URLs for {@code scrapeAndExtractHtml()} to scrape.
+   * finds URLs and metadata of news articles. Returns an empty list if no valid URLs are found.
    *
    * @see <a href="https://hc.apache.org/httpcomponents-client-ga/httpclient/examples/org/apache/"
    *    + "http/examples/client/ClientWithResponseHandler.java">Code reference</a>
    */
-  public List<URL> getUrlsFromCustomSearch(String candidateName) {
+  public List<NewsArticle> getUrlsFromCustomSearch(String candidateName) {
     String request =
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
@@ -155,21 +160,23 @@ public class WebCrawler {
     try {
       HttpGet httpGet = new HttpGet(request);
       JsonObject json = InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
-      return extractUrlsFromCustomSearchJson(json);
+      return extractUrlsAndMetadataFromCustomSearchJson(json);
     } catch (IOException e) {
       System.out.println("[ERROR] Error occurred with fetching URLs from Custom Search: " + e);
       return Arrays.asList();
     }
   }
 
-  // @TODO [Extract other metadata and store into the updated NewsArticle structure.]
   /**
    * Parses {@code json}, which is in Google Custom Search's JSON response format, and extracts
-   * news articles' URLs (URLs from the source website, instead of from News.google).
+   * news articles' URLs (URLs from the source website, instead of from News.google) and metadata,
+   * including the publisher and published date. Packages extracted data into {@code NewsArticle}.
+   * Set news articles' priority based on the order in which they are returned by Custom Search.
    */
-  List<URL> extractUrlsFromCustomSearchJson(JsonObject json) {
-    List<URL> urls = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
+  List<NewsArticle> extractUrlsAndMetadataFromCustomSearchJson(JsonObject json) {
+    List<NewsArticle> newsArticles = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
     JsonArray searchResults = json.getAsJsonArray("items");
+    int priority = 1;
     for (JsonElement result : searchResults) {
       JsonObject metadata =
           (JsonObject)
@@ -177,58 +184,91 @@ public class WebCrawler {
                    .getAsJsonObject("pagemap")
                        .getAsJsonArray("metatags")
                            .get(0));
-      try {
-        urls.add(
-            new URL(
-                metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString()));
-      } catch (Exception e) {}
+      String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
+      String publisher = extractPublisherMetadata(metadata);
+      Date publishedDate = extractPublishedDateMetadata(metadata);
+      newsArticles.add(new NewsArticle(url, publisher, publishedDate, priority));
+      priority++;
     }
-    return urls;
+    return newsArticles;
+  }
+
+  /**
+   * Extracts the publisher from {@code metadata} by examining in order
+   * {@code CUSTOM_SEARCH_PUBLISHER_METATAGS}. Returns null if no matching metatags are found.
+   */
+  private String extractPublisherMetadata(JsonObject metadata) {
+    for (String potentialPublisherMetatag : CUSTOM_SEARCH_PUBLISHER_METATAGS) {
+      if (metadata.has(potentialPublisherMetatag)) {
+        return metadata.get(potentialPublisherMetatag).getAsString();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Extracts the published date from {@code metadata} by examining in order
+   * {@code CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS} and parsing the date string. Returns null if no
+   * matching metatags are found or if no date strings could be parsed.
+   */
+  private Date extractPublishedDateMetadata(JsonObject metadata) {
+    for (String potentialDateMetatag : CUSTOM_SEARCH_PUBLISHED_DATE_METATAGS) {
+      if (!metadata.has(potentialDateMetatag)) {
+        continue;
+      }
+      String date = metadata.get(potentialDateMetatag).getAsString();
+      for (DateTimeFormatter potentialDateTimeFormatter : DATE_TIME_FORMATTERS) {
+        try {
+          return Date.from(Instant.from(potentialDateTimeFormatter.parse(date)));
+        } catch (IllegalArgumentException | DateTimeException e) {}
+      }
+    }
+    return null;
   }
 
   /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
-   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
+   * textual content to put into {@code newsArticle}. Sets "content" to empty in the event of an
+   * exception.
    */
-  public Optional<NewsArticle> scrapeAndExtractFromHtml(URL url) {
+  public void scrapeAndExtractFromHtml(NewsArticle newsArticle) {
     try {
+      URL url = new URL(newsArticle.getUrl());
       URL robotsUrl = new URL(url.getProtocol(), url.getHost(), "/robots.txt");
       InputStream robotsTxtStream = setTimeoutAndOpenStream(robotsUrl);
       RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
       robotsTxtStream.close();
       String webpagePath = url.getPath();
       Grant grant = robotsTxt.ask("*", webpagePath);
-      return politelyScrapeAndExtractFromHtml(grant, robotsUrl, url);
+      politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
-      return Optional.empty();
+      newsArticle.setContent("");
     }
   }
 
   /**
    * Checks robots.txt for permission to web-scrape, scrapes webpage if permitted and extracts
-   * textual content. Returns an empty {@code Optional<NewsArticle>} in the event of an exception.
+   * textual content to put into {@code newsArticle}. Sets "content" to empty in the event of an
+   * exception.
    */
-  Optional<NewsArticle> politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl, URL url) {
+  void politelyScrapeAndExtractFromHtml(Grant grant, URL robotsUrl,
+      NewsArticle newsArticle) {
     try {
       // Check permission to access and respect the required crawl delay.
-      if (grant == null || grant.hasAccess()) {
-        if (grant != null
-            && grant.getCrawlDelay() != null
-            && !waitForAndSetCrawlDelay(grant, robotsUrl.toString())) {
-          return Optional.empty();
-        }
-        InputStream webpageStream = setTimeoutAndOpenStream(url);
-        Optional<NewsArticle> potentialNewsArticle =
-            newsContentExtractor.extractContentFromHtml(webpageStream, url.toString());
+      if (grant == null
+          || (grant.hasAccess()
+              && waitForAndSetCrawlDelay(grant, robotsUrl.toString()))) {
+        InputStream webpageStream = setTimeoutAndOpenStream(new URL(newsArticle.getUrl()));
+        newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
-        return potentialNewsArticle;
       } else {
-        return Optional.empty();
+        newsArticle.setContent("");
+        return;
       }
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
-      return Optional.empty();
+      newsArticle.setContent("");
     }
   }
 
@@ -249,6 +289,9 @@ public class WebCrawler {
    * non-null. This method is made default for testing purposes.
    */
   boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+    if (grant.getCrawlDelay() == null) {
+      return true;
+    }
     if (nextAccessTimes.containsKey(url)) {
       if (!waitIfNecessary(url)) {
         return false;
@@ -275,7 +318,6 @@ public class WebCrawler {
     return true;
   }
 
-  // @TODO [Fill in other properties: published date, publisher.]
   /**
    * Stores {@code NewsArticle}'s metadata and content into the database, following a predesigned
    * database schema. Requires "gcloud config set project project-ID" to be set correctly. {@code
@@ -298,6 +340,11 @@ public class WebCrawler {
             .set("content", excludeStringFromIndexes(newsArticle.getContent()))
             .set(
                 "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .set("publisher", newsArticle.getPublisher())
+            .set("publishedDate", TimestampValue.newBuilder(
+                                      Timestamp.of(
+                                          newsArticle.getPublishedDate())).build())
+            .set("priority", newsArticle.getPriority())
             .build();
     datastore.put(newsArticleEntity);
   }

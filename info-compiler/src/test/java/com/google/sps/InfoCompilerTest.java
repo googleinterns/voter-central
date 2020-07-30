@@ -77,6 +77,7 @@ public final class InfoCompilerTest {
       " ]" +
       "}";
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
+
   private static JsonObject electionJson;
   private static JsonObject singleContestJson;
   private static InfoCompiler infoCompiler;

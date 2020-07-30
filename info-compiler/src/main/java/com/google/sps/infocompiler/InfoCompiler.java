@@ -161,7 +161,9 @@ public class InfoCompiler {
   private JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
-    return requestHttpAndBuildJsonResponse(httpClient, httpGet);
+    JsonObject json = requestHttpAndBuildJsonResponse(httpClient, httpGet);
+    httpClient.close();
+    return json;
   }
 
   /** 
@@ -179,18 +181,15 @@ public class InfoCompiler {
         public String handleResponse(final HttpResponse response) throws IOException {
           int status = response.getStatusLine().getStatusCode();
           if (status >= 200 && status < 300) {
-              HttpEntity entity = response.getEntity();
-              return entity != null ? EntityUtils.toString(entity) : null;
+            HttpEntity entity = response.getEntity();
+            return entity != null ? EntityUtils.toString(entity) : null;
           } else {
-              httpClient.close();
-              throw new ClientProtocolException("Unexpected response status: " + status);
+            throw new ClientProtocolException("Unexpected response status: " + status);
           }
         }
     };
     String responseBody = httpClient.execute(httpGet, responseHandler);
-    httpClient.close();
-    JsonObject json = new JsonParser().parse(responseBody).getAsJsonObject();
-    return json;
+    return new JsonParser().parse(responseBody).getAsJsonObject();
   }
 
   /**

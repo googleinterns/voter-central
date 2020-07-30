@@ -31,7 +31,6 @@ import org.xml.sax.SAXException;
  */
 @RunWith(JUnit4.class)
 public final class NewsContentProcessorTest {
-  private static final String TITLE = "title";
   private static final String URL = "https://www.cnn.com/index.html";
   private static final String WORD = "word";
   private static final String EMPTY_CONTENT = "";
@@ -55,6 +54,7 @@ public final class NewsContentProcessorTest {
       "Ocasio-Cortez, who has in her first term in office become a national progressive icon, " +
       "had significant advantages in the race, including strong national name recognition, " +
       "devoted supporters and significant fundraising."; // The 2nd, 3rd, 4th sentences.
+  private static final int PRIORITY = 1;
 
   private String LONG_CONTENT;
   private String MAX_CONTENT;
@@ -82,56 +82,63 @@ public final class NewsContentProcessorTest {
   public void abbreviate_longContent() {
     // Process {@code LONG_CONTENT} and extract abbreviated content as {@code MAX_CONTENT}, which
     // contains the {@code MAX_WORD_COUNT} of words. After content processing, the title, URL and
-    // content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, LONG_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
+    // content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    newsArticle.setContent(LONG_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.abbreviate(newsArticle);
     expectedArticle.setAbbreviatedContent(MAX_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void abbreviate_shortContent() {
     // Process {@code SHORT_CONTENT} and extract abbreviated content as {@code SHORT_CONTENT},
     // which contains fewer than {@code MAX_WORD_COUNT} of words. After content processing, the
-    // title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, SHORT_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
+    // title, URL and content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    newsArticle.setContent(SHORT_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.abbreviate(newsArticle);
     expectedArticle.setAbbreviatedContent(SHORT_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void abbreviate_emptyContent() {
     // Process {@code EMPTY_CONTENT} and extract abbreviated content as {@code EMPTY_CONTENT}.
-    // After content processing, the title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.abbreviate(newsArticle);
+    // After content processing, the title, URL, content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    newsArticle.setContent(EMPTY_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.abbreviate(newsArticle);
     expectedArticle.setAbbreviatedContent(EMPTY_CONTENT);
-    assertThat(processedNewsArticle).isEqualTo(expectedArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void summarize_regularContent() throws Exception {
     // Summarize {@code REGULAR_CONTENT} and extract content as {@code SUMMARIZED_CONTENT}.
-    // After content processing, the title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, REGULAR_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.summarize(newsArticle);
+    // After content processing, the title, URL, content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    newsArticle.setContent(REGULAR_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.summarize(newsArticle);
     expectedArticle.setSummarizedContent(SUMMARIZED_CONTENT);
-    Assert.assertEquals(expectedArticle, processedNewsArticle);
+    System.out.println(newsArticle.getSummarizedContent());
+    System.out.println(expectedArticle.getSummarizedContent());
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 
   @Test
   public void summarize_emptyContent() throws Exception {
     // Summarize {@code EMPTY_CONTENT} and extract content as {@code EMPTY_CONTENT}.
-    // After content processing, the title, URL and content remain the same.
-    NewsArticle newsArticle = new NewsArticle(TITLE, URL, EMPTY_CONTENT);
-    NewsArticle processedNewsArticle = NewsContentProcessor.summarize(newsArticle);
+    // After content processing, the title, URL, content and other data remain the same.
+    NewsArticle newsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    newsArticle.setContent(EMPTY_CONTENT);
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
+    NewsContentProcessor.summarize(newsArticle);
     expectedArticle.setSummarizedContent(EMPTY_CONTENT);
-    Assert.assertEquals(expectedArticle, processedNewsArticle);
+    assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 }

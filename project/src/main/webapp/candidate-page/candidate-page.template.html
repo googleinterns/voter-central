@@ -22,8 +22,13 @@
     <h5>{{newsArticle.publisher}}</h5>
     <time>{{newsArticle.publishedDate}}</time>
     <div class="news-article-content">
+      <em>Content</em>
       <p>{{newsArticle.content}}</p>
-      <a href={{newsArticle.url}}>Read the full article</a>
+      <em>Abbreviated Content</em>
+      <p>{{newsArticle.abbreviatedContent}}</p>
+      <em>5-Sentence Summarized Content</em>
+      <p>{{newsArticle.summarizedContent}}</p>
+      <a href={{newsArticle.url}}>Read the original article</a>
     </div>
     <hr>
   </article>
