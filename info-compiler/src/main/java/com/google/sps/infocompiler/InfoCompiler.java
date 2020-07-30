@@ -270,6 +270,7 @@ public class InfoCompiler {
             .build();
     datastore.update(electionEntity);
   }
+
   private boolean checkIncumbency(String candidateName, String position, String division){
     String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
     JsonObject representatives = queryCivicInformation(queryUrl);
@@ -303,8 +304,6 @@ public class InfoCompiler {
     String photo = getField(candidate, "PhotoUrl");
     String candidateUrl = getField(candidate, "candidateUrl");
     String twitter = getTwitter(candidate);
-    // @TODO [May expand to other information to uniquely identify a candidate. Currently,
-    // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
     Key candidateKey =
         datastore.newKeyFactory()
@@ -327,11 +326,12 @@ public class InfoCompiler {
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
   }
+
   private String getField(JsonObject candidate, String field) {
     if (candidate.has(field)) {
       return candidate.get(field).getAsString();
     } else {
-      return "not available";
+      return "";
     }
   }
 
@@ -346,7 +346,7 @@ public class InfoCompiler {
         }
       }
     }
-    return "not available"; 
+    return ""; 
   }
 
 
