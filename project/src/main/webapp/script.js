@@ -131,7 +131,7 @@ function constructCandidateTable(candidates, electionName) {
     candidatesTable.innerHTML +=
         constructCandidateTableRow(candidate.id,
             candidate.candidateName,
-            candidate.partyAffiliation,
+            candidate.party,
             candidate.isIncumbent,
             electionName);
   }
@@ -143,12 +143,12 @@ function constructCandidateTable(candidates, electionName) {
  * and embed candidate ID into the URL.
  */
 function constructCandidateTableRow(
-    id, candidateName, partyAffiliation, isIncumbent, electionName) {
+    id, candidateName, party, isIncumbent, electionName) {
   return `<tr>
             <td><a href=
                 "candidate.html?candidateId=${id}&electionName=${electionName}">
                     ${candidateName}</a></td>
-            <td>${partyAffiliation}</td>
+            <td>${party}</td>
             <td>${isIncumbent ? 'Yes' : 'No'}</td>
           </tr>`;
 }

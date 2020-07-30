@@ -1,17 +1,17 @@
 
 <div class="candidate-page-info" id="official-info-container">
   <h3>{{officialInfo.candidateName}}</h3>
-  <img src={{officialInfo.photoURL}} 
+  <img src={{officialInfo.PhotoUrl}} 
       alt="Picture of {{officialInfo.candidateName}}">
   <ul>
     <li>Position: {{officialInfo.position}}</li>
-    <li>Party Affiliation: {{officialInfo.partyAffiliation}}</li>
+    <li>Party Affiliation: {{officialInfo.party}}</li>
     <li>Email: {{officialInfo.email}}</li>
-    <li>Phone number: {{officialInfo.phoneNumber}}</li>
+    <li>Phone number: {{officialInfo.phone}}</li>
   </ul>
   <p ng-if="officialInfo.isIncumbent"> {{officialInfo.candidateName}}
         currently holds office as {{officialInfo.position}}</p>
-  <p>Click <a href={{officialInfo.website}}>here </a>to be redirected
+  <p>Click <a href={{officialInfo.candidateUrl}}>here </a>to be redirected
       to {{officialInfo.candidateName}}'s website.</p>
 </div>
 <div ng-repeat="newsArticle in newsArticles" class="candidate-page-info" 

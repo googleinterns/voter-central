@@ -107,7 +107,17 @@ public final class InfoCompilerTest {
     candidate.addProperty("PhotoUrl", "photoOfCuomo.com");
     candidate.addProperty("candidateUrl", "www.Andrewcuomo.com");
     candidate.addProperty("phone", "122-333-4444");
-    //candidate.addProperty("Twitter Handle", "@AC");
+    JsonArray channels = new JsonArray();
+    JsonObject Twitterchannel = new JsonObject();
+    JsonObject facebookChannel = new JsonObject();
+    facebookChannel.addProperty("type", "Facebook");
+    facebookChannel.addProperty("id", "@thewrongfakeACuomo");
+    Twitterchannel.addProperty("type", "Twitter");
+    Twitterchannel.addProperty("id", "@thefakeACuomo");
+    channels.add(Twitterchannel);
+    channels.add(facebookChannel);
+    candidate.add("channels", channels);
+
     JsonArray candidates = new JsonArray();
     candidates.add(candidate);
     singleContestJson = new JsonObject();
@@ -233,12 +243,13 @@ public final class InfoCompilerTest {
     assertThat(queryResult.hasNext()).isFalse();
     assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
-    assertThat(candidateEntity.getString("partyAffiliation"))
+    assertThat(candidateEntity.getString("party"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
     assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
-    assertThat(candidateEntity.getString("phone number")).isEqualTo(candidate.get("phone").getAsString());
-    assertThat(candidateEntity.getString("website")).isEqualTo(candidate.get("candidateUrl").getAsString());
-    assertThat(candidateEntity.getString("photoURL")).isEqualTo(candidate.get("PhotoUrl").getAsString());
+    assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
+    assertThat(candidateEntity.getString("candidateUrl")).isEqualTo(candidate.get("candidateUrl").getAsString());
+    assertThat(candidateEntity.getString("PhotoUrl")).isEqualTo(candidate.get("PhotoUrl").getAsString());
+    assertThat(candidateEntity.getString("twitter")).isEqualTo("@thefakeACuomo");
   }
 
   // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
