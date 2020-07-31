@@ -20,7 +20,7 @@ angular.module('navigation').component('navBar', {
       <br>
       <a href="/education.html">Voter Education</a>
       <br>
-      <a href="/">Polling Locations</a>
+      <a href="/polling_location.html">Polling Locations</a>
       <br>`,
   controller: function navBarController() {
     // Dynamically generate links and pages relating to directory page etc.

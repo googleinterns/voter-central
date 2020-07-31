@@ -21,8 +21,6 @@
     <script src="/navigation/navigation.module.js"></script>
     <script src="/navigation/nav-bar.component.js"></script>
     <script src="/navigation/header.component.js"></script>
-    <script src="/directory-page/directory-page.module.js"></script>
-    <script src="/candidate-page/candidate-page.module.js"></script>
     <title>Voter Central Homepage</title>
   </head>
   <body>
@@ -38,19 +36,12 @@
         </div>
         <div class="col-9">
           <main role="main">
-            <form id="location-input" action="/directory.html">
+            <form id="location-input" action="/PollingLocationsServlet.java">
               <label for="address">Enter your street address:</label>
               <br>
               <input type="text" id="address" name="address"
                   placeholder="...your street address..." required/>
-              <input type="hidden" name="listAllElections" value="false"/>
               <input type="submit" id="submit-address"/>
-            </form>
-            <form id="list-all-input" action="/directory.html">
-              <input type="hidden" name="address" value="default"/>
-              <input type="hidden" name="listAllElections" value="true"/>
-              <input type="submit" id="submit-list-all"
-                  value="List All Elections"/>
             </form>
           </main>
         </div>
