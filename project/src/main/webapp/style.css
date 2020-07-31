@@ -22,13 +22,13 @@ body {
   position: fixed;
 }
 
-#navigation-bar a {
+.nav-link {
   color: #474747;
   font-family: 'Roboto Slab', serif;
 }
 
 #site-header {
-  color: #f0eded;
   background-color: #b32424;
+  color: #f0eded;
   font-family: 'Roboto Slab', serif;
 }

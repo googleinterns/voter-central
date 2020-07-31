@@ -18,7 +18,7 @@
 angular.module('directoryPage').component('directoryPage', {
   templateUrl: '/directory-page/directory-page.template.html', 
   controller: function directoryPageController($scope) {
-      getElectionCandidateInformation($scope);
+    getElectionCandidateInformation($scope);
   }
 });
 
