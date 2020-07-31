@@ -1,5 +1,5 @@
 <div id="elections-container">
-  <div class="state-filter">
+  <div class="state-filter" ng-show="showStateFilter">
     <label>Filter results based on state:</label>
     <select name="state-filter" id="state-filter"
             ng-change="filterOnState()" ng-model="stateFilter"

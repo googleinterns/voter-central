@@ -19,6 +19,7 @@ angular.module('directoryPage')
     .component('directoryPage', {
       templateUrl: '/directory-page/directory-page.template.html', 
       controller: function directoryPageController($scope) {
+        showOrHideStateFilter($scope);
         getElectionCandidateInformation($scope);
         $scope.filterOnState = function() {
           getElectionCandidateInformation($scope);
@@ -33,6 +34,16 @@ angular.module('directoryPage')
     });
 
 /**
+ * Shows the state filter dropdown box if {@code listAllElections} is 'true'.
+ * Otherwise hides.
+ */
+function showOrHideStateFilter(scope) {
+  const listAllElections =
+      location.search.substring(location.search.lastIndexOf('=') + 1);
+  scope.showStateFilter = (listAllElections === 'true');
+}
+
+/**
  * Adds a brief version of the official election/candidate information to the
  * page's scope so it can be displayed by the corresponding page template.
  * Queries the backend database with the user input of address.
@@ -44,9 +55,11 @@ async function getElectionCandidateInformation(scope) {
       location.search.substring(location.search.lastIndexOf('=') + 1);
 
   // Send GET request to /data with address and whether to list all elections.
-  const fetchUrl =
-      `/data?address=${address}&listAllElections=${listAllElections}` +
-      `${getStateFilterUrl(scope.stateFilter)}`;
+  let fetchUrl =
+      `/data?address=${address}&listAllElections=${listAllElections}`;
+  if (listAllElections === 'true') {
+    fetchUrl += `${getStateFilterUrl(scope.stateFilter)}`;
+  }
   const response = await fetch(fetchUrl);
   const dataPackage = await response.json();
 
