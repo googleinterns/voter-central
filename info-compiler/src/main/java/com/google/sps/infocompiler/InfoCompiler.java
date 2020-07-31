@@ -34,7 +34,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.sps.data.State;
 import com.google.sps.infocompiler.Config;
 import com.google.sps.webcrawler.NewsContentExtractor;
 import com.google.sps.webcrawler.RelevancyChecker;
