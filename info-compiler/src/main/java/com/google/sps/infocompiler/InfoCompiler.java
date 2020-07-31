@@ -270,22 +270,29 @@ public class InfoCompiler {
     datastore.update(electionEntity);
   }
 
-  private boolean checkIncumbency(String candidateName, String position, String division){
-    String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
-    JsonObject representatives = queryCivicInformation(queryUrl);
-    JsonArray offices = representatives.getAsJsonArray("offices");
-    int i = 0;
-    for (JsonElement eachOffice : offices){
-      JsonObject office = (JsonObject) eachOffice;
-      String officeName = office.get("name").getAsString();
-      if (position.equals(officeName)){
-        break;
+  private boolean checkIncumbency(String candidateName, String position, String division) {
+    try {
+      String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
+      JsonObject representatives = queryCivicInformation(queryUrl);
+      JsonArray offices = representatives.getAsJsonArray("offices");
+      int i = 0;
+      for (JsonElement eachOffice : offices){
+        JsonObject office = (JsonObject) eachOffice;
+        String officeName = office.get("name").getAsString();
+        if (position.equals(officeName)){
+          break;
+        }
+        i++;
       }
-      i++;
+      JsonObject officials = representatives.getAsJsonObject("officials");
+      String incumbent = (officials.get("name").getAsString());
+      return candidateName.equals(incumbent);
+    } catch (IOException e) {
+        System.out.println(
+          String.format(
+              "[ERROR] Failed to query the Civic Information API for %s: %s.", "representatives", e));
+      return false;
     }
-    JsonArray officials = representatives.getAsJsonArray("officials");
-    String incumbent = (officials.getJSONObject(i).get("name").getAsString());
-    return candidateName.equals(incumbent);
   }
 
   /**
@@ -320,7 +327,7 @@ public class InfoCompiler {
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
-    boolean isincumbent = checkIncumbency(name, position.getStringValue(), ocdDivisionId);
+    boolean isincumbent = checkIncumbency(name, position.get(), ocdDivisionId);
     candidateIncumbency.add(BooleanValue.newBuilder(isincumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());

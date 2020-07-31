@@ -95,6 +95,7 @@ public final class InfoCompilerTest {
     election.addProperty("id", "2000");
     election.addProperty("name", "VIP Test Election");
     election.addProperty("electionDay", "2013-06-06");
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
     JsonArray elections = new JsonArray();
     elections.add(election);
     electionJson = new JsonObject();
@@ -156,6 +157,9 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
+        //The response given by api for testing is missing a property
+        JsonObject mockElection = (JsonObject) json.getAsJsonArray("elections").get(0);
+        mockElection.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
     assertThat(json).isEqualTo(electionJson);
   }
 
