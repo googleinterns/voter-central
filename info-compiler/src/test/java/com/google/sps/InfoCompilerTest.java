@@ -205,8 +205,7 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
     assertThat(electionEntity.getString("state")).isEqualTo(STATE);
-    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
-                    >= past.getSeconds())
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
 
@@ -247,8 +246,7 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
     assertThat(electionEntity.getString("state")).isEqualTo("");
-    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
-                    >= past.getSeconds())
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
 
@@ -309,8 +307,7 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
-    assertThat(((Timestamp) candidateEntity.getValue("lastModified").get()).getSeconds()
-                    >= past.getSeconds())
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
 
@@ -363,8 +360,7 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
     assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
     assertThat(electionEntity.getString("state")).isEqualTo(STATE);
-    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).getSeconds()
-                    >= past.getSeconds())
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
     List<Value<String>> candidatePositions =
         new ArrayList<>(electionEntity.getList("candidatePositions"));
@@ -395,8 +391,7 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("partyAffiliation"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
-    assertThat(((Timestamp) candidateEntity.getValue("lastModified").get()).getSeconds()
-                    >= past.getSeconds())
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
 
@@ -456,7 +451,6 @@ public final class InfoCompilerTest {
       throws IOException {
     // Execute the entire information compilation process and set {@code DATA_EXPIRATION_SECONDS}
     // such that all newly added would be considered outdated immediately and thus cleared.
-    Timestamp past = Timestamp.now();
     JsonObject electionJsonCopy = electionJson.deepCopy();
     JsonObject election =
         ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
