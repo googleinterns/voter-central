@@ -57,6 +57,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A information compiler for finding (1) official election/candidate information and (2) news
@@ -337,7 +338,9 @@ public class InfoCompiler {
           (JsonObject) candidate,
           candidateIds,
           candidateIncumbency);
-      candidatePositions.add(StringValue.newBuilder(contest.get("office").getAsString()).build());
+      candidatePositions.add(
+          StringValue.newBuilder(
+              capitalizeFirstLetterOfEachWord(contest.get("office").getAsString())).build());
     }
     // Fill in position and candidate information for the election entities in the database.
     electionEntity =
@@ -347,6 +350,18 @@ public class InfoCompiler {
             .set("candidateIncumbency", candidateIncumbency)
             .build();
     datastore.update(electionEntity);
+  }
+
+  /**
+   * Capitalizes the first letter of each word in {@code phrase} and make the rest of the letters
+   * lowercase.
+   */
+  private String capitalizeFirstLetterOfEachWord(String phrase) {
+    String[] words = phrase.split(" ");
+    for (int i = 0; i < words.length; i++) {
+      words[i] = StringUtils.capitalize(words[i].toLowerCase());
+    }
+    return StringUtils.join(words, " ");
   }
 
   // @TODO [Find incumbency.]
@@ -360,7 +375,7 @@ public class InfoCompiler {
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
     String rawParty = candidate.get("party").getAsString();
-    String party = rawParty.substring(0, 1).toUpperCase() + rawParty.substring(1);
+    String party = capitalizeFirstLetterOfEachWord(rawParty);
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -370,7 +385,7 @@ public class InfoCompiler {
             .newKey(candidateId);
     Entity candidateEntity =
         Entity.newBuilder(candidateKey)
-            .set("name", name)
+            .set("name", capitalizeFirstLetterOfEachWord(name))
             .set("partyAffiliation", party + " Party")
             .set("lastModified", Timestamp.now())
             .build();
