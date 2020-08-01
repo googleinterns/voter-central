@@ -31,6 +31,9 @@ import java.io.IOException;
 public class RelevancyChecker {
   static final double CANDIDATE_SALIENCE_THRESHOLD = 0.18;
   static final double PARTY_SALIENCE_THRESHOLD = 0.001;
+  static final String NO_PARTY_AFFILIATION = "No Party Affiliation";
+  static final String NON_PARTISAN = "Non Partisan";
+  static final String NONPARTISAN = "Nonpartisan";
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -58,7 +61,8 @@ public class RelevancyChecker {
   public boolean isRelevant(NewsArticle newsArticle, String candidateName, String partyName) {
     double candidateNameSalience = computeSalienceOfName(newsArticle.getContent(), candidateName);
     double partyNameSalience =
-        (partyName == null)
+        (partyName == null || partyName.equalsIgnoreCase(NO_PARTY_AFFILIATION)
+             || partyName.equalsIgnoreCase(NON_PARTISAN) || partyName.equalsIgnoreCase(NONPARTISAN))
         ? PARTY_SALIENCE_THRESHOLD : computeSalienceOfName(newsArticle.getContent(), partyName);
     return (candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD
         && partyNameSalience >= PARTY_SALIENCE_THRESHOLD);

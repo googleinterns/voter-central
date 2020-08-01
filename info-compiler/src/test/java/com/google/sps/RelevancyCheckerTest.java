@@ -91,6 +91,52 @@ public final class RelevancyCheckerTest {
   }
 
   @Test
+  public void isRelevant_findEverythingRelevantWithNoParty() {
+    // Check content relevancy with a mock relevancy checker that always computes a salience
+    // score higher than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in {@code
+    // RelevancyChecker.NO_PARTY_AFFILIATION, RelevancyChecker.NON_PARTISAN, Relevancy.NONPARTISAN}
+    // as the party name. The relevancy should be determined solely by the candidate name salience.
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    relevantNewsArticle.setContent(RELEVANT_CONTENT);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
+    when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
+        .thenReturn(RelevancyChecker.CANDIDATE_SALIENCE_THRESHOLD + 1.0);
+    when(mockRelevancyChecker.isRelevant(anyObject(), anyString(), anyString()))
+        .thenCallRealMethod();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NO_PARTY_AFFILIATION))
+        .isTrue();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NO_PARTY_AFFILIATION))
+        .isTrue();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NON_PARTISAN))
+        .isTrue();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NON_PARTISAN))
+        .isTrue();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NONPARTISAN))
+        .isTrue();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NONPARTISAN))
+        .isTrue();
+  }
+
+  @Test
   public void isRelevant_findsEverythingIrrelevant() {
     // Check content relevancy with a mock relevancy checker that always computes a salience
     // score lower than at least one of {@code CANDIDATE_SALIENCE_THRESHOLD} or {@code
@@ -130,6 +176,52 @@ public final class RelevancyCheckerTest {
         mockRelevancyChecker.isRelevant(relevantNewsArticle, CANDIDATE_NAME, null)).isFalse();
     assertThat(
         mockRelevancyChecker.isRelevant(irrelevantNewsArticle, CANDIDATE_NAME, null)).isFalse();
+  }
+
+  @Test
+  public void isRelevant_findEverythingIrrelevantWithNoParty() {
+    // Check content relevancy with a mock relevancy checker that always computes a salience
+    // score lower than {@code CANDIDATE_SALIENCE_THRESHOLD} and pass in {@code
+    // RelevancyChecker.NO_PARTY_AFFILIATION, RelevancyChecker.NON_PARTISAN, Relevancy.NONPARTISAN}
+    // as the party name. The relevancy should be determined solely by the candidate name salience.
+    NewsArticle relevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    relevantNewsArticle.setContent(RELEVANT_CONTENT);
+    NewsArticle irrelevantNewsArticle = new NewsArticle(URL, null, null, PRIORITY);
+    irrelevantNewsArticle.setContent(IRRELEVANT_CONTENT);
+    when(mockRelevancyChecker.computeSalienceOfName(anyString(), anyString()))
+        .thenReturn(RelevancyChecker.CANDIDATE_SALIENCE_THRESHOLD - 1.0);
+    when(mockRelevancyChecker.isRelevant(anyObject(), anyString(), anyString()))
+        .thenCallRealMethod();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NO_PARTY_AFFILIATION))
+        .isFalse();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NO_PARTY_AFFILIATION))
+        .isFalse();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NON_PARTISAN))
+        .isFalse();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NON_PARTISAN))
+        .isFalse();
+    assertThat(
+        mockRelevancyChecker.isRelevant(relevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NONPARTISAN))
+        .isFalse();
+    assertThat(
+        mockRelevancyChecker.isRelevant(irrelevantNewsArticle,
+                                        CANDIDATE_NAME,
+                                        RelevancyChecker.NONPARTISAN))
+        .isFalse();
   }
 
   // @TODO [Write tests that mocks {@code languageServiceClient.analyzeEntities()} and other
