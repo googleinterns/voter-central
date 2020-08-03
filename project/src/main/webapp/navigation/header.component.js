@@ -17,7 +17,7 @@
 
 angular.module('navigation').component('header', {
   template: `<div class="py-2 mb-3" id="site-header">
-             <h1>Voter Central</h1>
+              <h1>Voter Central</h1>
              </div>`,
   controller: function headerController() {
     // Generate any dynamic info for header
