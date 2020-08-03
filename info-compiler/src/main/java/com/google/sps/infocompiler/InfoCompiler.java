@@ -296,7 +296,7 @@ public class InfoCompiler {
         officialIndicesArray =  office.getAsJsonArray("officialIndices");
         officials = office.getAsJsonArray("officials");
         for (int i = 0; i < officialIndicesArray.size(); i++) {
-          int j = officialIndicesArray.get(i);
+          int j = officialIndicesArray.get(i).getAsInt();
           mapOfIncumbents.put(officeName,officials.get(i).getAsString());
         }
       }
