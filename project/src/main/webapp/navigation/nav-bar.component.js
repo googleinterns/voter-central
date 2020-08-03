@@ -37,7 +37,4 @@ async function addDynamicNavBarContent(scope){
     scope.elections = dataPackage.electionsData;
     scope.$apply();
   }
-  else if (location.pathname.includes("candidate.html")) {
-    scope.isCandidatePage = true;
-  }
 }

@@ -14,11 +14,16 @@ body {
   text-align: center;
 }
 
+.material-icons {
+  font-size: 48px;
+  vertical-align: bottom;
+}
+
 #navigation-bar {
   background-color: #4788c4;
-  float: left;
   font-size: 22px;
   height: 100%;
+  max-width: 25%;
   position: fixed;
 }
 
@@ -32,3 +37,5 @@ body {
   color: #f0eded;
   font-family: 'Roboto Slab', serif;
 }
+
+/* Directory Page Styling */
