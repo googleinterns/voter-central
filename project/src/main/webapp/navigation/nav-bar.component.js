@@ -16,12 +16,7 @@
 "use strict"
 
 angular.module('navigation').component('navBar', {
-  template: `<a href="/index.html">Home</a>
-      <br>
-      <a href="/education.html">Voter Education</a>
-      <br>
-      <a href="/polling_location.html">Polling Locations</a>
-      <br>`,
+  templateUrl: '/navigation/nav-bar.template.html',
   controller: function navBarController() {
     // Dynamically generate links and pages relating to directory page etc.
   
