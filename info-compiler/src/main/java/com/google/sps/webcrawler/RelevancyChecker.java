@@ -60,12 +60,16 @@ public class RelevancyChecker {
    */
   public boolean isRelevant(NewsArticle newsArticle, String candidateName, String partyName) {
     double candidateNameSalience = computeSalienceOfName(newsArticle.getContent(), candidateName);
-    double partyNameSalience =
-        (partyName == null || partyName.equalsIgnoreCase(NO_PARTY_AFFILIATION)
-             || partyName.equalsIgnoreCase(NON_PARTISAN) || partyName.equalsIgnoreCase(NONPARTISAN))
-        ? PARTY_SALIENCE_THRESHOLD : computeSalienceOfName(newsArticle.getContent(), partyName);
-    return (candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD
-        && partyNameSalience >= PARTY_SALIENCE_THRESHOLD);
+    if (partyName == null
+            || partyName.equalsIgnoreCase(NO_PARTY_AFFILIATION)
+            || partyName.equalsIgnoreCase(NON_PARTISAN)
+            || partyName.equalsIgnoreCase(NONPARTISAN)) {
+      return candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD;
+    } else {
+      double partyNameSalience = computeSalienceOfName(newsArticle.getContent(), partyName);
+      return (candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD
+          && partyNameSalience >= PARTY_SALIENCE_THRESHOLD);
+    }
   }
 
   /**
