@@ -14,18 +14,18 @@ private final static String VOTER_INFO_QUERY_URL =
 public class PollingLocationServlet extends HttpServlet {
 
   @Override
-  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     
-    String address = request.getParameter("Address");
-    String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, address);
-    JsonArray pollingLocationsArray = infoCompiler.queryCivicInformation(queryUrl);
-    if (pollingLocationsArray.has("pollingLocations")) {
-      pollingLocationsArray.getAsJsonArray("pollingLocations");
+    String userAddress = request.getParameter("address");
+    String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, userAddress);
+    JsonArray voterInfoArray = infoCompiler.queryCivicInformation(queryUrl);
+    if (voterInfoArray.has("pollingLocations")) {
+      JsonArray pollingLocation voterInfoArray.getAsJsonArray("pollingLocations");
     }
-    JsonObject Address pollingLocationsArray.get(0).getAsJsonObject();
+    JsonObject pollingLocationAddress pollingLocationsArray.get(0).getAsJsonObject();
 
     Gson gson = new Gson();
-    String pollingLocation = gson.toJson(Address);
+    String pollingLocation = gson.toJson(pollingLocationAddress);
 
     // Send data in JSON format as the servlet response for the polling location page.
     response.setContentType("application/json;");
