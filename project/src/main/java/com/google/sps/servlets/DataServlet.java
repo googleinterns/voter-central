@@ -112,6 +112,7 @@ public class DataServlet extends HttpServlet {
     Query electionQuery = new Query("Election");
     PreparedQuery electionQueryResult = datastore.prepare(electionQuery);
     List<Entity> electionsData = electionQueryResult.asList(FetchOptions.Builder.withDefaults());
+    resetRelevantNonspecificFlag();
     for (Entity election : electionsData) {
       if (!isRelevantElection(election, address, listAllElections, stateFilter)) {
         continue;
@@ -144,7 +145,6 @@ public class DataServlet extends HttpServlet {
    */
   boolean isRelevantElection(Entity election, String address, boolean listAllElections,
       String stateFilter) {
-    resetRelevantNonspecificFlag();
     if (listAllElections) {
       String state = (String) election.getProperty("state");
       return (stateFilter == null || state.isEmpty()) ? true : state.equals(stateFilter);

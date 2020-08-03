@@ -6,6 +6,9 @@
             ng-options="x for x in states">
     </select>
   </div>
+  <div class="alert" ng-show="alert">
+    <h4>Note: {{alert}}</h4>
+  </div>
   <div ng-repeat="election in elections" id="election-{{$index + 1}}">
     <h3>{{election.electionName}}</h3>
     <time>{{election.date}}</time>

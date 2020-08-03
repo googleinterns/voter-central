@@ -64,6 +64,7 @@ async function getElectionCandidateInformation(scope) {
   const dataPackage = await response.json();
 
   scope.elections = dataPackage.electionsData;
+  scope.alert = dataPackage.alert;
   scope.$apply();
 }
 
