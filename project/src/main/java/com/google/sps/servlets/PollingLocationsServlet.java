@@ -1,6 +1,10 @@
+package com/google/sps/servlets;
+
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.sps.infocompiler;
 
 private static InfoCompiler infoCompiler = new InfoCompiler();
 private final static String VOTER_INFO_QUERY_URL =
@@ -10,13 +14,16 @@ private final static String VOTER_INFO_QUERY_URL =
 public class PollingLocationServlet extends HttpServlet {
 
   @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
     
     String address = request.getParameter("Address");
     String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, address);
-    JsonArray pollingLocationsArray = infoCompiler.queryCivicInformation(queryUrl).getAsJsonArray("pollingLocations");
+    JsonArray pollingLocationsArray = infoCompiler.queryCivicInformation(queryUrl);
+    if (pollingLocationsArray.has("pollingLocations")) {
+      pollingLocationsArray.getAsJsonArray("pollingLocations");
+    }
     JsonObject Address pollingLocationsArray.get(0).getAsJsonObject();
-    pollingLocation
+
     Gson gson = new Gson();
     String pollingLocation = gson.toJson(Address);
 
