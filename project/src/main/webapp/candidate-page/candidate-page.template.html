@@ -14,6 +14,16 @@
   <p>Click <a href={{officialInfo.website}}>here </a>to be redirected
       to {{officialInfo.candidateName}}'s website.</p>
 </div>
+<div id="news-article-content-display-options">
+  <h4>What types of news article content would you like to see?</h4>
+  <input type="checkbox"
+          ng-checked="all" ng-model="showContent"> Full Content<br>
+  <input type="checkbox" 
+          ng-checked="all" ng-model="showAbbreviatedContent"> Abbreviated Content<br>
+  <input type="checkbox"
+          ng-checked="all" ng-model="showSummarizedContent"> 5-Sentence Summary<br>
+  <input type="checkbox" ng-model="all"> All<br>
+</div>
 <div ng-repeat="newsArticle in newsArticles" class="candidate-page-info" 
     id="news-articles-container">
   <article id="news-article-{{$index+1}}">
@@ -22,12 +32,18 @@
     <h5>{{newsArticle.publisher}}</h5>
     <time>{{newsArticle.publishedDate}}</time>
     <div class="news-article-content">
-      <em>Content</em>
-      <p>{{newsArticle.content}}</p>
-      <em>Abbreviated Content</em>
-      <p>{{newsArticle.abbreviatedContent}}</p>
-      <em>5-Sentence Summarized Content</em>
-      <p>{{newsArticle.summarizedContent}}</p>
+      <div ng-show="showContent || all">
+        <em>Content</em>
+        <p>{{newsArticle.content}}</p>
+      </div>
+      <div ng-show="showAbbreviatedContent || all">
+        <em>Abbreviated Content</em>
+        <p>{{newsArticle.abbreviatedContent}}</p>
+      </div>
+      <div ng-show="showSummarizedContent || all">
+        <em>Summarized Content</em>
+        <p>{{newsArticle.summarizedContent}}</p>
+      </div>
       <a href={{newsArticle.url}}>Read the original article</a>
     </div>
     <hr>
