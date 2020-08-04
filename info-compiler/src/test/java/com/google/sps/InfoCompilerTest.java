@@ -36,6 +36,8 @@ import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import java.util.Date;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -76,9 +78,11 @@ public final class InfoCompilerTest {
       "  }" +
       " ]" +
       "}";
+
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
 
   private static JsonObject electionJson;
+  private static JsonObject representativesJson;
   private static JsonObject singleContestJson;
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
@@ -119,13 +123,30 @@ public final class InfoCompilerTest {
     channels.add(Twitterchannel);
     channels.add(facebookChannel);
     candidate.add("channels", channels);
-
     JsonArray candidates = new JsonArray();
     candidates.add(candidate);
     singleContestJson = new JsonObject();
     singleContestJson.addProperty("office", "Governor");
     singleContestJson.add("candidates", candidates);
-  }
+    
+    JsonObject official = new JsonObject();
+    official.addProperty("name", "Andrew Cuomo");
+    JsonArray officials = new JsonArray();
+    officials.add(official);
+    official = new JsonObject();
+    official.addProperty("name", "John Doe");
+    officials.add(official);
+    JsonObject office = new JsonObject();
+    office.addProperty("name", "Governor of New York");
+    JsonArray officialIndices = new JsonArray();
+    officialIndices.add(0);
+    office.add("officialIndices", officialIndices);
+    JsonArray offices = new JsonArray();
+    offices.add(office);
+    representativesJson = new JsonObject();
+    representativesJson.add("offices", offices);
+    representativesJson.add("officials", officials);
+    }
 
   /**
    * Resets the internal state of the Datastore emulator and then {@code datastore}. Also resets
@@ -161,6 +182,14 @@ public final class InfoCompilerTest {
         JsonObject mockElection = (JsonObject) json.getAsJsonArray("elections").get(0);
         mockElection.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
     assertThat(json).isEqualTo(electionJson);
+  }
+
+  @Test
+  public void getIncumbents_checkWithMockJson() throws Exception {
+    Map<String, List<String>> incumbentMap = infoCompiler.getIncumbents(representativesJson);
+    Map<String, List<String>> mockIncumbentMap = new HashMap<>();
+    mockIncumbentMap.put("Governor of New York", Arrays.asList("Andrew Cuomo"));
+    assertThat(incumbentMap).isEqualTo(mockIncumbentMap);
   }
 
   @Test

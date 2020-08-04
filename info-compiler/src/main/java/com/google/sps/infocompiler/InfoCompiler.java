@@ -251,7 +251,7 @@ public class InfoCompiler {
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
     String ocdDivisionId = electionEntity.getString("ocdDivisionId");
-    Map<String, List<String>> incumbents = getincumbents(ocdDivisionId);
+    Map<String, List<String>> incumbents = getIncumbents(ocdDivisionId);
     
     // Obtain candidate information and create candidate entities in the database.
     for (JsonElement candidate : candidates) {
@@ -301,7 +301,7 @@ public class InfoCompiler {
       JsonArray officialIndicesArray =  office.getAsJsonArray("officialIndices");
       List<String> incumbents = new ArrayList<>();
       for (JsonElement index : officialIndicesArray) {
-        incumbents.add(officials.get(index.getAsInt()).getAsString());
+        incumbents.add((officials.get(index.getAsInt())).getAsString());
       }
       mapOfIncumbents.put(officeName, incumbents);
     }
@@ -341,7 +341,7 @@ public class InfoCompiler {
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     boolean isIncumbent = incumbents.containsKey(position) && incumbents.get(position).contains(name);
-    candidateIncumbency.add(BooleanValue.newBuilder(isincumbent).build());
+    candidateIncumbency.add(BooleanValue.newBuilder(isIncumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
   }
