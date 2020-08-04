@@ -1,4 +1,34 @@
 /* General Styling */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  color: #f0eded;
+  text-decoration: none;
+}
+
 body {
+  color: #474747;
+  font-family: 'Open Sans', sans-serif;
   text-align: center;
+}
+
+#navigation-bar {
+  background-color: #4788c4;
+  float: left;
+  font-size: 22px;
+  height: 100%;
+  position: fixed;
+}
+
+.nav-link {
+  color: #474747;
+  font-family: 'Roboto Slab', serif;
+}
+
+#site-header {
+  background-color: #b32424;
+  color: #f0eded;
+  font-family: 'Roboto Slab', serif;
 }
