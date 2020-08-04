@@ -2,7 +2,7 @@
 <html lang="en-US" ng-app="voterCentral">
   <head>
     <meta charset="utf-8">
-    <meta name="Voter Central Homepage"
+    <meta name="Polling Locations"
           content="Voter Central's polling locations page">
     <meta name="viewport" 
           content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -14,25 +14,29 @@
         "sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
         crossorigin="anonymous">         
     <link rel="stylesheet" href="style.css">
+
     <script src="/node_modules/angular/angular.js"></script>
     <script src="config.js"></script>
     <script src="app.module.js"></script>
     <script src="/navigation/navigation.module.js"></script>
     <script src="/navigation/nav-bar.component.js"></script>
     <script src="/navigation/header.component.js"></script>
-    <title>Voter Central Homepage</title>
+    <script src="/directory-page/directory-page.module.js"></script>
+    <script src="/candidate-page/candidate-page.module.js"></script>
+    <script src="script2.js"></script>
+    <title>Polling Locations</title>
   </head>
   <body>
-    <div class="container">
+    <div class="container-fluid mt-1">
       <div class="row justify-content-end">
+        <div class="col-3">
+          <nav-bar></nav-bar>
+        </div>
         <div class="col-9">
             <header></header>
         </div>
       </div>
-      <div class="row">
-        <div class="col">
-          <nav-bar></nav-bar>
-        </div>
+      <div class="row justify-content-end">
         <div class="col-9">
           <main role="main">
             <form id="location-input" action="listPollingLocations()">
