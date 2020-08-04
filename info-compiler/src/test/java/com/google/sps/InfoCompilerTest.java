@@ -64,6 +64,8 @@ import org.mockito.ArgumentCaptor;
 @RunWith(JUnit4.class)
 public final class InfoCompilerTest {
   private static final int ADDRESS_NUMBER = 957; // After screening.
+  private static String CORRECT_FORMAT_NAME = "Andrew Cuomo";
+  private static String CORRECT_FORMAT_NAME_IN_QUOTES = "\"Andrew Cuomo\"";
   private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
   private static final String STATE = "NY";
   private static final String NONTEST_ELECTION_QUERY_ID =
@@ -248,6 +250,31 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getString("state")).isEqualTo("");
     assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
+  }
+
+  @Test
+  public void capitalizeFirstLetterOfEachWord_checkDifferentNames()
+      throws IOException {
+    // Capitalize the first letter of each word and make the rest of the letters lowercase.
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("Andrew Cuomo"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("andrew cuomo"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("ANDREW CUOMO"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+  }
+
+  @Test
+  public void capitalizeFirstLetterOfEachWord_checkDifferentNamesInQuotes()
+      throws IOException {
+    // Within the quotation marks, capitalize the first letter of each word and make the rest of
+    // the letters lowercase.
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"Andrew Cuomo\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"andrew cuomo\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"ANDREW CUOMO\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
   }
 
   @Test

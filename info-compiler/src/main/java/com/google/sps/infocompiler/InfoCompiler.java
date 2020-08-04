@@ -356,10 +356,15 @@ public class InfoCompiler {
    * Capitalizes the first letter of each word in {@code phrase} and make the rest of the letters
    * lowercase.
    */
-  private String capitalizeFirstLetterOfEachWord(String phrase) {
+  String capitalizeFirstLetterOfEachWord(String phrase) {
     String[] words = phrase.split(" ");
     for (int i = 0; i < words.length; i++) {
-      words[i] = StringUtils.capitalize(words[i].toLowerCase());
+      String word = words[i];
+      if (word.substring(0, 1).equals("\"")) {
+        words[i] = "\"" + StringUtils.capitalize(word.substring(1).toLowerCase());
+      } else {
+        words[i] = StringUtils.capitalize(word.toLowerCase());
+      }
     }
     return StringUtils.join(words, " ");
   }
