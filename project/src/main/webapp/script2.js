@@ -1,8 +1,7 @@
 function listPollingLocations() {
-  var address = document.getElementById("location-input").element[0].value;
-
-  fetch(`/pollingLocation?address=${address}`).then(response => response.json()).then((address) => {
-    const pollAddress = document.getElementById('poll-address');
-    pollAddress.appendChild(address);
+  const userAddress = document.getElementById("location-input").element[0].value;
+  fetch(`/pollingLocation?address=${userAddress}`).then(response => response.json()).then((pollingAddress) => {
+    const pollingAddressElement = document.getElementById('poll-address');
+    pollingAddressElement.appendChild(pollingAddress);
   });
 }
