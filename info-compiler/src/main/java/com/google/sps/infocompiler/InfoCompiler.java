@@ -384,6 +384,10 @@ public class InfoCompiler {
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
+    StringValue candidateIdString = StringValue.newBuilder(Long.toString(candidateId)).build();
+    if (candidateIds.contains(candidateIdString)) {
+      return;
+    }
     Key candidateKey =
         datastore.newKeyFactory()
             .setKind("Candidate")
@@ -395,7 +399,7 @@ public class InfoCompiler {
             .set("lastModified", Timestamp.now())
             .build();
     datastore.put(candidateEntity);
-    candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
+    candidateIds.add(candidateIdString);
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
 
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), party);
