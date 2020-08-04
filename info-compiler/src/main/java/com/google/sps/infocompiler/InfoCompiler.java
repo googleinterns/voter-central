@@ -340,7 +340,7 @@ public class InfoCompiler {
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
-    boolean isincumbent = map.get(position).contains(name);
+    boolean isIncumbent = incumbents.containsKey(position) && incumbents.get(position).contains(name);
     candidateIncumbency.add(BooleanValue.newBuilder(isincumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
