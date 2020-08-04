@@ -301,7 +301,8 @@ public class InfoCompiler {
       JsonArray officialIndicesArray =  office.getAsJsonArray("officialIndices");
       List<String> incumbents = new ArrayList<>();
       for (JsonElement index : officialIndicesArray) {
-        incumbents.add((officials.get(index.getAsInt())).getAsString());
+        JsonObject official = (JsonObject) officials.get(index.getAsInt());
+        incumbents.add(official.get("name").getAsString());
       }
       mapOfIncumbents.put(officeName, incumbents);
     }
