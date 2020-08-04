@@ -14,7 +14,7 @@
     </li>
     <li ng-if="isDirectoryPage" ng-repeat="election in elections"
         class="navbar-item">
-      <a class="nav-link" href="#election-{{$index + 1}}">
+      <a class="nav-link" href="#election-{{election.electionName}}">
           {{election.electionName}}</a>
     </li>
   </ul>

@@ -1,5 +1,5 @@
 <div id="elections-container">
-  <div ng-repeat="election in elections" id="election-{{$index + 1}}">
+  <div ng-repeat="election in elections" id="election-{{election.electionName}}">
     <h3 class="election-name">{{election.electionName}}</h3>
     <time>{{election.date}}</time>
     <div id="election-{{$index + 1}}-positions">
