@@ -251,7 +251,7 @@ public class InfoCompiler {
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
     String ocdDivisionId = electionEntity.getString("ocdDivisionId");
-    Map<String, String> incumbents = getincumbents(ocdDivisionId);
+    Map<String, List<String>> incumbents = getincumbents(ocdDivisionId);
     
     // Obtain candidate information and create candidate entities in the database.
     for (JsonElement candidate : candidates) {
@@ -274,14 +274,12 @@ public class InfoCompiler {
     datastore.update(electionEntity);
   }
 
-  private boolean checkIncumbency(Map<String, String> map, String position, String name) {
-    for (Map.Entry<String, String> e : map.entrySet()) {
-      if (e.getKey() == position && e.getValue() == name) return true;
-    }
-    return false;
-  }
-  private Map<String, String> getincumbents(String division) {
-    Map<String, String> mapOfIncumbents = new HashMap<>();  
+  /**
+   * Queries the API for the representatives by division JSON. then returns all representatives in
+   * a map that can be checked to verify incumbency.
+   */
+  private Map<String, List<String>> getincumbents(String division) {
+    Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
     try {
       String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
       JsonObject representatives = queryCivicInformation(queryUrl);
@@ -290,15 +288,18 @@ public class InfoCompiler {
       String officeName;
       JsonArray officialIndicesArray;
       JsonArray officials;
+      List<String> incumbents;
       for (JsonElement eachOffice : offices) {
         office = (JsonObject) eachOffice;
         officeName = office.get("name").getAsString();
         officialIndicesArray =  office.getAsJsonArray("officialIndices");
         officials = office.getAsJsonArray("officials");
+        incumbats = new ArrayList<>();
         for (int i = 0; i < officialIndicesArray.size(); i++) {
           int j = officialIndicesArray.get(i).getAsInt();
-          mapOfIncumbents.put(officeName,officials.get(i).getAsString());
+          incumbants.add(officials.get(j).getAsString());
         }
+        mapOfIncumbents.put(officeName, incumbants);
       }
       return mapOfIncumbents;
 
@@ -317,7 +318,7 @@ public class InfoCompiler {
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency, 
-      List<Value<String>> candidatePositions, Value<String> position, Map<String, String> incumbents) {
+      List<Value<String>> candidatePositions, Value<String> position, Map<String, List<String>> incumbents) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
     String email = getField(candidate, "email");
@@ -342,12 +343,13 @@ public class InfoCompiler {
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
-    boolean isincumbent = checkIncumbency(incumbents, position.get(), name);
+    boolean isincumbent = map.get(position).contains(name);
     candidateIncumbency.add(BooleanValue.newBuilder(isincumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
   }
-
+  
+  // Checks JSON for desired field then returns the Field as a String
   private String getField(JsonObject candidate, String field) {
     if (candidate.has(field)) {
       return candidate.get(field).getAsString();
@@ -356,6 +358,7 @@ public class InfoCompiler {
     }
   }
 
+  // Checks JSON for Twittter Handle which is nested in Channels Array then returns as String
   private String getTwitter(JsonObject candidate) {
     if (candidate.has("channels")){
       JsonArray channels = candidate.getAsJsonArray("channels");
@@ -369,7 +372,6 @@ public class InfoCompiler {
     }
     return ""; 
   }
-
 
   /**
    * Compiles news articles data of {@code candidateName} and stores said data in the database.
