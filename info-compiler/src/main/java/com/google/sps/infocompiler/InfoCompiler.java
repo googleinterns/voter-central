@@ -278,37 +278,34 @@ public class InfoCompiler {
    * Queries the API for the representatives by division JSON. then returns all representatives in
    * a map that can be checked to verify incumbency.
    */
-  private Map<String, List<String>> getincumbents(String division) {
-    Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
+  private Map<String, List<String>> getIncumbents(String division) {
     try {
       String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
       JsonObject representatives = queryCivicInformation(queryUrl);
-      JsonArray offices = representatives.getAsJsonArray("offices");
-      JsonObject office;
-      String officeName;
-      JsonArray officialIndicesArray;
-      JsonArray officials;
-      List<String> incumbents;
-      for (JsonElement eachOffice : offices) {
-        office = (JsonObject) eachOffice;
-        officeName = office.get("name").getAsString();
-        officialIndicesArray =  office.getAsJsonArray("officialIndices");
-        officials = office.getAsJsonArray("officials");
-        incumbats = new ArrayList<>();
-        for (int i = 0; i < officialIndicesArray.size(); i++) {
-          int j = officialIndicesArray.get(i).getAsInt();
-          incumbants.add(officials.get(j).getAsString());
-        }
-        mapOfIncumbents.put(officeName, incumbants);
-      }
-      return mapOfIncumbents;
-
+      return getIncumbents(representatives);
     } catch (IOException e) {
         System.out.println(
           String.format(
               "[ERROR] Failed to query the Civic Information API for %s: %s.", "representatives", e));
-      return mapOfIncumbents;
+      return new HashMap<String, List<String>>();
     }
+  }
+
+  Map<String, List<String>> getIncumbents(JsonObject representatives) {
+    Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
+    JsonArray offices = representatives.getAsJsonArray("offices");
+    JsonArray officials = representatives.getAsJsonArray("officials");
+    for (JsonElement eachOffice : offices) {
+      JsonObject office = (JsonObject) eachOffice;
+      String officeName = office.get("name").getAsString();
+      JsonArray officialIndicesArray =  office.getAsJsonArray("officialIndices");
+      List<String> incumbents = new ArrayList<>();
+      for (JsonElement index : officialIndicesArray) {
+        incumbents.add(officials.get(index.getAsInt()).getAsString());
+      }
+      mapOfIncumbents.put(officeName, incumbents);
+    }
+    return mapOfIncumbents;
   }
 
   /**
