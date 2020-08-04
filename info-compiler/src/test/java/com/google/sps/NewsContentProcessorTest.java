@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth8.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.sps.data.NewsArticle;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

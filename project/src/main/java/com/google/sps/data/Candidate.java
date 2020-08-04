@@ -17,18 +17,18 @@ package com.google.sps.data;
 public class Candidate extends DirectoryCandidate {
   private String email;
   private String phone;
-  private String PhotoUrl;
+  private String photoUrl;
   private String position;
   private String candidateUrl;
   private String twitter;
 
   public Candidate(String id, String name, String party, String email,
-      String phone, String PhotoURL, String position, String candidateUrl,
+      String phone, String photoUrl, String position, String candidateUrl,
       String twitter, boolean isIncumbent) {
     super(id, name, party, isIncumbent);
     this.email = email;
     this.phone = phone;
-    this.PhotoURL = PhotoURL;
+    this.photoUrl = photoUrl;
     this.position = position;
     this.candidateUrl = candidateUrl;
     this.twitter = twitter;

@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -69,7 +71,6 @@ public class InfoCompiler {
   // Will include all 50 states.
   private List<String> states = Arrays.asList("NY");
   private WebCrawler webCrawler;
-  private String ocdDivisionId;
 
   public InfoCompiler() throws IOException {
     this(DatastoreOptions.getDefaultInstance().getService());
@@ -210,7 +211,7 @@ public class InfoCompiler {
             Integer.parseInt(yearMonthDay[2]),
             4,
             0); // Convert from UTC to EDT with 4 hours.
-    ocdDivisionId = election.get("ocdDivisionId").getAsString();
+    String ocdDivisionId = election.get("ocdDivisionId").getAsString();
     Entity electionEntity =
         Entity.newBuilder(electionKey)
             .set("queryId", electionQueryId)
@@ -249,6 +250,9 @@ public class InfoCompiler {
         new ArrayList<>(electionEntity.getList("candidateIds"));
     List<Value<Boolean>> candidateIncumbency =
         new ArrayList<>(electionEntity.getList("candidateIncumbency"));
+    String ocdDivisionId = electionEntity.getString("ocdDivisionId");
+    Map<String, List<String>> incumbents = getIncumbents(ocdDivisionId);
+    
     // Obtain candidate information and create candidate entities in the database.
     for (JsonElement candidate : candidates) {
       Value<String> position = StringValue.newBuilder(contest.get("office").getAsString()).build();
@@ -258,7 +262,7 @@ public class InfoCompiler {
           candidateIncumbency,
           candidatePositions,
           position,
-          ocdDivisionId);
+          incumbents);
     }
     // Fill in position and candidate information for the election entities in the database.
     electionEntity =
@@ -270,29 +274,39 @@ public class InfoCompiler {
     datastore.update(electionEntity);
   }
 
-  private boolean checkIncumbency(String candidateName, String position, String division) {
+  /**
+   * Queries the API for the representatives by division JSON. then returns all representatives in
+   * a map that can be checked to verify incumbency.
+   */
+  private Map<String, List<String>> getIncumbents(String division) {
     try {
       String queryUrl = String.format("%s&ocdDivisionId=%s", REPRENTATIVE_QUERY_URL, division);
       JsonObject representatives = queryCivicInformation(queryUrl);
-      JsonArray offices = representatives.getAsJsonArray("offices");
-      int i = 0;
-      for (JsonElement eachOffice : offices){
-        JsonObject office = (JsonObject) eachOffice;
-        String officeName = office.get("name").getAsString();
-        if (position.equals(officeName)){
-          break;
-        }
-        i++;
-      }
-      JsonObject officials = representatives.getAsJsonObject("officials");
-      String incumbent = (officials.get("name").getAsString());
-      return candidateName.equals(incumbent);
+      return getIncumbents(representatives);
     } catch (IOException e) {
         System.out.println(
           String.format(
               "[ERROR] Failed to query the Civic Information API for %s: %s.", "representatives", e));
-      return false;
+      return new HashMap<String, List<String>>();
     }
+  }
+
+  Map<String, List<String>> getIncumbents(JsonObject representatives) {
+    Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
+    JsonArray offices = representatives.getAsJsonArray("offices");
+    JsonArray officials = representatives.getAsJsonArray("officials");
+    for (JsonElement eachOffice : offices) {
+      JsonObject office = (JsonObject) eachOffice;
+      String officeName = office.get("name").getAsString();
+      JsonArray officialIndicesArray =  office.getAsJsonArray("officialIndices");
+      List<String> incumbents = new ArrayList<>();
+      for (JsonElement index : officialIndicesArray) {
+        JsonObject official = (JsonObject) officials.get(index.getAsInt());
+        incumbents.add(official.get("name").getAsString());
+      }
+      mapOfIncumbents.put(officeName, incumbents);
+    }
+    return mapOfIncumbents;
   }
 
   /**
@@ -302,12 +316,12 @@ public class InfoCompiler {
    */
   private void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency, 
-      List<Value<String>> candidatePositions, Value<String> position, String ocdDivisionId) {
+      List<Value<String>> candidatePositions, Value<String> position, Map<String, List<String>> incumbents) {
     String name = candidate.get("name").getAsString();
     String party = candidate.get("party").getAsString();
     String email = getField(candidate, "email");
     String phone = getField(candidate, "phone");
-    String photo = getField(candidate, "PhotoUrl");
+    String photoUrl = getField(candidate, "PhotoUrl");
     String candidateUrl = getField(candidate, "candidateUrl");
     String twitter = getTwitter(candidate);
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -321,18 +335,19 @@ public class InfoCompiler {
             .set("party", party + " Party")
             .set("email", email)
             .set("phone", phone)
-            .set("PhotoUrl", photo)
+            .set("PhotoUrl", photoUrl)
             .set("candidateUrl", candidateUrl)
             .set("twitter", twitter)
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
-    boolean isincumbent = checkIncumbency(name, position.get(), ocdDivisionId);
-    candidateIncumbency.add(BooleanValue.newBuilder(isincumbent).build());
+    boolean isIncumbent = incumbents.containsKey(position) && incumbents.get(position).contains(name);
+    candidateIncumbency.add(BooleanValue.newBuilder(isIncumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
   }
-
+  
+  // Checks JSON for desired field then returns the Field as a String
   private String getField(JsonObject candidate, String field) {
     if (candidate.has(field)) {
       return candidate.get(field).getAsString();
@@ -341,6 +356,7 @@ public class InfoCompiler {
     }
   }
 
+  // Checks JSON for Twittter Handle which is nested in Channels Array then returns as String
   private String getTwitter(JsonObject candidate) {
     if (candidate.has("channels")){
       JsonArray channels = candidate.getAsJsonArray("channels");
@@ -355,15 +371,14 @@ public class InfoCompiler {
     return ""; 
   }
 
-
   /**
    * Compiles news articles data of {@code candidateName} and stores said data in the database.
    * News articles data are represented by {@code NewsArticle}.
    */
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
       String candidateId) {
-    try{
+    try {
       webCrawler.compileNewsArticle(candidateName, candidateId);
-    } catch (Exception e){}
+    } catch (Exception e) {}
   }
 }

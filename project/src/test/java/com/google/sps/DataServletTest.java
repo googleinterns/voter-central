@@ -74,6 +74,10 @@ public class DataServletTest {
       "  ]" +
       "}";
   private static final String QUERY_ID = "1000";
+  private static final String NY_STATE = "NY";
+  private static final String NJ_STATE = "NJ";
+  private static final String UNKNOWN_STATE = "";
+  private static final String STATE_FILTER = "NY";
   private static final String ADDRESS = "Sample address";
   private static final DataServlet dataServlet = new DataServlet();
 
@@ -133,29 +137,95 @@ public class DataServletTest {
     boolean listAllElections = false;
     Entity election = new Entity("Election");
     election.setProperty("queryId", (Object) QUERY_ID);
+    election.setProperty("state", (Object) NY_STATE);
     when(dataServletMock.queryCivicInformation(anyString()))
         .thenThrow(ClientProtocolException.class);
-    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections))
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
         .thenCallRealMethod();
-    assertThat(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections)).isFalse();
+    assertThat(
+        dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+            .isFalse();
   }
 
   @Test
-  public void isRelevantElection_listAllElections() throws IOException {
+  public void isRelevantElection_listAllElectionsWithCorrectState() throws IOException {
     // See that {@code isRelevantElection()} returns true when {@code listAllElections} is set to
-    // true, even for irrelevant elections, which will cause {@code queryCivicInformation()} to
-    // throw an exception. Use App Engine development tools for testing Datastore locally in
-    // memory.
+    // true and the election state matches {@code STATE_FILTER}, even for irrelevant elections,
+    // which will cause {@code queryCivicInformation()} to throw an exception. Use App Engine
+    // development tools for testing Datastore locally in memory.
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     DataServlet dataServletMock = mock(DataServlet.class);
     boolean listAllElections = true;
     Entity election = new Entity("Election");
     election.setProperty("queryId", (Object) QUERY_ID);
+    election.setProperty("state", (Object) NY_STATE);
     when(dataServletMock.queryCivicInformation(anyString()))
         .thenThrow(ClientProtocolException.class);
-    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections))
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
         .thenCallRealMethod();
-    assertThat(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections)).isTrue();
+    assertThat(
+        dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+            .isTrue();
+  }
+
+  @Test
+  public void isRelevantElection_listAllElectionsWithIncorrectState() throws IOException {
+    // See that {@code isRelevantElection()} returns false when {@code listAllElections} is set to
+    // true and the election state does not match {@code STATE_FILTER}. Use App Engine development
+    // tools for testing Datastore locally in memory.
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    DataServlet dataServletMock = mock(DataServlet.class);
+    boolean listAllElections = true;
+    Entity election = new Entity("Election");
+    election.setProperty("queryId", (Object) QUERY_ID);
+    election.setProperty("state", (Object) NJ_STATE);
+    when(dataServletMock.queryCivicInformation(anyString()))
+        .thenThrow(ClientProtocolException.class);
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+        .thenCallRealMethod();
+    assertThat(
+        dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+            .isFalse();
+  }
+
+  @Test
+  public void isRelevantElection_listAllElectionsWithUnknownState() throws IOException {
+    // See that {@code isRelevantElection()} returns true when {@code listAllElections} is set to
+    // true and the election state is unknown (empty string). Use App Engine development tools for
+    // testing Datastore locally in memory.
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    DataServlet dataServletMock = mock(DataServlet.class);
+    boolean listAllElections = true;
+    Entity election = new Entity("Election");
+    election.setProperty("queryId", (Object) QUERY_ID);
+    election.setProperty("state", (Object) UNKNOWN_STATE);
+    when(dataServletMock.queryCivicInformation(anyString()))
+        .thenThrow(ClientProtocolException.class);
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+        .thenCallRealMethod();
+    assertThat(
+        dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+            .isTrue();
+  }
+
+  @Test
+  public void isRelevantElection_listAllElectionsWithNullState() throws IOException {
+    // See that {@code isRelevantElection()} returns true when {@code listAllElections} is set to
+    // true and the state filter is null, which happens when the filter is not set. Use App Engine
+    // development tools for testing Datastore locally in memory.
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    DataServlet dataServletMock = mock(DataServlet.class);
+    boolean listAllElections = true;
+    Entity election = new Entity("Election");
+    election.setProperty("queryId", (Object) QUERY_ID);
+    election.setProperty("state", (Object) UNKNOWN_STATE);
+    when(dataServletMock.queryCivicInformation(anyString()))
+        .thenThrow(ClientProtocolException.class);
+    when(dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+        .thenCallRealMethod();
+    assertThat(
+        dataServletMock.isRelevantElection(election, ADDRESS, listAllElections, STATE_FILTER))
+            .isTrue();
   }
 
   @After
