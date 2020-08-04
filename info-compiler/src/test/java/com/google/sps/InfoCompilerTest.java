@@ -294,7 +294,8 @@ public final class InfoCompilerTest {
     election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
-                                + candidate.get("party").getAsString().hashCode());
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
     infoCompiler.electionQueryIds = new ArrayList<>();
     infoCompiler.storeBaseElectionInDatabase(election);
     infoCompiler.storeElectionContestInDatabase(election.get("id").getAsString(),
@@ -363,7 +364,8 @@ public final class InfoCompilerTest {
     doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
-                                + candidate.get("party").getAsString().hashCode());
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -446,7 +448,8 @@ public final class InfoCompilerTest {
     doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
-                                + candidate.get("party").getAsString().hashCode());
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -496,7 +499,8 @@ public final class InfoCompilerTest {
     doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
-                                + candidate.get("party").getAsString().hashCode());
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,

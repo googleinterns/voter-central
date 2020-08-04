@@ -337,7 +337,8 @@ public class InfoCompiler {
       storeElectionContestCandidateInDatabase(
           (JsonObject) candidate,
           candidateIds,
-          candidateIncumbency);
+          candidateIncumbency,
+          electionEntity.getKey().getName());
       candidatePositions.add(
           StringValue.newBuilder(
               capitalizeFirstLetterOfEachWord(contest.get("office").getAsString())).build());
@@ -377,13 +378,14 @@ public class InfoCompiler {
    * deletion purposes.
    */
   void storeElectionContestCandidateInDatabase(JsonObject candidate,
-      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
+      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency,
+      String electionName) {
     String name = candidate.get("name").getAsString();
     String rawParty = candidate.get("party").getAsString();
     String party = capitalizeFirstLetterOfEachWord(rawParty);
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
-    long candidateId = (long) (name.hashCode() + party.hashCode());
+    long candidateId = (long) (name.hashCode() + party.hashCode() + electionName.hashCode());
     StringValue candidateIdString = StringValue.newBuilder(Long.toString(candidateId)).build();
     if (candidateIds.contains(candidateIdString)) {
       return;
