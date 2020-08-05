@@ -27,6 +27,9 @@ public class Config {
   public static final String OPEN_NLP_MODEL_FILES_BUCKET_NAME = "";
   public static final String OPEN_NLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
   public static final String OPEN_NLP_TOKENIZER_FILE = "en-token.bin";
+  // This should be shorter than or equal to the time it takes for the next cycle of InfoCompiler
+  // to run.
+  public static final long DATA_EXPIRATION_SECONDS = 60 * 60 * 12;
 
   // For respecting the query rate limit (250 queries/100 seconds) of the Civic Information API:
   // With Cloud Functions deployment: How much to shorten/extend the pause between queries, relative

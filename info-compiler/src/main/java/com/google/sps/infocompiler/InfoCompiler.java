@@ -56,6 +56,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A information compiler for finding (1) official election/candidate information and (2) news
@@ -74,6 +75,14 @@ public class InfoCompiler {
   private static final int QUOTA_QUERY_LIMIT = 250;
   private static final long QUERY_PAUSE_MILISECONDS =
       (long) (QUOTA_TIME_UNIT_MILLISECONDS / QUOTA_QUERY_LIMIT * Config.PAUSE_FACTOR);
+  private static final String DATASTORE_BULK_DELETE_TEMPLATE_REQUEST =
+      String.format("https://dataflow.googleapis.com/v1b3/projects/%s/templates:launch?"
+          + "gcsPath=gs://dataflow-templates/latest/Datastore_to_Datastore_Delete",
+          Config.PROJECT_ID);
+  private static final String DATASTORE_BULK_DELETE_JOB_NAME =
+      Config.PROJECT_ID + "_datastore_bulk_delete";
+  // This intermediary variable is set up for testing purposes.
+  static long DATA_EXPIRATION_SECONDS = Config.DATA_EXPIRATION_SECONDS;
   Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
   WebCrawler webCrawler;
   List<String> electionQueryIds;
@@ -119,11 +128,13 @@ public class InfoCompiler {
   }
 
   /**
-   * Compiles location-specific information for elections, positions and candidates.
+   * Compiles location-specific information for elections, positions and candidates. Then clears
+   * outdated information from the database.
    */
   public void compileInfo() {
     queryAndStoreBaseElectionInfo();
     queryAndStoreElectionContestInfo();
+    clearOutdatedInfo();
   }
 
   /**
@@ -289,6 +300,7 @@ public class InfoCompiler {
             .set("candidateIds", Arrays.asList())
             .set("candidateIncumbency", Arrays.asList())
             .set("state", state)
+            .set("lastModified", Timestamp.now())
             .build();
     datastore.put(electionEntity);
     electionQueryIds.add(electionQueryId);
@@ -324,8 +336,11 @@ public class InfoCompiler {
       storeElectionContestCandidateInDatabase(
           (JsonObject) candidate,
           candidateIds,
-          candidateIncumbency);
-      candidatePositions.add(StringValue.newBuilder(contest.get("office").getAsString()).build());
+          candidateIncumbency,
+          electionEntity.getKey().getName());
+      candidatePositions.add(
+          StringValue.newBuilder(
+              capitalizeFirstLetterOfEachWord(contest.get("office").getAsString())).build());
     }
     // Fill in position and candidate information for the election entities in the database.
     electionEntity =
@@ -337,31 +352,55 @@ public class InfoCompiler {
     datastore.update(electionEntity);
   }
 
+  /**
+   * Capitalizes the first letter of each word in {@code phrase} and make the rest of the letters
+   * lowercase.
+   */
+  String capitalizeFirstLetterOfEachWord(String phrase) {
+    String[] words = phrase.split(" ");
+    for (int i = 0; i < words.length; i++) {
+      String word = words[i];
+      if (word.substring(0, 1).equals("\"")) {
+        words[i] = "\"" + StringUtils.capitalize(word.substring(1).toLowerCase());
+      } else {
+        words[i] = StringUtils.capitalize(word.toLowerCase());
+      }
+    }
+    return StringUtils.join(words, " ");
+  }
+
   // @TODO [Find incumbency.]
   /**
    * Stores information of a {@code candidate} in the database, and updates the candidate's running
    * position's information for the election. Information includes: name, party affiliation,
-   * incumbency status, and news articles related to the candidate.
+   * incumbency status, and news articles related to the candidate. Set the last modified time for
+   * deletion purposes.
    */
   void storeElectionContestCandidateInDatabase(JsonObject candidate,
-      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
+      List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency,
+      String electionName) {
     String name = candidate.get("name").getAsString();
     String rawParty = candidate.get("party").getAsString();
-    String party = rawParty.substring(0, 1).toUpperCase() + rawParty.substring(1);
+    String party = capitalizeFirstLetterOfEachWord(rawParty);
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
-    long candidateId = (long) (name.hashCode() + party.hashCode());
+    long candidateId = (long) (name.hashCode() + party.hashCode() + electionName.hashCode());
+    StringValue candidateIdString = StringValue.newBuilder(Long.toString(candidateId)).build();
+    if (candidateIds.contains(candidateIdString)) {
+      return;
+    }
     Key candidateKey =
         datastore.newKeyFactory()
             .setKind("Candidate")
             .newKey(candidateId);
     Entity candidateEntity =
         Entity.newBuilder(candidateKey)
-            .set("name", name)
+            .set("name", capitalizeFirstLetterOfEachWord(name))
             .set("partyAffiliation", party + " Party")
+            .set("lastModified", Timestamp.now())
             .build();
     datastore.put(candidateEntity);
-    candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
+    candidateIds.add(candidateIdString);
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
 
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), party);
@@ -374,5 +413,35 @@ public class InfoCompiler {
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
       String candidateId, String partyName) {
     webCrawler.compileNewsArticle(candidateName, candidateId, partyName);
+  }
+
+  /**
+   * Clears all outdated data in the database, where "outdatedness" is defined by {@code
+   * Config.DATA_EXPIRATION_SECONDS}.
+   */
+  private void clearOutdatedInfo() {
+    Timestamp expirationTime =
+        Timestamp.ofTimeSecondsAndNanos(
+            Timestamp.now().getSeconds() - DATA_EXPIRATION_SECONDS, 0);
+    clearOutdatedEntities("Election", expirationTime);
+    clearOutdatedEntities("Candidate", expirationTime);
+    clearOutdatedEntities("NewsArticle", expirationTime);
+  }
+
+  /**
+   * Clears outdated entities of type {@code entityType} in the database, where "outdatedness" is
+   * defined by {@code expirationTime}.
+   */
+  private void clearOutdatedEntities(String entityType, Timestamp expirationTime) {
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+          .setKind(entityType)
+          .setFilter(PropertyFilter.le("lastModified", expirationTime))
+          .build();
+    QueryResults<Entity> queryResults = datastore.run(query);
+    while (queryResults.hasNext()) {
+      Entity entity = queryResults.next();
+      datastore.delete(entity.getKey());
+    }
   }
 }
