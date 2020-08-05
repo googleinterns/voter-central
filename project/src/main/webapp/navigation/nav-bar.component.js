@@ -17,8 +17,24 @@
 
 angular.module('navigation').component('navBar', {
   templateUrl: '/navigation/nav-bar.template.html',
-  controller: function navBarController() {
-    // Dynamically generate links and pages relating to directory page etc.
-  
+  controller: function navBarController($scope) {
+    addDynamicNavBarContent($scope);
   }
 });
+
+async function addDynamicNavBarContent(scope){
+  if (location.pathname.includes("directory.html")) {
+    scope.isDirectoryPage = true;
+    const address = location.search.substring(location.search.indexOf('=') + 1,
+    location.search.indexOf('&'));
+    const listAllElections =
+        location.search.substring(location.search.lastIndexOf('=') + 1);
+
+    // Send GET request to /data with address and whether to list all elections.
+    const response = await fetch(`/data?address=${address}&listAllElections=${listAllElections}`);
+    const dataPackage = await response.json();
+
+    scope.elections = dataPackage.electionsData;
+    scope.$apply();
+  }
+}
