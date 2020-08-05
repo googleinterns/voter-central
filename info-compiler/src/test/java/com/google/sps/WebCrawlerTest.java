@@ -24,6 +24,7 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.sps.data.NewsArticle;
@@ -376,6 +377,7 @@ public final class WebCrawlerTest {
     // and successfully stores said entity into the database. Use a Datastore emulator to simulate
     // operations, as opposed to a Mockito mock of Datastore which does not provide mocking of all
     // required operations.
+    Timestamp past = Timestamp.now();
     NewsArticle expectedNewsArticle = new NewsArticle(VALID_URL, null, null, PRIORITY);
     expectedNewsArticle.setTitle(TITLE);
     expectedNewsArticle.setContent(CONTENT);
@@ -403,9 +405,15 @@ public final class WebCrawlerTest {
     assertThat(newsArticleEntity.getString("title")).isEqualTo(expectedNewsArticle.getTitle());
     assertThat(newsArticleEntity.getString("url")).isEqualTo(expectedNewsArticle.getUrl());
     assertThat(newsArticleEntity.getString("content")).isEqualTo(expectedNewsArticle.getContent());
-    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
-    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_SUMMARIZED_CONTENT);
-    assertThat(newsArticleEntity.getValue("priority").get()).isEqualTo(expectedNewsArticle.getPriority());
+    assertThat(newsArticleEntity.getString("abbreviatedContent"))
+        .isEqualTo(EMPTY_ABBREVIATED_CONTENT);
+    assertThat(newsArticleEntity.getString("abbreviatedContent"))
+        .isEqualTo(EMPTY_SUMMARIZED_CONTENT);
+    assertThat(newsArticleEntity.getValue("priority").get())
+        .isEqualTo(expectedNewsArticle.getPriority());
+    assertThat(((Timestamp) newsArticleEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @AfterClass

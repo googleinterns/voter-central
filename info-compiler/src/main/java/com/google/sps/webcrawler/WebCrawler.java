@@ -345,7 +345,8 @@ public class WebCrawler {
    * content} and {@code abbreviatedContent} are excluded form database indexes, which are
    * additional data structures built to enable efficient lookup on non-keyed properties. Because
    * we will not query {@code NewsArticle} Datastore entities via {@code content} or
-   * {@code abbreviatedContent}, we will not use indexes regardless.
+   * {@code abbreviatedContent}, we will not use indexes regardless. Set the last modified time
+   * for deletion purposes.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Key newsArticleKey =
@@ -369,6 +370,7 @@ public class WebCrawler {
                                       Timestamp.of(
                                           newsArticle.getPublishedDate())).build())
             .set("priority", newsArticle.getPriority())
+            .set("lastModified", Timestamp.now())
             .build();
     datastore.put(newsArticleEntity);
   }
