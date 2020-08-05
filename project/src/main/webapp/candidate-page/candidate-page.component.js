@@ -44,7 +44,10 @@ async function getCandidateInformation(scope) {
 
   // Add 2 components of information to the scope.
   scope.officialInfo = officialCandidateInfo;
-  scope.newsArticles = newsArticles;
+  // Sort news articles based on priority scores. News articles with smaller
+  // priority scores come first.
+  scope.newsArticles =
+      newsArticles.sort((x, y) => (x.priority >= y.priority) ? 1 : -1);
   scope.$apply();
 
   // Then add twitter information and load the widget

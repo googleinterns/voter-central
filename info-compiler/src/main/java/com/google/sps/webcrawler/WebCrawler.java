@@ -279,8 +279,7 @@ public class WebCrawler {
       // Check permission to access and respect the required crawl delay.
       if (grant == null
           || (grant.hasAccess()
-              && (grant.getCrawlDelay() == null
-                  || waitForAndSetCrawlDelay(grant, robotsUrl.toString())))) {
+              && waitForAndSetCrawlDelay(grant, robotsUrl.toString()))) {
         InputStream webpageStream = setTimeoutAndOpenStream(new URL(newsArticle.getUrl()));
         newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
@@ -311,6 +310,9 @@ public class WebCrawler {
    * non-null. This method is made default for testing purposes.
    */
   boolean waitForAndSetCrawlDelay(Grant grant, String url) {
+    if (grant.getCrawlDelay() == null) {
+      return true;
+    }
     if (nextAccessTimes.containsKey(url)) {
       if (!waitIfNecessary(url)) {
         return false;

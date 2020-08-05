@@ -1,0 +1,21 @@
+<nav class="navbar px-4 py-3 mx-1 float-left" id="navigation-bar">
+  <ul class="navbar-nav">
+    <li class="navbar-item">
+      <a class="nav-link" href="/index.html">Home</a>
+    </li>
+    <li class="navbar-item">
+      <a class="nav-link" href="/education.html">Voter Education</a>
+    </li>
+    <li class="navbar-item">
+      <a class="nav-link" href="/">Polling Locations</a>
+    </li>
+    <li ng-if="isDirectoryPage" class="navbar-item">
+      <i class="material-icons">minimize</i>
+    </li>
+    <li ng-if="isDirectoryPage" ng-repeat="election in elections"
+        class="navbar-item">
+      <a class="nav-link" href="#election-{{election.electionName}}">
+          {{election.electionName}}</a>
+    </li>
+  </ul>
+</nav>
