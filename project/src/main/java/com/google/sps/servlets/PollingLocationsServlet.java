@@ -18,7 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
+import java.net.URLEncoder;
 
 @WebServlet("/pollingLocation")
 public class PollingLocationsServlet extends HttpServlet {
@@ -28,7 +28,8 @@ public class PollingLocationsServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     String userAddress = request.getParameter("address");
-    String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, userAddress);
+    String encodedAddress = URLEncoder.encode(userAddress);
+    String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, encodedAddress);
     JsonObject voterInfoJson = queryCivicInformation(queryUrl);
     JsonArray pollingLocationsArray;
     //if (voterInfoJson.has("pollingLocations")) {
