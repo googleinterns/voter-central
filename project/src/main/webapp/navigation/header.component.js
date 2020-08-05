@@ -17,12 +17,12 @@
 
 angular.module('navigation').component('header', {
   template: `<a href="/">
-              <div class="py-2 mb-3" id="site-header">
-                <h1>
-                  <i class="material-icons md-48">how_to_vote</i>
-                  Voter Central
-                </h1>
-              </div>
+               <div class="py-2 mb-3" id="site-header">
+                 <h1>
+                   <i class="material-icons md-48">how_to_vote</i>
+                   Voter Central
+                 </h1>
+               </div>
              </a>`,
   controller: function headerController() {
     // Generate any dynamic info for header

@@ -12,8 +12,8 @@
   </ul>
   <p ng-if="officialInfo.isIncumbent"> {{officialInfo.candidateName}}
         currently holds office as {{officialInfo.position}}</p>
-  <p ng-show="officialInfo.website">Click <a href={{officialInfo.website}}>
-      here </a>to be redirected to {{officialInfo.candidateName}}'s website.
+  <p ng-show="officialInfo.website">
+    <a href={{officialInfo.website}}>Candidate's Website</a>
   </p>
 </div>
 <div ng-repeat="newsArticle in newsArticles" class="candidate-page-info" 
