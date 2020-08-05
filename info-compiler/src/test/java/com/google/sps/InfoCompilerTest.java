@@ -32,6 +32,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
@@ -75,8 +77,7 @@ public final class InfoCompilerTest {
                     Config.CIVIC_INFO_API_KEY);
   private static final String CONTEST_QUERY_URL =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
-                      ADDRESS.replace(",", "%2C").replace(" ", "%20").replace("\"", "%22"),
-                      NONTEST_ELECTION_QUERY_ID);
+                      URLEncoder.encode(ADDRESS), NONTEST_ELECTION_QUERY_ID);
   // @see <a href=
   //     "https://developers.google.com/civic-information/docs/using_api#electionquery-example">
   //     Sample JSON structure for the Civic Information API</a>
