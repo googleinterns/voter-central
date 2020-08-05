@@ -1,4 +1,14 @@
 <div id="elections-container">
+  <div class="state-filter" ng-show="showStateFilter">
+    <label>Filter results based on state:</label>
+    <select name="state-filter" id="state-filter"
+            ng-change="filterOnState()" ng-model="stateFilter"
+            ng-options="x for x in states">
+    </select>
+  </div>
+  <div class="alert" ng-show="alert">
+    <h4>Note: {{alert}}</h4>
+  </div>
   <div ng-repeat="election in elections" id="election-{{election.electionName}}">
     <h3 class="election-name">{{election.electionName}}</h3>
     <time>{{election.date}}</time>
