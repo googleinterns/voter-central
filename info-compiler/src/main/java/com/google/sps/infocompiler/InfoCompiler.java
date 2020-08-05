@@ -26,6 +26,9 @@ import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.cloud.datastore.TimestampValue;
 import com.google.cloud.datastore.Value;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -36,10 +39,15 @@ import com.google.sps.webcrawler.NewsContentExtractor;
 import com.google.sps.webcrawler.RelevancyChecker;
 import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -54,18 +62,23 @@ import org.apache.http.util.EntityUtils;
  * article information, and storing them in the database.
  */
 public class InfoCompiler {
-  private final static String ELECTION_QUERY_URL =
+  private static final String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
                     Config.CIVIC_INFO_API_KEY);
-  private final static String VOTER_INFO_QUERY_URL =
+  private static final String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                     Config.CIVIC_INFO_API_KEY);
-  private Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  private List<String> electionQueryIds = new ArrayList<>();
-  // For testing purposes (not to add too much information to the database).
-  // Will include all 50 states.
-  private List<String> states = Arrays.asList("NY");
-  private WebCrawler webCrawler;
+  static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
+  private static final Pattern STATE_PATTERN = Pattern.compile(".*state:(..).*");
+  private static final long QUOTA_TIME_UNIT_MILLISECONDS = 100 * 1000;
+  private static final int QUOTA_QUERY_LIMIT = 250;
+  private static final long QUERY_PAUSE_MILISECONDS =
+      (long) (QUOTA_TIME_UNIT_MILLISECONDS / QUOTA_QUERY_LIMIT * Config.PAUSE_FACTOR);
+  Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  WebCrawler webCrawler;
+  List<String> electionQueryIds;
+  // List of U.S. street addresses that theoretically cover the entire U.S.
+  List<String> addresses;
 
   public InfoCompiler() throws IOException {
     this(DatastoreOptions.getDefaultInstance().getService());
@@ -76,6 +89,41 @@ public class InfoCompiler {
     this.datastore = datastore;
     this.webCrawler =
         new WebCrawler(this.datastore, new NewsContentExtractor(), new RelevancyChecker());
+    parseAddressesFromDataset();
+  }
+
+  /**
+   * Reads the National Address Database (Release 3), referenced below, from Google Cloud Storage.
+   * The file is located at bucket {@code Config.ADDRESS_BUCKET_NAME} and named {@code
+   * Config.ADDRESS_FILE_NAME}.
+   *
+   * @see <a href=
+   *    "https://www.transportation.gov/gis/national-address-database/national-address-database-0">
+   *    National Address Database (Release 3)</a>
+   */
+  private void parseAddressesFromDataset() {
+    Storage storage =
+        StorageOptions.newBuilder().setProjectId(Config.PROJECT_ID).build().getService();
+    String[] addressFile =
+        new String (storage.get(Config.ADDRESS_BUCKET_NAME, Config.ADDRESS_FILE_NAME,
+                                Storage.BlobGetOption.userProject(Config.PROJECT_ID))
+                        .getContent()).split("\\r?\\n");
+    addresses = new ArrayList<>(addressFile.length);
+    for (String fullAddress : addressFile) {
+      // Extract the full address and discard other data, such as coordinates or ill-formated data.
+      String[] fullAddressSplit = fullAddress.split(",,,,,,,,,,");
+      if (fullAddressSplit.length == 2) {
+        addresses.add(fullAddressSplit[0]);
+      }
+    }
+  }
+
+  /**
+   * Compiles location-specific information for elections, positions and candidates.
+   */
+  public void compileInfo() {
+    queryAndStoreBaseElectionInfo();
+    queryAndStoreElectionContestInfo();
   }
 
   /**
@@ -92,7 +140,7 @@ public class InfoCompiler {
    * stores said found information in the database. Information includes: name, date, and query ID
    * of the election for the Civic Information API.
    */
-  public void queryAndStoreBaseElectionInfo() {
+  void queryAndStoreBaseElectionInfo() {
     queryAndStore(ELECTION_QUERY_URL, "elections", null);
   }
 
@@ -101,25 +149,49 @@ public class InfoCompiler {
    * information, which will serve as the starting point for finding additional information, and
    * stores said found information in the database. VoterInfoQuery requires two query parameters:
    * (1) address and (2) election ID. To cover the entire United States and all elections, queries
-   * all combinations of states as the address and election IDs. Information includes: positions,
-   * candidate names, candidate party affiliations.
+   * all combinations of {@code addresses} and election IDs. Information includes: candidate names
+   * and candidate party affiliations. Pauses for {@code QUERY_PAUSE_MILISECONDS} per query to
+   * respect the query rate limit of the Civic Information API.
    */
-  public void queryAndStoreElectionContestInfo() {
-    for (String state : states) {
+  void queryAndStoreElectionContestInfo() {
+    int addressStartIndex = Math.max(0, Config.ADDRESS_START_INDEX);
+    int addressEndIndex = Math.min(addresses.size(), Config.ADDRESS_END_INDEX);
+    for (String address : addresses.subList(addressStartIndex, addressEndIndex)) {
       for (String electionQueryId : electionQueryIds) {
-        queryAndStoreElectionContestInfo(state, electionQueryId);
+        try {
+          queryAndStoreElectionContestInfo(address, electionQueryId);
+          pause(QUERY_PAUSE_MILISECONDS);
+        } catch (UnsupportedEncodingException e) {}
       }
     }
   }
 
   /**
-   * Queries the ElectionQuery of the Civic Information API (once) for the election positions and
-   * candidates information of a particular state and election, and stores said found information
-   * in the database.
+   * Waits for {@code timeToPause} milliseconds if necessary and returns true if the pause
+   * succeeded.
    */
-  private void queryAndStoreElectionContestInfo(String state, String electionQueryId) {
+  private boolean pause(long timeToPause) {
+    try {
+      TimeUnit.MILLISECONDS.sleep(timeToPause);
+    } catch (InterruptedException e) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Queries the ElectionQuery of the Civic Information API (once) for the election positions and
+   * candidates information of a particular {@code address} and election corresponding to {@code
+   * electionQueryId}, and stores said found information in the database.
+   *
+   * @throws UnsupportedEncodingException if {@code address} cannot be encoded into a valid URL.
+   */
+  void queryAndStoreElectionContestInfo(String address, String electionQueryId)
+      throws UnsupportedEncodingException {
     String queryUrl =
-        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL, state, electionQueryId);
+        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
+                      URLEncoder.encode(address, "UTF-8"),
+                      electionQueryId);
     queryAndStore(queryUrl, "contests", electionQueryId);
   }
 
@@ -127,10 +199,13 @@ public class InfoCompiler {
    * Queries the Civic Information API (once) for {@code targetInfo}, by making requests to {@code
    * queryUrl}, and saves found information in the database.
    */
-  private void queryAndStore(String queryUrl, String targetInfo, String electionQueryId) {
+  void queryAndStore(String queryUrl, String targetInfo, String electionQueryId) {
     JsonArray infoArray;
     try {
       infoArray = queryCivicInformation(queryUrl).getAsJsonArray(targetInfo);
+      if (infoArray == null) {
+        return;
+      }
     } catch (IOException e) {
       System.out.println(
           String.format(
@@ -154,7 +229,7 @@ public class InfoCompiler {
    *
    * @throws ClientProtocolException if the GET request to the Civic Information API fails.
    */
-  private JsonObject queryCivicInformation(String queryUrl) throws IOException {
+  JsonObject queryCivicInformation(String queryUrl) throws IOException {
     CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpGet httpGet = new HttpGet(queryUrl);
     JsonObject json = requestHttpAndBuildJsonResponse(httpClient, httpGet);
@@ -191,13 +266,17 @@ public class InfoCompiler {
   /**
    * Stores the name, date and query ID of {@code election} in to the database. The original format
    * of the election day is "YYYY-MM-DD", and the specific hour/minute/second is irrelevant. By
-   * default, stores the election day at the beginning of the day in EDT timezone.
+   * default, stores the election day at the beginning of the day in EDT timezone. Extracts the
+   * state name from the political division information.
    */
   void storeBaseElectionInDatabase(JsonObject election) {
+    String electionQueryId = election.get("id").getAsString();
+    if (electionQueryId.equals(TEST_VIP_ELECTION_QUERY_ID)) {
+      return;
+    }
     Key electionKey = datastore.newKeyFactory()
         .setKind("Election")
         .newKey(election.get("name").getAsString());
-    String electionQueryId = election.get("id").getAsString();
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date =
         new Date(
@@ -206,6 +285,10 @@ public class InfoCompiler {
             Integer.parseInt(yearMonthDay[2]),
             4,
             0); // Convert from UTC to EDT with 4 hours.
+    // Extract state name for the election. Set state to empty if not found.
+    String division = election.get("ocdDivisionId").getAsString();
+    Matcher stateFinder = STATE_PATTERN.matcher(division);
+    String state = stateFinder.find() ? stateFinder.group(1).toUpperCase() : "";
     Entity electionEntity =
         Entity.newBuilder(electionKey)
             .set("queryId", electionQueryId)
@@ -213,6 +296,7 @@ public class InfoCompiler {
             .set("candidatePositions", Arrays.asList())
             .set("candidateIds", Arrays.asList())
             .set("candidateIncumbency", Arrays.asList())
+            .set("state", state)
             .build();
     datastore.put(electionEntity);
     electionQueryIds.add(electionQueryId);
@@ -267,10 +351,11 @@ public class InfoCompiler {
    * position's information for the election. Information includes: name, party affiliation,
    * incumbency status, and news articles related to the candidate.
    */
-  private void storeElectionContestCandidateInDatabase(JsonObject candidate,
+  void storeElectionContestCandidateInDatabase(JsonObject candidate,
       List<Value<String>> candidateIds, List<Value<Boolean>> candidateIncumbency) {
     String name = candidate.get("name").getAsString();
-    String party = candidate.get("party").getAsString();
+    String rawParty = candidate.get("party").getAsString();
+    String party = rawParty.substring(0, 1).toUpperCase() + rawParty.substring(1);
     // @TODO [May expand to other information to uniquely identify a candidate. Currently,
     // candidate information includes only name and party affiliation.]
     long candidateId = (long) (name.hashCode() + party.hashCode());
@@ -287,7 +372,7 @@ public class InfoCompiler {
     candidateIds.add(StringValue.newBuilder(Long.toString(candidateId)).build());
     candidateIncumbency.add(BooleanValue.newBuilder(false).build());
 
-    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString());
+    compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), party);
   }
 
   /**
@@ -295,7 +380,7 @@ public class InfoCompiler {
    * News articles data are represented by {@code NewsArticle}.
    */
   private void compileAndStoreCandidateNewsArticlesInDatabase(String candidateName,
-      String candidateId) {
-    webCrawler.compileNewsArticle(candidateName, candidateId);
+      String candidateId, String partyName) {
+    webCrawler.compileNewsArticle(candidateName, candidateId, partyName);
   }
 }

@@ -24,13 +24,16 @@ import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.sps.data.NewsArticle;
 import java.io.IOException;
 
-// @TODO [Compute the salience of other features, such as location, election, to improve accuracy.]
 /**
  * A utility class that performs entity analysis to check the relevancy of news article content to a
  * candidate.
  */
 public class RelevancyChecker {
-  static final double SALIENCE_THRESHOLD = 0.5;
+  static final double CANDIDATE_SALIENCE_THRESHOLD = 0.18;
+  static final double PARTY_SALIENCE_THRESHOLD = 0.001;
+  static final String NO_PARTY_AFFILIATION = "No Party Affiliation";
+  static final String NON_PARTISAN = "Non Partisan";
+  static final String NONPARTISAN = "Nonpartisan";
   private LanguageServiceClient languageServiceClient;
 
   /**
@@ -50,20 +53,31 @@ public class RelevancyChecker {
 
   /**
    * Checks whether the {@code newsArticle} is relevant to the {@code candidateName} of interest.
-   * Defines relevancy as the salience of {@code candidateName} in the content, and defines
-   * sufficient relevancy with {@code SALIENCE_THRESHOLD}.
+   * Defines relevancy as the salience of {@code candidateName} and {@code partyName} in the
+   * content both being bigger than their respective threshold. If {@code partyName} is null,
+   * skips the salience checking for {@code partyName} and determines relevancy solely by looking
+   * at the salience of {@code candidateName}.
    */
-  public boolean isRelevant(NewsArticle newsArticle, String candidateName) {
-    double salience = computeSalienceOfName(newsArticle.getContent(), candidateName);
-    return salience >= SALIENCE_THRESHOLD;
+  public boolean isRelevant(NewsArticle newsArticle, String candidateName, String partyName) {
+    double candidateNameSalience = computeSalienceOfName(newsArticle.getContent(), candidateName);
+    if (partyName == null
+            || partyName.equalsIgnoreCase(NO_PARTY_AFFILIATION)
+            || partyName.equalsIgnoreCase(NON_PARTISAN)
+            || partyName.equalsIgnoreCase(NONPARTISAN)) {
+      return candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD;
+    } else {
+      double partyNameSalience = computeSalienceOfName(newsArticle.getContent(), partyName);
+      return (candidateNameSalience >= CANDIDATE_SALIENCE_THRESHOLD
+          && partyNameSalience >= PARTY_SALIENCE_THRESHOLD);
+    }
   }
 
   /**
-   * Performs entity analysis, and computes the salience score of {@code candidateName} in the
-   * {@code content}. Salience has range [0, 1], with higher salience indicating higher relevance
-   * of {@code candidateName} to {@code content} overall.
+   * Performs entity analysis, and computes the salience score of {@code name} in the {@code
+   * content}. Salience has range [0, 1], with higher salience indicating higher relevance of
+   * {@code name} to {@code content} overall.
    */
-  double computeSalienceOfName(String content, String candidateName) {
+  double computeSalienceOfName(String content, String name) {
     Document doc = Document.newBuilder().setContent(content).setType(Type.PLAIN_TEXT).build();
     AnalyzeEntitiesRequest request =
         AnalyzeEntitiesRequest.newBuilder()
@@ -72,7 +86,7 @@ public class RelevancyChecker {
             .build();
     AnalyzeEntitiesResponse response = languageServiceClient.analyzeEntities(request);
     for (Entity entity : response.getEntitiesList()) {
-      if (candidateName.equalsIgnoreCase(entity.getName())) {
+      if (name.equalsIgnoreCase(entity.getName())) {
         return entity.getSalience();
       }
     }
