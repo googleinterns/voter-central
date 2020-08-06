@@ -30,19 +30,19 @@ public class PollingLocationsServlet extends HttpServlet {
     String userAddress = request.getParameter("address");
     String encodedAddress = URLEncoder.encode(userAddress);
     String queryUrl = String.format("%s&address=%s", VOTER_INFO_QUERY_URL, encodedAddress);
-    JsonObject voterInfoJson = queryCivicInformation(queryUrl);
-    JsonArray pollingLocationsArray;
-    //if (voterInfoJson.has("pollingLocations")) {
-    pollingLocationsArray = voterInfoJson.getAsJsonArray("pollingLocations");
-    //}
-    JsonObject pollingLocationAddress = pollingLocationsArray.get(0).getAsJsonObject();
-
-    Gson gson = new Gson();
-    String pollingLocation = gson.toJson(pollingLocationAddress);
-
-    // Send data in JSON format as the servlet response for the polling location page.
-    response.setContentType("application/json;");
-    response.getWriter().println(pollingLocation);
+    try {
+      JsonObject voterInfoJson = queryCivicInformation(queryUrl);
+      if (voterInfoJson.has("pollingLocations")) {
+        JsonArray pollingLocationsArray = voterInfoJson.getAsJsonArray("pollingLocations");
+        JsonObject pollingLocationAddress = pollingLocationsArray.get(0).getAsJsonObject();
+        // Send data in JSON format as the servlet response for the polling location page.
+        response.setContentType("application/json;");
+        response.getWriter().println(new Gson().toJson(pollingLocationAddress));
+      }
+    } catch (IOException e) {
+      System.out.println(e);
+      return;
+    }
   }
 
   /** 
