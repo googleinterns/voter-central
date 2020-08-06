@@ -88,15 +88,15 @@ public final class InfoCompilerTest {
       "   \"officialIndices\": [" +
       "      0" +
       "    ]" +
-      "  }," +
+      "  }" +
       " ]," +
       " \"officials\": [" +
       "  {" +
-      "   \"name\": \"Andrew Cuomo\"," +
+      "   \"name\": \"Andrew Cuomo\"" +
       "  }," +
       "  {" +
-      "   \"name\": \"John Doe\"," +
-      "  }," +
+      "   \"name\": \"John Doe\"" +
+      "  }" +
       " ]" +
       "}";
 
