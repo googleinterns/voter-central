@@ -28,6 +28,7 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
 import com.google.cloud.datastore.Value;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -72,7 +73,6 @@ public final class InfoCompilerTest {
   private static final String STATE = "NY";
   private static final String NONTEST_ELECTION_QUERY_ID =
       InfoCompiler.TEST_VIP_ELECTION_QUERY_ID + "0";
-  private static final boolean PLACEHOLDER_INCUMBENCY = false;
   private static final String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
   private static final String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
@@ -91,10 +91,9 @@ public final class InfoCompilerTest {
       " \"kind\": \"civicinfo#electionsqueryresponse\"," +
       " \"elections\": [" +
       "  {" +
-      "   \"id\": \"2000\"," +
+      "   \"id\": " + NONTEST_ELECTION_QUERY_ID + "," +
       "   \"name\": \"VIP Test Election\"," +
-      "   \"electionDay\": \"2013-06-06\"," +
-      "   \"ocdDivisionId\": \"ocd-division/country:us/state:ny\"" +
+      "   \"electionDay\": \"2013-06-06\"" +
       "  }" +
       " ]" +
       "}";
@@ -124,12 +123,14 @@ public final class InfoCompilerTest {
       new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
 
   private static JsonObject singleContestJson;
+  private static Map<String, List<String>> INCUMBENT_MAP = new HashMap<>();
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
   private static Datastore datastore;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
+    INCUMBENT_MAP.put("Governor of New York", Arrays.asList("Andrew Cuomo"));
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
@@ -139,7 +140,7 @@ public final class InfoCompilerTest {
     candidate.addProperty("name", "Andrew Cuomo");
     candidate.addProperty("party", "Democratic");
     candidate.addProperty("email", "ac@gmail.com");
-    candidate.addProperty("PhotoUrl", "photoOfCuomo.com");
+    candidate.addProperty("photoUrl", "photoOfCuomo.com");
     candidate.addProperty("candidateUrl", "www.Andrewcuomo.com");
     candidate.addProperty("phone", "122-333-4444");
     JsonArray channels = new JsonArray();
@@ -173,13 +174,13 @@ public final class InfoCompilerTest {
     infoCompiler = new InfoCompiler(datastore);
   }
 
-  @Test
-  public void parseAddressesFromDataset_regularParse() {
-    // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
-    // and contain {@code ADDRESS}.
-    assertThat(infoCompiler.addresses).hasSize(ADDRESS_NUMBER);
-    assertThat(infoCompiler.addresses).contains(ADDRESS);
-  }
+  // @Test
+  // public void parseAddressesFromDataset_regularParse() {
+  //   // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
+  //   // and contain {@code ADDRESS}.
+  //   assertThat(infoCompiler.addresses).hasSize(ADDRESS_NUMBER);
+  //   assertThat(infoCompiler.addresses).contains(ADDRESS);
+  // }
 
   @Test
   public void requestHttpAndBuildJsonResponse_succeedWithMockResponse() throws Exception {
@@ -204,9 +205,7 @@ public final class InfoCompilerTest {
   public void getIncumbents_checkWithMockJson() throws Exception {
     // Test that {@code getIncumbents} parses {@code representativesJson} correctly.
     Map<String, List<String>> incumbentMap = infoCompiler.getIncumbents(representativesJson);
-    Map<String, List<String>> mockIncumbentMap = new HashMap<>();
-    mockIncumbentMap.put("Governor of New York", Arrays.asList("Andrew Cuomo"));
-    assertThat(incumbentMap).isEqualTo(mockIncumbentMap);
+    assertThat(incumbentMap).isEqualTo(INCUMBENT_MAP);
   }
 
   @Test
@@ -457,7 +456,7 @@ public final class InfoCompilerTest {
     assertThat(queryResult.hasNext()).isFalse();
     assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
-    assertThat(candidateEntity.getString("partyAffiliation"))
+    assertThat(candidateEntity.getString("party"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
     assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
     assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
