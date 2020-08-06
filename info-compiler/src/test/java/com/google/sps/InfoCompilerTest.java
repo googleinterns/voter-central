@@ -82,22 +82,22 @@ public final class InfoCompilerTest {
 
   private static final String REPRESENTATIVE_RESPONSE = 
       "{" +
-      "offices: [" +
-      "{" +
-      "\"name\": \"Governor of New York\"," +
-      "\"officialIndices\": [" +
-      "0" +
-      "]" +
-      "}," +
-      "]," +
-      "\"officials\": [" +
-      "{" +
-      "\"name\": \"Andrew Cuomo\"," +
-      "}," +
-      "{" +
-      "\"name\": \"John Doe\"," +
-      "}," +
-      "]" +
+      " \"offices\": [" +
+      "  {" +
+      "   \"name\": \"Governor of New York\"," +
+      "   \"officialIndices\": [" +
+      "      0" +
+      "    ]" +
+      "  }," +
+      " ]," +
+      " \"officials\": [" +
+      "  {" +
+      "   \"name\": \"Andrew Cuomo\"," +
+      "  }," +
+      "  {" +
+      "   \"name\": \"John Doe\"," +
+      "  }," +
+      " ]" +
       "}";
 
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
