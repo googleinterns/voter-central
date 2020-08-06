@@ -31,7 +31,10 @@ import com.google.cloud.datastore.Value;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
@@ -62,12 +65,27 @@ import org.mockito.ArgumentCaptor;
  */
 @RunWith(JUnit4.class)
 public final class InfoCompilerTest {
+  private static final int ADDRESS_NUMBER = 957; // After screening.
+  private static String CORRECT_FORMAT_NAME = "Andrew Cuomo";
+  private static String CORRECT_FORMAT_NAME_IN_QUOTES = "\"Andrew Cuomo\"";
+  private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
+  private static final String STATE = "NY";
+  private static final String NONTEST_ELECTION_QUERY_ID =
+      InfoCompiler.TEST_VIP_ELECTION_QUERY_ID + "0";
+  private static final boolean PLACEHOLDER_INCUMBENCY = false;
   private static final String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
   private static final String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
                     CIVIC_INFO_API_KEY);
-  // @see Sample JSON structure:
-  //     https://developers.google.com/civic-information/docs/using_api#electionquery-example.
+  private static final String VOTER_INFO_QUERY_URL =
+      String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
+                    Config.CIVIC_INFO_API_KEY);
+  private static final String CONTEST_QUERY_URL =
+        String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
+                      URLEncoder.encode(ADDRESS), NONTEST_ELECTION_QUERY_ID);
+  // @see <a href=
+  //     "https://developers.google.com/civic-information/docs/using_api#electionquery-example">
+  //     Sample JSON structure for the Civic Information API</a>
   private static final String ELECTION_RESPONSE =
       "{" +
       " \"kind\": \"civicinfo#electionsqueryresponse\"," +
@@ -75,11 +93,11 @@ public final class InfoCompilerTest {
       "  {" +
       "   \"id\": \"2000\"," +
       "   \"name\": \"VIP Test Election\"," +
-      "   \"electionDay\": \"2013-06-06\"" +
+      "   \"electionDay\": \"2013-06-06\"," +
+      "   \"ocdDivisionId\": \"ocd-division/country:us/state:ny\"" +
       "  }" +
       " ]" +
       "}";
-
   private static final String REPRESENTATIVE_RESPONSE = 
       "{" +
       " \"offices\": [" +
@@ -99,11 +117,12 @@ public final class InfoCompilerTest {
       "  }" +
       " ]" +
       "}";
-
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
+  private static final JsonObject electionJson =
+      new JsonParser().parse(ELECTION_RESPONSE).getAsJsonObject();
+  private static final JsonObject representativesJson =
+      new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
 
-  private static JsonObject electionJson;
-  private static JsonObject representativesJson;
   private static JsonObject singleContestJson;
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
@@ -115,17 +134,6 @@ public final class InfoCompilerTest {
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
-
-    JsonObject election = new JsonObject();
-    election.addProperty("id", "2000");
-    election.addProperty("name", "VIP Test Election");
-    election.addProperty("electionDay", "2013-06-06");
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
-    JsonArray elections = new JsonArray();
-    elections.add(election);
-    electionJson = new JsonObject();
-    electionJson.addProperty("kind", "civicinfo#electionsqueryresponse");
-    electionJson.add("elections", elections);
 
     JsonObject candidate = new JsonObject();
     candidate.addProperty("name", "Andrew Cuomo");
@@ -149,9 +157,7 @@ public final class InfoCompilerTest {
     singleContestJson = new JsonObject();
     singleContestJson.addProperty("office", "Governor");
     singleContestJson.add("candidates", candidates);
-    
-    representativesJson = new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
-    }
+  }
 
   /**
    * Resets the internal state of the Datastore emulator and then {@code datastore}. Also resets
@@ -168,7 +174,15 @@ public final class InfoCompilerTest {
   }
 
   @Test
-  public void queryCivicInformation_succeedWithMockResponse() throws Exception {
+  public void parseAddressesFromDataset_regularParse() {
+    // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
+    // and contain {@code ADDRESS}.
+    assertThat(infoCompiler.addresses).hasSize(ADDRESS_NUMBER);
+    assertThat(infoCompiler.addresses).contains(ADDRESS);
+  }
+
+  @Test
+  public void requestHttpAndBuildJsonResponse_succeedWithMockResponse() throws Exception {
     // Query the Civic Information API with a mock HTTP client + mock callback function of type
     // {@code ResponseHandler<String>} that converts any {@code HttpResponse} response to {@code
     // ELECTION_RESPONSE}, and subsequently convert {@code ELECTION_RESPONSE} to {@code json}.
@@ -183,14 +197,12 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
-        //The response given by api for testing is missing a property
-        JsonObject mockElection = (JsonObject) json.getAsJsonArray("elections").get(0);
-        mockElection.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
     assertThat(json).isEqualTo(electionJson);
   }
 
   @Test
   public void getIncumbents_checkWithMockJson() throws Exception {
+    // Test that {@code getIncumbents} parses {@code representativesJson} correctly.
     Map<String, List<String>> incumbentMap = infoCompiler.getIncumbents(representativesJson);
     Map<String, List<String>> mockIncumbentMap = new HashMap<>();
     mockIncumbentMap.put("Governor of New York", Arrays.asList("Andrew Cuomo"));
@@ -198,13 +210,18 @@ public final class InfoCompilerTest {
   }
 
   @Test
-  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()
+  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJsonWithState()
       throws IOException {
     // Parse and re-structure base election information from {@code electionJson}'s
     // "elections" section and store the corresponding entity in the database. Said
     // entity should contain information that is consistent with that in {@code electionJson}.
-    // A Datastore emulator is used to simulate Datastore operations, as opposed to Mockito mocks.
-    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
+    // Here state information is added to {@code election} in lower case. {@code infoCompiler}
+    // should extract and store the same state, in upper case. A Datastore emulator is used to
+    // simulate Datastore operations, as opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -212,7 +229,7 @@ public final class InfoCompilerTest {
         Integer.parseInt(yearMonthDay[2]),
         4,
         0);
-
+    infoCompiler.electionQueryIds = new ArrayList<>();
     infoCompiler.storeBaseElectionInDatabase(election);
     Query<Entity> query =
         Query.newEntityQueryBuilder()
@@ -228,6 +245,75 @@ public final class InfoCompilerTest {
     assertThat(electionEntity.getList("candidatePositions")).isEmpty();
     assertThat(electionEntity.getList("candidateIds")).isEmpty();
     assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
+    assertThat(electionEntity.getString("state")).isEqualTo(STATE);
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
+        .isTrue();
+  }
+
+  @Test
+  public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJsonWithoutState()
+      throws IOException {
+    // Parse and re-structure base election information from {@code electionJson}'s
+    // "elections" section and store the corresponding entity in the database. Said
+    // entity should contain information that is consistent with that in {@code electionJson}.
+    // Here no state information is added to {@code election}. So {@code infoCompiler} should
+    // store an empty state name. A Datastore emulator is used to simulate Datastore operations, as
+    // opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us");
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+    infoCompiler.electionQueryIds = new ArrayList<>();
+    infoCompiler.storeBaseElectionInDatabase(election);
+    Query<Entity> query =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(query);
+    assertThat(queryResult.hasNext()).isTrue();
+    Entity electionEntity = queryResult.next();
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
+    assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
+    assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
+    assertThat(electionEntity.getList("candidatePositions")).isEmpty();
+    assertThat(electionEntity.getList("candidateIds")).isEmpty();
+    assertThat(electionEntity.getList("candidateIncumbency")).isEmpty();
+    assertThat(electionEntity.getString("state")).isEqualTo("");
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
+        .isTrue();
+  }
+
+  @Test
+  public void capitalizeFirstLetterOfEachWord_checkDifferentNames()
+      throws IOException {
+    // Capitalize the first letter of each word and make the rest of the letters lowercase.
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("Andrew Cuomo"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("andrew cuomo"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("ANDREW CUOMO"))
+        .isEqualTo(CORRECT_FORMAT_NAME);
+  }
+
+  @Test
+  public void capitalizeFirstLetterOfEachWord_checkDifferentNamesInQuotes()
+      throws IOException {
+    // Within the quotation marks, capitalize the first letter of each word and make the rest of
+    // the letters lowercase.
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"Andrew Cuomo\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"andrew cuomo\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
+    assertThat(infoCompiler.capitalizeFirstLetterOfEachWord("\"ANDREW CUOMO\""))
+        .isEqualTo(CORRECT_FORMAT_NAME_IN_QUOTES);
   }
 
   @Test
@@ -241,11 +327,15 @@ public final class InfoCompilerTest {
     // This method relies on the election entity created by {@code storeBaseElectionInDatabase()}
     // and thus assumes the correctness of said method. This method avoids repeating any tests
     // executed by {@code storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJson()}.
-    JsonObject election = (JsonObject) electionJson.getAsJsonArray("elections").get(0);
+    Timestamp past = Timestamp.now();
+    JsonObject election =
+        ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
-                                + candidate.get("party").getAsString().hashCode());
-
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
+    infoCompiler.electionQueryIds = new ArrayList<>();
     infoCompiler.storeBaseElectionInDatabase(election);
     infoCompiler.storeElectionContestInDatabase(election.get("id").getAsString(),
                                                 singleContestJson);
@@ -284,15 +374,205 @@ public final class InfoCompilerTest {
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
     assertThat(candidateEntity.getString("party"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
-    assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
-    assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
-    assertThat(candidateEntity.getString("candidateUrl")).isEqualTo(candidate.get("candidateUrl").getAsString());
-    assertThat(candidateEntity.getString("PhotoUrl")).isEqualTo(candidate.get("PhotoUrl").getAsString());
-    assertThat(candidateEntity.getString("twitter")).isEqualTo("@thefakeACuomo");
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
+        .isTrue();
   }
 
-  // @TODO [Perhaps add integrated tests that execute the entire processes of querying and storing
-  // information, eg. {@code queryAndStoreBaseElectionInfo()}.]
+  @Test
+  public void compileInfo_checkEntireInfoCompilationProcess()
+      throws IOException {
+    // Execute the entire information compilation process. We don't test WebCrawler (for compiling
+    // news articles) as that is tested in WebCrawlerTest. A Datastore emulator is used to simulate
+    // Datastore operations, as opposed to Mockito mocks.
+    Timestamp past = Timestamp.now();
+    JsonObject electionJsonCopy = electionJson.deepCopy();
+    JsonObject election =
+        ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
+    InfoCompiler infoCompilerSpy = spy(infoCompiler);
+    // Set expiration time to a safely large value that will not cause new data to be cleared.
+    infoCompilerSpy.DATA_EXPIRATION_SECONDS = 60 * 60 * 12;
+    infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
+    infoCompilerSpy.webCrawler = mock(WebCrawler.class);
+    doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
+    JsonArray contests = new JsonArray();
+    contests.add(singleContestJson);
+    JsonObject contestsResponse = new JsonObject();
+    contestsResponse.add("contests", contests);
+    doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
+    JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
+    Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+
+    infoCompilerSpy.compileInfo();
+
+    // Check election data.
+    Query<Entity> electionQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(electionQuery);
+    assertThat(queryResult.hasNext()).isTrue();
+    Entity electionEntity = queryResult.next();
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(electionEntity.getKey().getName()).isEqualTo(election.get("name").getAsString());
+    assertThat(electionEntity.getString("queryId")).isEqualTo(election.get("id").getAsString());
+    assertThat(electionEntity.getTimestamp("date").toDate()).isEqualTo(date);
+    assertThat(electionEntity.getString("state")).isEqualTo(STATE);
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
+        .isTrue();
+    List<Value<String>> candidatePositions =
+        new ArrayList<>(electionEntity.getList("candidatePositions"));
+    assertThat(candidatePositions).hasSize(1);
+    assertThat(candidatePositions)
+        .containsExactly(StringValue.newBuilder(
+                         singleContestJson.get("office").getAsString()).build());
+    List<Value<String>> candidateIds =
+        new ArrayList<>(electionEntity.getList("candidateIds"));
+    assertThat(candidateIds).hasSize(1);
+    assertThat(candidateIds)
+        .containsExactly(StringValue.newBuilder(candidateId.toString()).build());
+    List<Value<Boolean>> candidateIncumbency =
+        new ArrayList<>(electionEntity.getList("candidateIncumbency"));
+    assertThat(candidateIncumbency).hasSize(1);
+    assertThat(candidateIncumbency)
+        .containsExactly(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build());
+    // Check candidate data.
+    Query<Entity> candidateQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Candidate")
+            .build();
+    queryResult = datastore.run(candidateQuery);
+    assertThat(queryResult.hasNext()).isTrue();
+    Entity candidateEntity = queryResult.next();
+    assertThat(queryResult.hasNext()).isFalse();
+    assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
+    assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
+    assertThat(candidateEntity.getString("partyAffiliation"))
+        .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
+    assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
+    assertThat(candidateEntity.getString("candidateUrl"))
+        .isEqualTo(candidate.get("candidateUrl").getAsString());
+    assertThat(candidateEntity.getString("photoUrl"))
+        .isEqualTo(candidate.get("photoUrl").getAsString());
+    // @TODO make into constant
+    assertThat(candidateEntity.getString("twitter")).isEqualTo("@thefakeACuomo");
+    assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
+        .isTrue();
+  }
+
+  @Test
+  public void compileInfo_discardTestElection2000()
+      throws IOException {
+    // Execute the entire information compilation process but for information of election of query
+    // ID 2000, which is the test election of the Civic Information API and should be discarded.
+    // We don't test WebCrawler (for compiling news articles) as that is tested in WebCrawlerTest.
+    // A Datastore emulator is used to simulate Datastore operations, as opposed to Mockito mocks.
+    JsonObject electionJsonCopy = electionJson.deepCopy();
+    JsonObject election =
+        ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    election.addProperty("id", InfoCompiler.TEST_VIP_ELECTION_QUERY_ID);
+    InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
+    InfoCompiler infoCompilerSpy = spy(infoCompiler);
+    infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
+    infoCompilerSpy.webCrawler = mock(WebCrawler.class);
+    doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
+    JsonArray contests = new JsonArray();
+    contests.add(singleContestJson);
+    JsonObject contestsResponse = new JsonObject();
+    contestsResponse.add("contests", contests);
+    doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
+    JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
+    Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+
+    infoCompilerSpy.compileInfo();
+
+    // Check election data.
+    Query<Entity> electionQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(electionQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+    // Check candidate data.
+    Query<Entity> candidateQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Candidate")
+            .build();
+    queryResult = datastore.run(candidateQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+  }
+
+  @Test
+  public void compileInfo_infoExpires()
+      throws IOException {
+    // Execute the entire information compilation process and set {@code DATA_EXPIRATION_SECONDS}
+    // such that all newly added would be considered outdated immediately and thus cleared.
+    JsonObject electionJsonCopy = electionJson.deepCopy();
+    JsonObject election =
+        ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
+    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
+    InfoCompiler infoCompilerSpy = spy(infoCompiler);
+    // Any new data will be seen as outdated and thus cleared.
+    infoCompilerSpy.DATA_EXPIRATION_SECONDS = -1;
+    infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
+    infoCompilerSpy.webCrawler = mock(WebCrawler.class);
+    doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
+    JsonArray contests = new JsonArray();
+    contests.add(singleContestJson);
+    JsonObject contestsResponse = new JsonObject();
+    contestsResponse.add("contests", contests);
+    doReturn(contestsResponse).when(infoCompilerSpy).queryCivicInformation(eq(CONTEST_QUERY_URL));
+    JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
+    Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
+                                + candidate.get("party").getAsString().hashCode()
+                                + election.get("name").getAsString().hashCode());
+    String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
+    Date date = new Date(
+        Integer.parseInt(yearMonthDay[0]) - 1900,
+        Integer.parseInt(yearMonthDay[1]) - 1,
+        Integer.parseInt(yearMonthDay[2]),
+        4,
+        0);
+
+    infoCompilerSpy.compileInfo();
+
+    // Check election data.
+    Query<Entity> electionQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Election")
+            .build();
+    QueryResults<Entity> queryResult = datastore.run(electionQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+    // Check candidate data.
+    Query<Entity> candidateQuery =
+        Query.newEntityQueryBuilder()
+            .setKind("Candidate")
+            .build();
+    queryResult = datastore.run(candidateQuery);
+    assertThat(queryResult.hasNext()).isFalse();
+  }
 
   @AfterClass
   public static void cleanup() throws InterruptedException, IOException, TimeoutException {

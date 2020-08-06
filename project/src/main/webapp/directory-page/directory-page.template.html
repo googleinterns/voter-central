@@ -9,12 +9,12 @@
   <div class="alert" ng-show="alert">
     <h4>Note: {{alert}}</h4>
   </div>
-  <div ng-repeat="election in elections" id="election-{{$index + 1}}">
-    <h3>{{election.electionName}}</h3>
+  <div ng-repeat="election in elections" id="election-{{election.electionName}}">
+    <h3 class="election-name">{{election.electionName}}</h3>
     <time>{{election.date}}</time>
     <div id="election-{{$index + 1}}-positions">
-      <ul ng-repeat="position in election.positions">
-        <li>
+      <ul ng-repeat="position in election.positions" class="list-group">
+        <li class="list-group-item">
           <h4>Position {{$index + 1}}: {{position.positionName}}</h4>
           <p>Table of Candidates</p>
           <table>
