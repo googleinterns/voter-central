@@ -69,6 +69,13 @@ public final class InfoCompilerTest {
   private static final int ADDRESS_NUMBER = 957; // After screening.
   private static String CORRECT_FORMAT_NAME = "Andrew Cuomo";
   private static String CORRECT_FORMAT_NAME_IN_QUOTES = "\"Andrew Cuomo\"";
+  private static final String PARTY = "Democratic";
+  private static final String EMAIL = "ac@gmail.com";
+  private static final String PHOTO_URL = "photoOfCuomo.jpg";
+  private static final String CANDIDATE_URL = "www.andrewcuomo.com";
+  private static final String PHONE = "122-333-4444";
+  private static final String TWITTER_ID = "@thefakeACuomo";
+  private static final String OFFICE = "Governor";
   private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
   private static final String STATE = "NY";
   private static final String NONTEST_ELECTION_QUERY_ID =
@@ -90,18 +97,42 @@ public final class InfoCompilerTest {
       "{" +
       " \"kind\": \"civicinfo#electionsqueryresponse\"," +
       " \"elections\": [" +
-      "  {" +
-      "   \"id\": " + NONTEST_ELECTION_QUERY_ID + "," +
-      "   \"name\": \"VIP Test Election\"," +
-      "   \"electionDay\": \"2013-06-06\"" +
-      "  }" +
+      "   {" +
+      "    \"id\": " + "\"" + NONTEST_ELECTION_QUERY_ID + "\"," +
+      "    \"name\": \"VIP Test Election\"," +
+      "    \"electionDay\": \"2013-06-06\"" +
+      "   }" +
+      " ]" +
+      "}";
+  private static final String SINGLE_CONTEST_RESPONSE =
+      "{" +
+      " \"office\": " + OFFICE + "," +
+      " \"candidates\": [" +
+      "   {" +
+      "    \"name\": " + "\"" + CORRECT_FORMAT_NAME + "\"," +
+      "    \"party\": " + "\"" + PARTY + "\"," +
+      "    \"email\": " + "\"" + EMAIL + "\"," +
+      "    \"photoUrl\": " + "\"" + PHOTO_URL + "\"," +
+      "    \"candidateUrl\": " + "\"" + CANDIDATE_URL + "\"," +
+      "    \"phone\": " + "\"" + PHONE + "\"," +
+      "    \"channels\": [" +
+      "      {" +
+      "        \"type\": \"Twitter\"," +
+      "        \"id\": " + "\"" + TWITTER_ID + "\"" +
+      "      }," +
+      "      {" +
+      "        \"type\": \"Facebook\"," +
+      "        \"id\": \"randomAccount\"" +
+      "      }" +
+      "    ]" +
+      "   }" +
       " ]" +
       "}";
   private static final String REPRESENTATIVE_RESPONSE = 
       "{" +
       " \"offices\": [" +
       "  {" +
-      "   \"name\": \"Governor of New York\"," +
+      "   \"name\": " + "\"" + OFFICE + "\"," +
       "   \"officialIndices\": [" +
       "      0" +
       "    ]" +
@@ -109,7 +140,7 @@ public final class InfoCompilerTest {
       " ]," +
       " \"officials\": [" +
       "  {" +
-      "   \"name\": \"Andrew Cuomo\"" +
+      "   \"name\": " + "\"" + CORRECT_FORMAT_NAME + "\"" +
       "  }," +
       "  {" +
       "   \"name\": \"John Doe\"" +
@@ -119,10 +150,11 @@ public final class InfoCompilerTest {
   private static final boolean PLACEHOLDER_INCUMBENCY = false;
   private static final JsonObject electionJson =
       new JsonParser().parse(ELECTION_RESPONSE).getAsJsonObject();
+  private static JsonObject singleContestJson =
+      new JsonParser().parse(SINGLE_CONTEST_RESPONSE).getAsJsonObject();
   private static final JsonObject representativesJson =
       new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
 
-  private static JsonObject singleContestJson;
   private static Map<String, List<String>> INCUMBENT_MAP = new HashMap<>();
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
@@ -130,34 +162,11 @@ public final class InfoCompilerTest {
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
-    INCUMBENT_MAP.put("Governor of New York", Arrays.asList("Andrew Cuomo"));
+    INCUMBENT_MAP.put(OFFICE, Arrays.asList(CORRECT_FORMAT_NAME));
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
-
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("name", "Andrew Cuomo");
-    candidate.addProperty("party", "Democratic");
-    candidate.addProperty("email", "ac@gmail.com");
-    candidate.addProperty("photoUrl", "photoOfCuomo.com");
-    candidate.addProperty("candidateUrl", "www.Andrewcuomo.com");
-    candidate.addProperty("phone", "122-333-4444");
-    JsonArray channels = new JsonArray();
-    JsonObject Twitterchannel = new JsonObject();
-    JsonObject facebookChannel = new JsonObject();
-    facebookChannel.addProperty("type", "Facebook");
-    facebookChannel.addProperty("id", "@thewrongfakeACuomo");
-    Twitterchannel.addProperty("type", "Twitter");
-    Twitterchannel.addProperty("id", "@thefakeACuomo");
-    channels.add(Twitterchannel);
-    channels.add(facebookChannel);
-    candidate.add("channels", channels);
-    JsonArray candidates = new JsonArray();
-    candidates.add(candidate);
-    singleContestJson = new JsonObject();
-    singleContestJson.addProperty("office", "Governor");
-    singleContestJson.add("candidates", candidates);
   }
 
   /**
