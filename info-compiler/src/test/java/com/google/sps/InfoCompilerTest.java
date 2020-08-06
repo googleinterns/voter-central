@@ -150,23 +150,6 @@ public final class InfoCompilerTest {
     singleContestJson.addProperty("office", "Governor");
     singleContestJson.add("candidates", candidates);
     
-    // JsonObject official = new JsonObject();
-    // official.addProperty("name", "Andrew Cuomo");
-    // JsonArray officials = new JsonArray();
-    // officials.add(official);
-    // official = new JsonObject();
-    // official.addProperty("name", "John Doe");
-    // officials.add(official);
-    // JsonObject office = new JsonObject();
-    // office.addProperty("name", "Governor of New York");
-    // JsonArray officialIndices = new JsonArray();
-    // officialIndices.add(0);
-    // office.add("officialIndices", officialIndices);
-    // JsonArray offices = new JsonArray();
-    // offices.add(office);
-    // representativesJson = new JsonObject();
-    // representativesJson.add("offices", offices);
-    // representativesJson.add("officials", officials);
     representativesJson = new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
     }
 
