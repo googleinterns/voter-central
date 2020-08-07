@@ -85,19 +85,19 @@ public class NewsArticle {
   }
 
   public void setTitle(String title) {
-    this.title = title;
+    this.title = (title == null) ? "" : title;
   }
 
   public void setContent(String content) {
-    this.content = content;
+    this.content = (content == null) ? "" : content;
   }
 
   public void setAbbreviatedContent(String abbreviatedContent) {
-    this.abbreviatedContent = abbreviatedContent;
+    this.abbreviatedContent = (abbreviatedContent == null) ? "" : abbreviatedContent;
   }
 
   public void setSummarizedContent(String summarizedContent) {
-    this.summarizedContent = summarizedContent;
+    this.summarizedContent = (summarizedContent == null) ? "" : summarizedContent;
   }
 
   /**

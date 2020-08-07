@@ -54,7 +54,6 @@ async function getCandidateInformation(scope) {
   addCandidateTwitterInfo(scope, officialCandidateInfo.twitter)
 }
 
-
 /**
  * Adds the required twitter information into the scope, then
  * loads the script which allows the widget to work.

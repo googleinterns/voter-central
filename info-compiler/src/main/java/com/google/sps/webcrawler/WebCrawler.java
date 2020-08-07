@@ -77,6 +77,7 @@ public class WebCrawler {
   public static final int CUSTOM_SEARCH_RESULT_COUNT = 10;
   private static final int URL_CONNECT_TIMEOUT_MILLISECONDS = 1000;
   private static final int URL_READ_TIMEOUT_MILLISECONDS = 1000;
+  private static final int MAX_CRAWL_DELAY = 30 * 1000;
   private Datastore datastore;
   private NewsContentExtractor newsContentExtractor;
   private RelevancyChecker relevancyChecker;
@@ -127,7 +128,7 @@ public class WebCrawler {
     }
   }
 
-  // @TODO [Might adopt in {@code compileNewsArticle}.]
+  // [Might adopt in {@code compileNewsArticle}.]
   /**
    * Controls the web scraping frequency by delaying the @{code WebCrawler} for the maximum amount
    * of time as required by webpages encountered so far. This method is for frequency-tuning
@@ -139,6 +140,7 @@ public class WebCrawler {
   //     return;
   //   }
   //   long timeToDelay = Collections.max(nextAccessTimes.values()) - System.currentTimeMillis();
+  //   timeToDelay = Math.min(MAX_CRAWL_DELAY, timeToDelay);
   //   try {
   //     TimeUnit.MILLISECONDS.sleep(timeToDelay);
   //   } catch (InterruptedException e) {}
@@ -264,6 +266,7 @@ public class WebCrawler {
       politelyScrapeAndExtractFromHtml(grant, robotsUrl, newsArticle);
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in scrapeAndExtractHtml(): " + e);
+      newsArticle.setTitle("");
       newsArticle.setContent("");
     }
   }
@@ -284,11 +287,13 @@ public class WebCrawler {
         newsContentExtractor.extractContentFromHtml(webpageStream, newsArticle);
         webpageStream.close();
       } else {
+        newsArticle.setTitle("");
         newsArticle.setContent("");
         return;
       }
     } catch (Exception e) {
       System.out.println("[ERROR] Error occured in politelyScrapeAndExtractHtml(): " + e);
+      newsArticle.setTitle("");
       newsArticle.setContent("");
     }
   }
@@ -326,12 +331,17 @@ public class WebCrawler {
 
   /**
    * Waits for {@code timeToDelay} milliseconds if necessary and returns true if the pause
-   * succeeded or if the pause was unnecessary.
+   * succeeded or if the pause was unnecessary. Waits for a maximum of {@code MAX_CRAWL_DELAY}
+   * milliseconds.
    */
   private boolean waitIfNecessary(String url) {
     if (System.currentTimeMillis() < nextAccessTimes.get(url)) {
       try {
-        TimeUnit.MILLISECONDS.sleep(nextAccessTimes.get(url) - System.currentTimeMillis());
+        long sleepDuration = nextAccessTimes.get(url) - System.currentTimeMillis();
+        if (sleepDuration > MAX_CRAWL_DELAY) {
+          return false;
+        }
+        TimeUnit.MILLISECONDS.sleep(sleepDuration);
       } catch (InterruptedException e) {
         return false;
       }
