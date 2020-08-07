@@ -45,10 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-<<<<<<< HEAD
-=======
 import java.util.LinkedList;
->>>>>>> 8d689f3a64790a5f431ac58fc40c291983b413a3
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -368,14 +365,12 @@ public class InfoCompiler {
   }
 
   /**
-<<<<<<< HEAD
    * Queries the API for the representatives by division JSON. Then calls helper function that 
    * returns all representatives in a map that can be checked to verify incumbency. The map's keys 
    * contain office names and the value for each key is a list of officials.
-=======
    * Queries the Civic Information API for the representatives in {@code division}, and returns all
    * representatives in a position-representatives maping that can be checked to verify incumbency.
->>>>>>> 8d689f3a64790a5f431ac58fc40c291983b413a3
+   * The map's keys contain office names and the value for each key is a list of officials.
    */
   private Map<String, List<String>> getIncumbents(String division) {
     try {
@@ -385,27 +380,17 @@ public class InfoCompiler {
       JsonObject representatives = queryCivicInformation(queryUrl);
       return getIncumbents(representatives);
     } catch (IOException e) {
-        System.out.println(
-          String.format(
-<<<<<<< HEAD
-              "[ERROR] Failed to query the Civic Information API for representatives: %s.", e));
-=======
-              "[ERROR] Failed to query the Civic Information API for %s: %s.",
-              "representatives", e));
->>>>>>> 8d689f3a64790a5f431ac58fc40c291983b413a3
+      System.out.println(
+        String.format(
+            "[ERROR] Failed to query the Civic Information API for representatives: %s.", e));
       return new HashMap<String, List<String>>();
     }
   }
 
   /**
-<<<<<<< HEAD
-   * Helper function that takes Json object with the representatives by division as parameter.
-   * Creates a map that is then passed back to caller. The map's keys contain office names and 
-   * the value for each key is a list of officials.
-=======
-   * Parses the Civic Information API response and build a position-representatives maping that can
-   * be checked to verify incumbency.
->>>>>>> 8d689f3a64790a5f431ac58fc40c291983b413a3
+   * Helper function that parses JSON object with the representatives by division as parameter,
+   * and builds a position-representatives map, where the keys contain office names and the value
+   * for each key is a list of officials.
    */
   Map<String, List<String>> getIncumbents(JsonObject representatives) {
     Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
