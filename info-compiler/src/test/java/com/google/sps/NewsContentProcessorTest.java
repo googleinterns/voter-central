@@ -124,8 +124,6 @@ public final class NewsContentProcessorTest {
     NewsArticle expectedArticle = new NewsArticle(newsArticle);
     NewsContentProcessor.summarize(newsArticle);
     expectedArticle.setSummarizedContent(SUMMARIZED_CONTENT);
-    System.out.println(newsArticle.getSummarizedContent());
-    System.out.println(expectedArticle.getSummarizedContent());
     assertThat(newsArticle).isEqualTo(expectedArticle);
   }
 

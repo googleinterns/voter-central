@@ -18,9 +18,26 @@ package com.google.sps.infocompiler;
  * A configuration class for keeping hidden API keys and other configuration files.
  */
 public class Config {
+  public static final String PROJECT_ID = "";
+  public static final String ADDRESS_BUCKET_NAME = "";
+  public static final String ADDRESS_FILE_NAME = "";
   public static final String CIVIC_INFO_API_KEY = "";
   public static final String CUSTOM_SEARCH_KEY = "";
   public static final String CUSTOM_SEARCH_ENGINE_ID = "";
-  public static final String OpenNLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
-  public static final String OpenNLP_TOKENIZER_FILE = "en-token.bin";
+  public static final String OPEN_NLP_MODEL_FILES_BUCKET_NAME = "";
+  public static final String OPEN_NLP_SENTENCE_DETECTOR_FILE = "en-sent.bin";
+  public static final String OPEN_NLP_TOKENIZER_FILE = "en-token.bin";
+  // This should be shorter than or equal to the time it takes for the next cycle of InfoCompiler
+  // to run.
+  public static final long DATA_EXPIRATION_SECONDS = 60 * 60 * 12;
+
+  // For respecting the query rate limit (250 queries/100 seconds) of the Civic Information API:
+  // With Cloud Functions deployment: How much to shorten/extend the pause between queries, relative
+  // to the minimum pause (0.4 seconds) required.
+  // Recommended value: 2.
+  public static final double PAUSE_FACTOR = 2;
+  // Due to Cloud Functions' 540s execution limit: process only a subset of addresses.
+  // For instance: [0, 300), [301, 600), [601, 1000) respectively for three Cloud Functions.
+  public static final int ADDRESS_START_INDEX = 0; // Lower-bounded by 0.
+  public static final int ADDRESS_END_INDEX = 300; // Upper-bounded by the total number of addresses.
 }

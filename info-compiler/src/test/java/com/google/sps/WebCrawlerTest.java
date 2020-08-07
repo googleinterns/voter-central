@@ -24,6 +24,7 @@ import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
+import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.sps.data.NewsArticle;
@@ -160,9 +161,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat1()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
-    // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT1}).
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
+    // {@code initialize()} and added with the news article URL, publisher and published date
+    // (formatted as {@code PUBLISHED_DATE_FORMAT1}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -177,9 +179,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat2()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT2}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT2}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -194,9 +197,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat3()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT3}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT3}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -211,9 +215,10 @@ public final class WebCrawlerTest {
   @Test
   public void extractUrlsAndMetadataFromCustomSearchJson_regularJsonWithDateFormat4()
       throws IOException {
-    // Extract news article URL and metadata from {@code regularJson}, which is in format @see
+    // Extract news article URL and metadata from {@code regularJson}, whose structure is shown in
     // {@code initialize()} and added with the news article URL, publisher and published date (in
-    // the first potential format as {@code PUBLISHED_DATE_FORMAT4}).
+    // (formatted as {@code PUBLISHED_DATE_FORMAT4}).
+    // @see #initialize()
     JsonObject regularJson = customSearchJson.deepCopy();
     JsonObject metadata = getMetadataJsonObject(regularJson);
     metadata.addProperty(WebCrawler.CUSTOM_SEARCH_PUBLISHER_METATAGS.get(0), PUBLISHER);
@@ -307,6 +312,19 @@ public final class WebCrawlerTest {
         new NewsArticle(VALID_URL, null, null, PRIORITY + 1));
   }
 
+  @Test
+  public void extractUrlsAndMetadataFromCustomSearchJson_jsonWithoutUrl()
+      throws IOException {
+    // Extract news article URL and metadata from {@code jsonWithoutUrl}, which contains no
+    // URL. No news article should be returned.
+    JsonObject jsonWithoutUrl = customSearchJson.deepCopy();
+    JsonObject metadata = getMetadataJsonObject(jsonWithoutUrl);
+    metadata.remove(WebCrawler.CUSTOM_SEARCH_URL_METATAG);
+    List<NewsArticle> newsArticles =
+        webCrawler.extractUrlsAndMetadataFromCustomSearchJson(jsonWithoutUrl);
+    assertThat(newsArticles).isEmpty();
+  }
+
   /**
    * Obtains the innermost-level metadata from the complete {@code customSearchJson}.
    */
@@ -359,6 +377,7 @@ public final class WebCrawlerTest {
     // and successfully stores said entity into the database. Use a Datastore emulator to simulate
     // operations, as opposed to a Mockito mock of Datastore which does not provide mocking of all
     // required operations.
+    Timestamp past = Timestamp.now();
     NewsArticle expectedNewsArticle = new NewsArticle(VALID_URL, null, null, PRIORITY);
     expectedNewsArticle.setTitle(TITLE);
     expectedNewsArticle.setContent(CONTENT);
@@ -380,15 +399,21 @@ public final class WebCrawlerTest {
         datastore
             .newKeyFactory()
             .setKind("Candidate")
-            .newKey(CANDIDATE_ID);
+            .newKey(Long.parseLong(CANDIDATE_ID));
     assertThat(newsArticleEntity.getKey()).isEqualTo(newsArticleKey);
     assertThat(newsArticleEntity.getKey("candidateId")).isEqualTo(candidateKey);
     assertThat(newsArticleEntity.getString("title")).isEqualTo(expectedNewsArticle.getTitle());
     assertThat(newsArticleEntity.getString("url")).isEqualTo(expectedNewsArticle.getUrl());
     assertThat(newsArticleEntity.getString("content")).isEqualTo(expectedNewsArticle.getContent());
-    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_ABBREVIATED_CONTENT);
-    assertThat(newsArticleEntity.getString("abbreviatedContent")).isEqualTo(EMPTY_SUMMARIZED_CONTENT);
-    assertThat(newsArticleEntity.getValue("priority").get()).isEqualTo(expectedNewsArticle.getPriority());
+    assertThat(newsArticleEntity.getString("abbreviatedContent"))
+        .isEqualTo(EMPTY_ABBREVIATED_CONTENT);
+    assertThat(newsArticleEntity.getString("abbreviatedContent"))
+        .isEqualTo(EMPTY_SUMMARIZED_CONTENT);
+    assertThat(newsArticleEntity.getValue("priority").get())
+        .isEqualTo(expectedNewsArticle.getPriority());
+    assertThat(((Timestamp) newsArticleEntity.getValue("lastModified").get()).getSeconds()
+                    >= past.getSeconds())
+        .isTrue();
   }
 
   @AfterClass

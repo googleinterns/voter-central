@@ -1,4 +1,3 @@
-/* General Styling */
 a {
   text-decoration: none;
 }
@@ -14,11 +13,20 @@ body {
   text-align: center;
 }
 
+.election-name {
+  color: #1d5b8f;
+}
+
+.material-icons {
+  font-size: 48px;
+  vertical-align: bottom;
+}
+
 #navigation-bar {
   background-color: #4788c4;
-  float: left;
   font-size: 22px;
   height: 100%;
+  max-width: 25%;
   position: fixed;
 }
 

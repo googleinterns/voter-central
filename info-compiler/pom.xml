@@ -12,6 +12,8 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <failOnMissingWebXml>false</failOnMissingWebXml>
+    <!-- To execute: mvn clean compile exec:java -->
+    <exec.mainClass>com.google.sps.infocompiler.InfoCompilerRunner</exec.mainClass>
   </properties>
 
   <dependencyManagement>
@@ -34,6 +36,10 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-language</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.functions</groupId>
@@ -62,6 +68,11 @@
       <artifactId>junit</artifactId>
       <version>4.12</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.11</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -136,7 +147,7 @@
         <artifactId>function-maven-plugin</artifactId>
         <version>0.9.3</version>
         <configuration>
-          <functionTarget>com.google.sps.infocompiler.InfoCompilerFunction</functionTarget>
+          <functionTarget>com.google.sps.infocompiler.InfoCompilerUtils</functionTarget>
         </configuration>
       </plugin>
     </plugins>
