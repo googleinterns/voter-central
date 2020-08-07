@@ -183,14 +183,14 @@ public final class InfoCompilerTest {
     when(httpClient.execute(anyObject(), argumentCaptor.capture())).thenReturn(ELECTION_RESPONSE);
     JsonObject json =
         InfoCompiler.requestHttpAndBuildJsonResponse(httpClient, httpGet);
-        //The response given by api for testing is missing a property
+        // The response given by api for testing is missing a property.
         JsonObject mockElection = (JsonObject) json.getAsJsonArray("elections").get(0);
         mockElection.addProperty("ocdDivisionId", "ocd-division/country:us/state:ny");
     assertThat(json).isEqualTo(electionJson);
   }
 
   @Test
-  public void getIncumbents_checkWithMockJson() throws Exception {
+  public void getIncumbents_populateIncumbentsMap() throws Exception {
     Map<String, List<String>> incumbentMap = infoCompiler.getIncumbents(representativesJson);
     Map<String, List<String>> mockIncumbentMap = new HashMap<>();
     mockIncumbentMap.put("Governor of New York", Arrays.asList("Andrew Cuomo"));

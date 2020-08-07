@@ -39,8 +39,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -275,8 +275,9 @@ public class InfoCompiler {
   }
 
   /**
-   * Queries the API for the representatives by division JSON. then returns all representatives in
-   * a map that can be checked to verify incumbency.
+   * Queries the API for the representatives by division JSON. Then calls helper function that 
+   * returns all representatives in a map that can be checked to verify incumbency. The map's keys 
+   * contain office names and the value for each key is a list of officials.
    */
   private Map<String, List<String>> getIncumbents(String division) {
     try {
@@ -286,11 +287,16 @@ public class InfoCompiler {
     } catch (IOException e) {
         System.out.println(
           String.format(
-              "[ERROR] Failed to query the Civic Information API for %s: %s.", "representatives", e));
+              "[ERROR] Failed to query the Civic Information API for representatives: %s.", e));
       return new HashMap<String, List<String>>();
     }
   }
 
+  /**
+   * Helper function that takes Json object with the representatives by division as parameter.
+   * Creates a map that is then passed back to caller. The map's keys contain office names and 
+   * the value for each key is a list of officials.
+   */
   Map<String, List<String>> getIncumbents(JsonObject representatives) {
     Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
     JsonArray offices = representatives.getAsJsonArray("offices");
