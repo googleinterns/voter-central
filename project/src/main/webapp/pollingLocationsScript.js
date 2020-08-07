@@ -23,5 +23,8 @@ function listPollingLocations() {
     for (const fields in pollingAddress.address){
       pollingAddressElement.innerHTML += pollingAddress.address[fields] + "<br>";
     }
+  }).catch(() => {
+    document.getElementById('poll-address').innerText = 
+        "Polling location not found. Please verify that you have entered a valid address.";
   });
 }
