@@ -140,6 +140,7 @@ public class WebCrawler {
   //     return;
   //   }
   //   long timeToDelay = Collections.max(nextAccessTimes.values()) - System.currentTimeMillis();
+  //   timeToDelay = Math.min(MAX_CRAWL_DELAY, timeToDelay);
   //   try {
   //     TimeUnit.MILLISECONDS.sleep(timeToDelay);
   //   } catch (InterruptedException e) {}

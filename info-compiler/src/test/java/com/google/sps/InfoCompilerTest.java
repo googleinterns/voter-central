@@ -187,13 +187,13 @@ public final class InfoCompilerTest {
     infoCompiler = new InfoCompiler(datastore);
   }
 
-  // @Test
-  // public void parseAddressesFromDataset_regularParse() {
-  //   // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
-  //   // and contain {@code ADDRESS}.
-  //   assertThat(infoCompiler.addresses).hasSize(ADDRESS_NUMBER);
-  //   assertThat(infoCompiler.addresses).contains(ADDRESS);
-  // }
+  @Test
+  public void parseAddressesFromDataset_regularParse() {
+    // The list of U.S. addresses in the dataset should contains {@code ADDRESS_NUMBER} addresses
+    // and contain {@code ADDRESS}.
+    assertThat(infoCompiler.addresses).hasSize(ADDRESS_NUMBER);
+    assertThat(infoCompiler.addresses).contains(ADDRESS);
+  }
 
   @Test
   public void requestHttpAndBuildJsonResponse_succeedWithMockResponse() throws Exception {
