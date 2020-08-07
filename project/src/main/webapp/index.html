@@ -10,7 +10,9 @@
     <link
         href=
         "https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto+Slab:wght@900&display=swap"
-        rel="stylesheet">    
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet">
     <link
         rel="stylesheet"
         href=
@@ -30,18 +32,18 @@
     <title>Voter Central Homepage</title>
   </head>
   <body>
-    <nav-bar></nav-bar>
     <div class="container-fluid mt-1">
+      <nav-bar></nav-bar>
       <div class="row justify-content-end">
         <div class="col-9">
             <header></header>
         </div>
       </div>
       <div class="row justify-content-end">
-        <div class="col-9">
+        <div class="col-9 mt-5 pt-5">
           <main role="main">
             <form id="location-input" action="/directory.html">
-              <label for="address">Enter your street address:</label>
+              <label for="address"><h3>Enter your street address:</h3></label>
               <br>
               <input type="text" id="address" name="address"
                   placeholder="...your street address..." required/>

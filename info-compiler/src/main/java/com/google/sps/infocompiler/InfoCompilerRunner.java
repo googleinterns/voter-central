@@ -1,4 +1,4 @@
-//Copyright 2019 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// use modern JavaScript (ES5)
-"use strict"
+package com.google.sps.infocompiler;
 
-angular.module('navigation').component('header', {
-  template: `<a href="/">
-               <div class="py-2 mb-3" id="site-header">
-                 <h1>
-                   <i class="material-icons md-48">how_to_vote</i>
-                   Voter Central
-                 </h1>
-               </div>
-             </a>`,
-  controller: function headerController() {
-    // Generate any dynamic info for header
+import java.io.IOException;
+
+/**
+  * The entry point of Google Compute Engine: Compiles location-specific information for
+  * elections, positions and candidates.
+  */
+public class InfoCompilerRunner {
+
+  public static void main(String[] args) throws IOException {
+    InfoCompiler infoCompiler = new InfoCompiler();
+    infoCompiler.compileInfo();
+    System.out.println("InfoCompiler completed.");
   }
-});
+}

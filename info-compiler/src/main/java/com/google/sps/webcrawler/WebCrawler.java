@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.time.DateTimeException;
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
@@ -113,11 +114,11 @@ public class WebCrawler {
    * 6. Processes content.
    * 7. Stores processed content in the database.
    */
-  public void compileNewsArticle(String candidateName, String candidateId) {
+  public void compileNewsArticle(String candidateName, String candidateId, String partyName) {
     List<NewsArticle> newsArticles = getUrlsFromCustomSearch(candidateName);
     for (NewsArticle newsArticle : newsArticles) {
       scrapeAndExtractFromHtml(newsArticle);
-      if (!relevancyChecker.isRelevant(newsArticle, candidateName)) {
+      if (!relevancyChecker.isRelevant(newsArticle, candidateName, partyName)) {
         continue;
       }
       NewsContentProcessor.abbreviate(newsArticle);
@@ -155,7 +156,7 @@ public class WebCrawler {
         String.format(
             "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s",
             Config.CUSTOM_SEARCH_KEY, Config.CUSTOM_SEARCH_ENGINE_ID,
-            candidateName.replace(" ", "%20"));
+            URLEncoder.encode(candidateName));
     CloseableHttpClient httpClient = HttpClients.createDefault();
     try {
       HttpGet httpGet = new HttpGet(request);
@@ -176,21 +177,41 @@ public class WebCrawler {
   List<NewsArticle> extractUrlsAndMetadataFromCustomSearchJson(JsonObject json) {
     List<NewsArticle> newsArticles = new ArrayList<>(CUSTOM_SEARCH_RESULT_COUNT);
     JsonArray searchResults = json.getAsJsonArray("items");
+    if (searchResults == null) {
+      return Arrays.asList();
+    }
     int priority = 1;
     for (JsonElement result : searchResults) {
-      JsonObject metadata =
-          (JsonObject)
-              (((JsonObject) result)
-                   .getAsJsonObject("pagemap")
-                       .getAsJsonArray("metatags")
-                           .get(0));
-      String url = metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
+      JsonObject metadata;
+      String url;
+      try {
+        metadata =
+            (JsonObject)
+                (((JsonObject) result)
+                    .getAsJsonObject("pagemap")
+                        .getAsJsonArray("metatags")
+                            .get(0));
+        url = extractUrlMetadata(metadata);
+      } catch (NullPointerException e) {
+        continue;
+      }
       String publisher = extractPublisherMetadata(metadata);
       Date publishedDate = extractPublishedDateMetadata(metadata);
       newsArticles.add(new NewsArticle(url, publisher, publishedDate, priority));
       priority++;
     }
     return newsArticles;
+  }
+
+  /**
+   * Extracts the URL from {@code metadata}. Throws an exception if the URL wasn't found,
+   * because the news article content relies on the URL.
+   *
+   * @throws NullPointerException if the metatag {@code CUSTOM_SEARCH_URL_METATAG} doesn't
+   *     exist.
+   */
+  private String extractUrlMetadata(JsonObject metadata) {
+    return metadata.get(CUSTOM_SEARCH_URL_METATAG).getAsString();
   }
 
   /**
@@ -324,7 +345,8 @@ public class WebCrawler {
    * content} and {@code abbreviatedContent} are excluded form database indexes, which are
    * additional data structures built to enable efficient lookup on non-keyed properties. Because
    * we will not query {@code NewsArticle} Datastore entities via {@code content} or
-   * {@code abbreviatedContent}, we will not use indexes regardless.
+   * {@code abbreviatedContent}, we will not use indexes regardless. Set the last modified time
+   * for deletion purposes.
    */
   public void storeInDatabase(String candidateId, NewsArticle newsArticle) {
     Key newsArticleKey =
@@ -334,17 +356,21 @@ public class WebCrawler {
             .newKey((long) newsArticle.getUrl().hashCode());
     Entity newsArticleEntity =
         Entity.newBuilder(newsArticleKey)
-            .set("candidateId", datastore.newKeyFactory().setKind("Candidate").newKey(candidateId))
+            .set("candidateId", datastore.newKeyFactory()
+                                    .setKind("Candidate")
+                                    .newKey(Long.parseLong(candidateId)))
             .set("title", newsArticle.getTitle())
             .set("url", newsArticle.getUrl())
             .set("content", excludeStringFromIndexes(newsArticle.getContent()))
             .set(
                 "abbreviatedContent", excludeStringFromIndexes(newsArticle.getAbbreviatedContent()))
+            .set("summarizedContent", excludeStringFromIndexes(newsArticle.getSummarizedContent()))
             .set("publisher", newsArticle.getPublisher())
             .set("publishedDate", TimestampValue.newBuilder(
                                       Timestamp.of(
                                           newsArticle.getPublishedDate())).build())
             .set("priority", newsArticle.getPriority())
+            .set("lastModified", Timestamp.now())
             .build();
     datastore.put(newsArticleEntity);
   }
