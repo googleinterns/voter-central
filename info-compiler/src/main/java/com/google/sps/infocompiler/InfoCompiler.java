@@ -72,7 +72,7 @@ public class InfoCompiler {
   private static final String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                     Config.CIVIC_INFO_API_KEY);
-  private final static String REPRENTATIVE_QUERY_URL_WITHOUT_KEY =
+  private static final String REPRENTATIVE_QUERY_URL_WITHOUT_KEY =
       "https://www.googleapis.com/civicinfo/v2/representatives";
   static final String TEST_VIP_ELECTION_QUERY_ID = "2000";
   private static final Pattern STATE_PATTERN = Pattern.compile(".*state:(..).*");
@@ -463,7 +463,8 @@ public class InfoCompiler {
             .build();
     datastore.put(candidateEntity);
     candidateIds.add(candidateIdString);
-    boolean isIncumbent = incumbents.containsKey(position) && incumbents.get(position).contains(name);
+    boolean isIncumbent = incumbents.containsKey(position.get())
+        && incumbents.get(position.get()).contains(name);
     candidateIncumbency.add(BooleanValue.newBuilder(isIncumbent).build());
     candidatePositions.add(position);
     compileAndStoreCandidateNewsArticlesInDatabase(name, new Long(candidateId).toString(), party);
