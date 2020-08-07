@@ -31,6 +31,7 @@ import com.google.cloud.datastore.Value;
 import com.google.cloud.Timestamp;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.sps.webcrawler.WebCrawler;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -40,6 +41,8 @@ import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import java.util.Date;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -66,18 +69,28 @@ public final class InfoCompilerTest {
   private static final int ADDRESS_NUMBER = 957; // After screening.
   private static String CORRECT_FORMAT_NAME = "Andrew Cuomo";
   private static String CORRECT_FORMAT_NAME_IN_QUOTES = "\"Andrew Cuomo\"";
+  private static final String PARTY = "Democratic";
+  private static final String EMAIL = "ac@gmail.com";
+  private static final String PHOTO_URL = "photoOfCuomo.jpg";
+  private static final String CANDIDATE_URL = "www.andrewcuomo.com";
+  private static final String PHONE = "122-333-4444";
+  private static final String TWITTER_ID = "@thefakeACuomo";
+  private static final String OFFICE = "Governor";
+  private static final String DIVISION = "ocd-division/country:us";
   private static final String ADDRESS = ",NY,New York,,,,,10028,,,,,East,,,84,Street,,,,144";
   private static final String STATE = "NY";
   private static final String NONTEST_ELECTION_QUERY_ID =
       InfoCompiler.TEST_VIP_ELECTION_QUERY_ID + "0";
-  private static final boolean PLACEHOLDER_INCUMBENCY = false;
   private static final String CIVIC_INFO_API_KEY = Config.CIVIC_INFO_API_KEY;
+  private static final boolean PLACEHOLDER_INCUMBENCY = true;
   private static final String ELECTION_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/elections?key=%s",
                     CIVIC_INFO_API_KEY);
   private static final String VOTER_INFO_QUERY_URL =
       String.format("https://www.googleapis.com/civicinfo/v2/voterinfo?key=%s",
                     Config.CIVIC_INFO_API_KEY);
+  private static final String REPRENTATIVE_QUERY_URL_WITHOUT_KEY =
+      "https://www.googleapis.com/civicinfo/v2/representatives";
   private static final String CONTEST_QUERY_URL =
         String.format("%s&address=%s&electionId=%s", VOTER_INFO_QUERY_URL,
                       URLEncoder.encode(ADDRESS), NONTEST_ELECTION_QUERY_ID);
@@ -88,45 +101,76 @@ public final class InfoCompilerTest {
       "{" +
       " \"kind\": \"civicinfo#electionsqueryresponse\"," +
       " \"elections\": [" +
+      "   {" +
+      "    \"id\": " + "\"" + NONTEST_ELECTION_QUERY_ID + "\"," +
+      "    \"name\": \"VIP Test Election\"," +
+      "    \"electionDay\": \"2013-06-06\"," +
+      "    \"ocdDivisionId\": " + "\"" + DIVISION + "\"" +
+      "   }" +
+      " ]" +
+      "}";
+  private static final String SINGLE_CONTEST_RESPONSE =
+      "{" +
+      " \"office\": " + OFFICE + "," +
+      " \"candidates\": [" +
+      "   {" +
+      "    \"name\": " + "\"" + CORRECT_FORMAT_NAME + "\"," +
+      "    \"party\": " + "\"" + PARTY + "\"," +
+      "    \"email\": " + "\"" + EMAIL + "\"," +
+      "    \"photoUrl\": " + "\"" + PHOTO_URL + "\"," +
+      "    \"candidateUrl\": " + "\"" + CANDIDATE_URL + "\"," +
+      "    \"phone\": " + "\"" + PHONE + "\"," +
+      "    \"channels\": [" +
+      "      {" +
+      "        \"type\": \"Twitter\"," +
+      "        \"id\": " + "\"" + TWITTER_ID + "\"" +
+      "      }," +
+      "      {" +
+      "        \"type\": \"Facebook\"," +
+      "        \"id\": \"randomAccount\"" +
+      "      }" +
+      "    ]" +
+      "   }" +
+      " ]" +
+      "}";
+  private static final String REPRESENTATIVE_RESPONSE = 
+      "{" +
+      " \"offices\": [" +
       "  {" +
-      "   \"id\": \"" + NONTEST_ELECTION_QUERY_ID + "\"," +
-      "   \"name\": \"VIP Test Election\"," +
-      "   \"electionDay\": \"2013-06-06\"" +
+      "   \"name\": " + "\"" + OFFICE + "\"," +
+      "   \"officialIndices\": [" +
+      "      0" +
+      "    ]" +
+      "  }" +
+      " ]," +
+      " \"officials\": [" +
+      "  {" +
+      "   \"name\": " + "\"" + CORRECT_FORMAT_NAME + "\"" +
+      "  }," +
+      "  {" +
+      "   \"name\": \"John Doe\"" +
       "  }" +
       " ]" +
       "}";
+  private static final JsonObject electionJson =
+      new JsonParser().parse(ELECTION_RESPONSE).getAsJsonObject();
+  private static JsonObject singleContestJson =
+      new JsonParser().parse(SINGLE_CONTEST_RESPONSE).getAsJsonObject();
+  private static final JsonObject representativesJson =
+      new JsonParser().parse(REPRESENTATIVE_RESPONSE).getAsJsonObject();
 
-  private static JsonObject electionJson;
-  private static JsonObject singleContestJson;
+  private static Map<String, List<String>> INCUMBENT_MAP = new HashMap<>();
   private static InfoCompiler infoCompiler;
   private static LocalDatastoreHelper datastoreHelper;
   private static Datastore datastore;
 
   @BeforeClass
   public static void initialize() throws InterruptedException, IOException {
+    INCUMBENT_MAP.put(OFFICE, Arrays.asList(CORRECT_FORMAT_NAME));
     datastoreHelper = LocalDatastoreHelper.create();
     datastoreHelper.start();
     datastore = datastoreHelper.getOptions().getService();
     infoCompiler = new InfoCompiler(datastore);
-
-    JsonObject election = new JsonObject();
-    election.addProperty("id", NONTEST_ELECTION_QUERY_ID);
-    election.addProperty("name", "VIP Test Election");
-    election.addProperty("electionDay", "2013-06-06");
-    JsonArray elections = new JsonArray();
-    elections.add(election);
-    electionJson = new JsonObject();
-    electionJson.addProperty("kind", "civicinfo#electionsqueryresponse");
-    electionJson.add("elections", elections);
-
-    JsonObject candidate = new JsonObject();
-    candidate.addProperty("name", "Andrew Cuomo");
-    candidate.addProperty("party", "Democratic");
-    JsonArray candidates = new JsonArray();
-    candidates.add(candidate);
-    singleContestJson = new JsonObject();
-    singleContestJson.addProperty("office", "Governor");
-    singleContestJson.add("candidates", candidates);
   }
 
   /**
@@ -152,7 +196,7 @@ public final class InfoCompilerTest {
   }
 
   @Test
-  public void queryCivicInformation_succeedWithMockResponse() throws Exception {
+  public void requestHttpAndBuildJsonResponse_succeedWithMockResponse() throws Exception {
     // Query the Civic Information API with a mock HTTP client + mock callback function of type
     // {@code ResponseHandler<String>} that converts any {@code HttpResponse} response to {@code
     // ELECTION_RESPONSE}, and subsequently convert {@code ELECTION_RESPONSE} to {@code json}.
@@ -171,6 +215,13 @@ public final class InfoCompilerTest {
   }
 
   @Test
+  public void getIncumbents_populateIncumbentsMap() throws Exception {
+    // Test that {@code getIncumbents} parses {@code representativesJson} correctly.
+    Map<String, List<String>> incumbentMap = infoCompiler.getIncumbents(representativesJson);
+    assertThat(incumbentMap).isEqualTo(INCUMBENT_MAP);
+  }
+
+  @Test
   public void storeBaseElectionInDatabase_checkDatastoreEntityConstructionFromJsonWithState()
       throws IOException {
     // Parse and re-structure base election information from {@code electionJson}'s
@@ -182,7 +233,7 @@ public final class InfoCompilerTest {
     Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    election.addProperty("ocdDivisionId", DIVISION + "/state:" + STATE.toLowerCase());
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -223,7 +274,7 @@ public final class InfoCompilerTest {
     Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
-    election.addProperty("ocdDivisionId", "ocd-division/country:us");
+    election.addProperty("ocdDivisionId", DIVISION);
     String[] yearMonthDay = election.get("electionDay").getAsString().split("-");
     Date date = new Date(
         Integer.parseInt(yearMonthDay[0]) - 1900,
@@ -291,15 +342,23 @@ public final class InfoCompilerTest {
     Timestamp past = Timestamp.now();
     JsonObject election =
         ((JsonObject) electionJson.getAsJsonArray("elections").get(0)).deepCopy();
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    String ocdDivisionId = DIVISION + "/state:" + STATE.toLowerCase();
+    election.addProperty("ocdDivisionId", ocdDivisionId);
+    String representativesQuery =
+          String.format("%s/%s?key=%s", REPRENTATIVE_QUERY_URL_WITHOUT_KEY,
+              URLEncoder.encode(ocdDivisionId), Config.CIVIC_INFO_API_KEY);
+    InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
+    InfoCompiler infoCompilerSpy = spy(infoCompiler);
+    doReturn(representativesJson).when(infoCompilerSpy).queryCivicInformation(eq(representativesQuery));
     JsonObject candidate = (JsonObject) singleContestJson.getAsJsonArray("candidates").get(0);
     Long candidateId = new Long(candidate.get("name").getAsString().hashCode()
                                 + candidate.get("party").getAsString().hashCode()
                                 + election.get("name").getAsString().hashCode());
-    infoCompiler.electionQueryIds = new ArrayList<>();
-    infoCompiler.storeBaseElectionInDatabase(election);
-    infoCompiler.storeElectionContestInDatabase(election.get("id").getAsString(),
+    infoCompilerSpy.electionQueryIds = new ArrayList<>();
+    infoCompilerSpy.storeBaseElectionInDatabase(election);
+    infoCompilerSpy.storeElectionContestInDatabase(election.get("id").getAsString(),
                                                 singleContestJson);
+
     // Check data additions to the election entity.
     Query<Entity> electionQuery =
         Query.newEntityQueryBuilder()
@@ -322,6 +381,8 @@ public final class InfoCompilerTest {
     assertThat(candidateIncumbency).hasSize(1);
     assertThat(candidateIncumbency)
         .containsExactly(BooleanValue.newBuilder(PLACEHOLDER_INCUMBENCY).build());
+    System.out.println(candidateIncumbency);
+    System.out.println("!!!!!!!!!!!!!");
     // Check candidate data.
     Query<Entity> candidateQuery =
         Query.newEntityQueryBuilder()
@@ -333,8 +394,16 @@ public final class InfoCompilerTest {
     assertThat(queryResult.hasNext()).isFalse();
     assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
-    assertThat(candidateEntity.getString("partyAffiliation"))
+    assertThat(candidateEntity.getString("party"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
+    assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
+    assertThat(candidateEntity.getString("candidateUrl"))
+        .isEqualTo(candidate.get("candidateUrl").getAsString());
+    assertThat(candidateEntity.getString("photoUrl"))
+        .isEqualTo(candidate.get("photoUrl").getAsString());
+    assertThat(candidateEntity.getString("twitter"))
+        .isEqualTo(((JsonObject) candidate.getAsJsonArray("channels").get(0)).get("id").getAsString());
     assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
@@ -349,7 +418,11 @@ public final class InfoCompilerTest {
     JsonObject electionJsonCopy = electionJson.deepCopy();
     JsonObject election =
         ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    String ocdDivisionId = DIVISION + "/state:" + STATE.toLowerCase();
+    election.addProperty("ocdDivisionId", ocdDivisionId);
+    String representativesQuery =
+          String.format("%s/%s?key=%s", REPRENTATIVE_QUERY_URL_WITHOUT_KEY,
+              URLEncoder.encode(ocdDivisionId), Config.CIVIC_INFO_API_KEY);
     InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
     InfoCompiler infoCompilerSpy = spy(infoCompiler);
     // Set expiration time to a safely large value that will not cause new data to be cleared.
@@ -357,6 +430,7 @@ public final class InfoCompilerTest {
     infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
     infoCompilerSpy.webCrawler = mock(WebCrawler.class);
     doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
+    doReturn(representativesJson).when(infoCompilerSpy).queryCivicInformation(eq(representativesQuery));
     JsonArray contests = new JsonArray();
     contests.add(singleContestJson);
     JsonObject contestsResponse = new JsonObject();
@@ -418,8 +492,16 @@ public final class InfoCompilerTest {
     assertThat(queryResult.hasNext()).isFalse();
     assertThat(candidateEntity.getKey().getId()).isEqualTo(candidateId);
     assertThat(candidateEntity.getString("name")).isEqualTo(candidate.get("name").getAsString());
-    assertThat(candidateEntity.getString("partyAffiliation"))
+    assertThat(candidateEntity.getString("party"))
         .isEqualTo(candidate.get("party").getAsString() + " Party");
+    assertThat(candidateEntity.getString("email")).isEqualTo(candidate.get("email").getAsString());
+    assertThat(candidateEntity.getString("phone")).isEqualTo(candidate.get("phone").getAsString());
+    assertThat(candidateEntity.getString("candidateUrl"))
+        .isEqualTo(candidate.get("candidateUrl").getAsString());
+    assertThat(candidateEntity.getString("photoUrl"))
+        .isEqualTo(candidate.get("photoUrl").getAsString());
+    assertThat(candidateEntity.getString("twitter"))
+        .isEqualTo(((JsonObject) candidate.getAsJsonArray("channels").get(0)).get("id").getAsString());
     assertThat(((Timestamp) electionEntity.getValue("lastModified").get()).compareTo(past) >= 0)
         .isTrue();
   }
@@ -434,12 +516,17 @@ public final class InfoCompilerTest {
     JsonObject electionJsonCopy = electionJson.deepCopy();
     JsonObject election =
         ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    String ocdDivisionId = DIVISION + "/state:" + STATE.toLowerCase();
+    election.addProperty("ocdDivisionId", ocdDivisionId);
+    String representativesQuery =
+          String.format("%s/%s?key=%s", REPRENTATIVE_QUERY_URL_WITHOUT_KEY,
+              URLEncoder.encode(ocdDivisionId), Config.CIVIC_INFO_API_KEY);
     election.addProperty("id", InfoCompiler.TEST_VIP_ELECTION_QUERY_ID);
     InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
     InfoCompiler infoCompilerSpy = spy(infoCompiler);
     infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
     infoCompilerSpy.webCrawler = mock(WebCrawler.class);
+    doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
     doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
     JsonArray contests = new JsonArray();
     contests.add(singleContestJson);
@@ -484,13 +571,18 @@ public final class InfoCompilerTest {
     JsonObject electionJsonCopy = electionJson.deepCopy();
     JsonObject election =
         ((JsonObject) electionJsonCopy.getAsJsonArray("elections").get(0));
-    election.addProperty("ocdDivisionId", "ocd-division/country:us/state:" + STATE.toLowerCase());
+    String ocdDivisionId = DIVISION + "/state:" + STATE.toLowerCase();
+    election.addProperty("ocdDivisionId", ocdDivisionId);
+    String representativesQuery =
+          String.format("%s/%s?key=%s", REPRENTATIVE_QUERY_URL_WITHOUT_KEY,
+              URLEncoder.encode(ocdDivisionId), Config.CIVIC_INFO_API_KEY);
     InfoCompiler infoCompiler = new InfoCompiler(this.datastore);
     InfoCompiler infoCompilerSpy = spy(infoCompiler);
     // Any new data will be seen as outdated and thus cleared.
     infoCompilerSpy.DATA_EXPIRATION_SECONDS = -1;
     infoCompilerSpy.addresses = Arrays.asList(ADDRESS);
     infoCompilerSpy.webCrawler = mock(WebCrawler.class);
+    doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
     doReturn(electionJsonCopy).when(infoCompilerSpy).queryCivicInformation(eq(ELECTION_QUERY_URL));
     JsonArray contests = new JsonArray();
     contests.add(singleContestJson);

@@ -95,12 +95,12 @@ public class CandidateServlet extends HttpServlet {
     return new Candidate(
         candidateId,
         (String) candidateData.getProperty("name"),
-        (String) candidateData.getProperty("partyAffiliation"),
+        (String) candidateData.getProperty("party"),
         (String) candidateData.getProperty("email"),
-        (String) candidateData.getProperty("phone number"),
-        (String) candidateData.getProperty("photoURL"),
+        (String) candidateData.getProperty("phone"),
+        (String) candidateData.getProperty("PhotoUrl"),
         candidatePosition,
-        (String) candidateData.getProperty("website"),
+        (String) candidateData.getProperty("candidateUrl"),
         (String) candidateData.getProperty("twitter"),
         candidateIncumbency);
   }

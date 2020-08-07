@@ -18,13 +18,13 @@ package com.google.sps.data;
 public class DirectoryCandidate {
   private String id;
   private String candidateName;
-  private String partyAffiliation;
+  private String party;
   private boolean isIncumbent;
 
-  public DirectoryCandidate(String id, String name, String partyAffiliation, boolean isIncumbent) {
+  public DirectoryCandidate(String id, String name, String party, boolean isIncumbent) {
     this.id = id;
     this.candidateName = name;
-    this.partyAffiliation = partyAffiliation;
+    this.party = party;
     this.isIncumbent = isIncumbent;
   }
 }

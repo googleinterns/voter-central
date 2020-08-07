@@ -16,21 +16,21 @@ package com.google.sps.data;
 
 public class Candidate extends DirectoryCandidate {
   private String email;
-  private String phoneNumber;
-  private String photoURL;
+  private String phone;
+  private String photoUrl;
   private String position;
-  private String website;
+  private String candidateUrl;
   private String twitter;
 
-  public Candidate(String id, String name, String partyAffiliation, String email,
-      String phoneNumber, String photoURL, String position, String website,
+  public Candidate(String id, String name, String party, String email,
+      String phone, String photoUrl, String position, String candidateUrl,
       String twitter, boolean isIncumbent) {
-    super(id, name, partyAffiliation, isIncumbent);
+    super(id, name, party, isIncumbent);
     this.email = email;
-    this.phoneNumber = phoneNumber;
-    this.photoURL = photoURL;
+    this.phone = phone;
+    this.photoUrl = photoUrl;
     this.position = position;
-    this.website = website;
+    this.candidateUrl = candidateUrl;
     this.twitter = twitter;
   }
 }
