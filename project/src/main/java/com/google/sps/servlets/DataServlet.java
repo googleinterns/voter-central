@@ -261,7 +261,7 @@ public class DataServlet extends HttpServlet {
     Entity candidate = candidateQueryResult.asSingleEntity();
     return new DirectoryCandidate(candidateId, 
                                   (String) candidate.getProperty("name"),
-                                  (String) candidate.getProperty("partyAffiliation"),
+                                  (String) candidate.getProperty("party"),
                                   isIncumbent);
   }
 

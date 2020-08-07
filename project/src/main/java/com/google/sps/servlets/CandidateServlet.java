@@ -98,7 +98,7 @@ public class CandidateServlet extends HttpServlet {
         (String) candidateData.getProperty("party"),
         (String) candidateData.getProperty("email"),
         (String) candidateData.getProperty("phone"),
-        (String) candidateData.getProperty("PhotoUrl"),
+        (String) candidateData.getProperty("photoUrl"),
         candidatePosition,
         (String) candidateData.getProperty("candidateUrl"),
         (String) candidateData.getProperty("twitter"),
@@ -135,8 +135,6 @@ public class CandidateServlet extends HttpServlet {
     }
     return newsArticlesData;
   }
-
-  // @TODO [Function for getting (3) social media information from the database.]
 
   // Class to package together different types of data as a HTTP response.
   class CandidatePageDataPackage {

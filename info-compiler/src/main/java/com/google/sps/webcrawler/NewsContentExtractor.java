@@ -53,6 +53,7 @@ public class NewsContentExtractor {
    */
   public void extractContentFromHtml(InputStream htmlFileStream, NewsArticle newsArticle) {
     if (htmlFileStream == null) {
+      newsArticle.setTitle("");
       newsArticle.setContent("");
       return;
     }
@@ -62,6 +63,7 @@ public class NewsContentExtractor {
     try {
       extractContentFromHtml(boilerpipeHandler, metadata, htmlFileStream, newsArticle);
     } catch (IOException | SAXException | TikaException e) {
+      newsArticle.setTitle("");
       newsArticle.setContent("");
     }
   }
