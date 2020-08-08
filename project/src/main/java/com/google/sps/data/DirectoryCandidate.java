@@ -14,19 +14,17 @@
 
 package com.google.sps.data;
 
-/** 
- * Represents a candidate's information on the directory page.
- */
+/** Represents a candidate's information on the directory page. */
 public class DirectoryCandidate {
   private String id;
-  private String name;
-  private String partyAffiliation;
+  private String candidateName;
+  private String party;
   private boolean isIncumbent;
 
-  public DirectoryCandidate(String id, String name, String partyAffiliation, boolean isIncumbent) {
+  public DirectoryCandidate(String id, String name, String party, boolean isIncumbent) {
     this.id = id;
-    this.name = name;
-    this.partyAffiliation = partyAffiliation;
+    this.candidateName = name;
+    this.party = party;
     this.isIncumbent = isIncumbent;
   }
 }

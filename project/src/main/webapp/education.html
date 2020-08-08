@@ -1,32 +1,88 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" ng-app="voterCentral">
   <head>
     <meta charset="utf-8">
     <meta name="Voter Central Education Page"
           content="This page is dedicated to educating voters on basic
               information about voting in the United States">
+    <meta name="viewport" 
+          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link
+        href=
+        "https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto+Slab:wght@900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet">
+    <link 
+        rel="stylesheet"
+        href=
+        "https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity=
+        "sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
+    <script src="/node_modules/angular/angular.js"></script>
     <script src="config.js"></script>
+    <script src="app.module.js"></script>
+    <script src="/navigation/navigation.module.js"></script>
+    <script src="/navigation/nav-bar.component.js"></script>
+    <script src="/navigation/header.component.js"></script>
     <script src="script.js"></script>
+    <script src="/directory-page/directory-page.module.js"></script>
+    <script src="/candidate-page/candidate-page.module.js"></script>
     <title>Voter Central Education Page</title>
   </head>
   <body>
-    <h2>How to Vote</h2>
-    <iframe src="https://www.youtube.com/embed/R2yFIPRZXu4" width="560"
-        height="315" frameborder="0" allow="accelerometer; autoplay;
-        encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-    </iframe>
+    <div class="container-fluid mt-1">
+      <nav-bar></nav-bar>
+      <div class="row justify-content-end">
+        <div class="col-9">
+            <header></header>
+        </div>
+      </div>
+      <div class="row justify-content-end">
+        <div class="col-9">
+          <main role="main">
+            <h2>How to Vote</h2>
+            <iframe src="https://www.youtube.com/embed/R2yFIPRZXu4" width="560"
+                height="315" frameborder="0" allow="accelerometer; autoplay;
+                encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
 
-    <h2>Primary Elections Explained</h2>
-    <iframe src="https://www.youtube.com/embed/NAGZNjwxhDk" width="560"
-        height="315" frameborder="0" allow="accelerometer; autoplay;
-        encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-    </iframe>
+            <h2>Primary Elections Explained</h2>
+            <iframe src="https://www.youtube.com/embed/NAGZNjwxhDk" width="560"
+                height="315" frameborder="0" allow="accelerometer; autoplay;
+                encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
 
-    <h2>Overview on Congressional Elections</h2>
-    <iframe src="https://www.youtube.com/embed/qxiD9AEX4Hc"  width="560"
-        height="315"frameborder="0" allow="accelerometer; autoplay;
-        encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-    </iframe>
+            <h2>Overview on Congressional Elections</h2>
+            <iframe src="https://www.youtube.com/embed/qxiD9AEX4Hc"  width="560"
+                height="315"frameborder="0" allow="accelerometer; autoplay;
+                encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
+          </main>
+        </div>
+      </div>
+    </div>
+    <script
+        src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity=
+        "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous">
+    </script>
+    <script
+        src=
+        "https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity=
+        "sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous">
+    </script>
+    <script 
+        src=
+        "https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity=
+        "sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous">
+    </script>
   </body>
 </html>

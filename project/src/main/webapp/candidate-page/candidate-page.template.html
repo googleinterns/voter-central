@@ -1,0 +1,59 @@
+<div class="candidate-page-info" id="official-info-container">
+  <h3>{{officialInfo.candidateName}}</h3>
+  <img ng-show="officialInfo.photoUrl" src="{{officialInfo.photoUrl}}"
+      width=480
+      alt="Picture of {{officialInfo.candidateName}}">
+  <ul class="list-unstyled">
+    <li>Position: {{officialInfo.position}}</li>
+    <li>Party Affiliation: {{officialInfo.party}}</li>
+    <li ng-show="officialInfo.email">Email: {{officialInfo.email}}</li>
+    <li ng-show="officialInfo.phone">
+        Phone number: {{officialInfo.phone}}</li>
+  </ul>
+  <p ng-if="officialInfo.isIncumbent"> {{officialInfo.candidateName}}
+        currently holds office as {{officialInfo.position}}</p>
+  <p ng-show="officialInfo.candidateUrl">
+    <a href={{officialInfo.candidateUrl}}>Candidate's Website</a>
+  </p>
+  <hr>
+</div>
+<div id="news-article-content-display-options">
+  <h5>What types of news article content would you like to see?</h5>
+  <input type="checkbox"
+          ng-checked="all" ng-model="showContent"> Full Content<br>
+  <input type="checkbox" 
+          ng-checked="all" ng-model="showAbbreviatedContent"> Abbreviated Content<br>
+  <input type="checkbox"
+          ng-checked="all" ng-model="showSummarizedContent"> 5-Sentence Summary<br>
+  <input type="checkbox" ng-model="all"> All<br>
+  <hr>
+</div>
+<div ng-repeat="newsArticle in newsArticles" class="candidate-page-info" 
+    id="news-articles-container">
+  <article id="news-article-{{$index+1}}">
+    <h3>{{newsArticle.title}}</h3>
+    <a href={{newsArticle.url}}>Source</a>
+    <h5>{{newsArticle.publisher}}</h5>
+    <time>{{newsArticle.publishedDate}}</time>
+    <div class="news-article-content">
+      <div ng-show="showContent || all">
+        <em>Content</em>
+        <p>{{newsArticle.content}}</p>
+      </div>
+      <div ng-show="showAbbreviatedContent || all">
+        <em>Abbreviated Content</em>
+        <p>{{newsArticle.abbreviatedContent}}</p>
+      </div>
+      <div ng-show="showSummarizedContent || all">
+        <em>Summarized Content</em>
+        <p>{{newsArticle.summarizedContent}}</p>
+      </div>
+      <a href={{newsArticle.url}}>Read the original article</a>
+    </div>
+    <hr>
+  </article>
+</div>
+<div class="candidate-page-info" id="social-media-container">
+  <a ng-show="twitterHandle" class="twitter-timeline" data-width="400"
+      data-height="600" href={{twitterURL}}>Tweets by {{twitterHandle}}</a>
+</div>

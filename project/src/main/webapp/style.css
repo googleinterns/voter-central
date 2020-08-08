@@ -1,42 +1,42 @@
-/* General Styling */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  color: #f0eded;
+  text-decoration: none;
+}
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 30px;
-  margin: 50px;
-  min-height: 100%;
-  height: 100%;
+  color: #474747;
+  font-family: 'Open Sans', sans-serif;
   text-align: center;
 }
 
-html {
+.election-name {
+  color: #1d5b8f;
+}
+
+.material-icons {
+  font-size: 48px;
+  vertical-align: bottom;
+}
+
+#navigation-bar {
+  background-color: #4788c4;
+  font-size: 22px;
   height: 100%;
-}
-
-h2 {
-  text-align: center;
-}
-
-#navbar-container {
-  height: 80%;
-  left: 30px;
+  max-width: 25%;
   position: fixed;
-  text-align: center;
-  width: 15%;
 }
 
-#navbar-container a {
-  padding: 10px 20px;
-  vertical-align: middle;
+.nav-link {
+  color: #474747;
+  font-family: 'Roboto Slab', serif;
 }
 
-/* Candidate Page Styling */
-
-.candidate-page-info {
-  height: 40%;
-  padding: 100px 100px;
-  width: 60%;
-}
-
-main {
-  margin-left: 20%;
+#site-header {
+  background-color: #b32424;
+  color: #f0eded;
+  font-family: 'Roboto Slab', serif;
 }

@@ -1,0 +1,42 @@
+<div id="elections-container">
+  <div class="state-filter" ng-show="showStateFilter">
+    <label>Filter results based on state:</label>
+    <select name="state-filter" id="state-filter"
+            ng-change="filterOnState()" ng-model="stateFilter"
+            ng-options="x for x in states">
+    </select>
+  </div>
+  <div class="alert" ng-show="alert">
+    <h4>Note: {{alert}}</h4>
+  </div>
+  <div ng-repeat="election in elections" id="election-{{election.electionName}}">
+    <h3 class="election-name">{{election.electionName}}</h3>
+    <time>{{election.date}}</time>
+    <div id="election-{{$index + 1}}-positions">
+      <ul ng-repeat="position in election.positions" class="list-group">
+        <li class="list-group-item">
+          <h4>Position {{$index + 1}}: {{position.positionName}}</h4>
+          <p>Table of Candidates</p>
+          <table>
+            <tr>
+              <th>Candidate Name</th>
+              <th>Party Affiliation</th>
+              <th>Incumbent</th>
+            </tr>
+            <tr ng-repeat="candidate in position.candidates">
+              <td>
+                <a href="candidate.html?candidateId={{candidate.id}}&electionName={{election.electionName}}">
+                    {{candidate.candidateName}}</a>
+              </td>
+              <td>
+                {{candidate.partyAffiliation}}
+              </td>
+              <td ng-if="candidate.isIncumbent">Yes</td>
+              <td ng-if="!candidate.isIncumbent">No</td>
+            </tr>
+          </table>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
