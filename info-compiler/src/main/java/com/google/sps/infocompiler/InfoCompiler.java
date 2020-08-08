@@ -365,8 +365,12 @@ public class InfoCompiler {
   }
 
   /**
+   * Queries the API for the representatives by division JSON. Then calls helper function that 
+   * returns all representatives in a map that can be checked to verify incumbency. The map's keys 
+   * contain office names and the value for each key is a list of officials.
    * Queries the Civic Information API for the representatives in {@code division}, and returns all
    * representatives in a position-representatives maping that can be checked to verify incumbency.
+   * The map's keys contain office names and the value for each key is a list of officials.
    */
   private Map<String, List<String>> getIncumbents(String division) {
     try {
@@ -376,16 +380,17 @@ public class InfoCompiler {
       JsonObject representatives = queryCivicInformation(queryUrl);
       return getIncumbents(representatives);
     } catch (IOException e) {
-        System.out.println(
-          String.format(
-              "[ERROR] Failed to query the Civic Information API for representatives: %s.", e));
+      System.out.println(
+        String.format(
+            "[ERROR] Failed to query the Civic Information API for representatives: %s.", e));
       return new HashMap<String, List<String>>();
     }
   }
 
   /**
-   * Parses the Civic Information API response and build a position-representatives maping that can
-   * be checked to verify incumbency.
+   * Helper function that parses JSON object with the representatives by division as parameter,
+   * and builds a position-representatives map, where the keys contain office names and the value
+   * for each key is a list of officials.
    */
   Map<String, List<String>> getIncumbents(JsonObject representatives) {
     Map<String, List<String>> mapOfIncumbents = new HashMap<>();  
